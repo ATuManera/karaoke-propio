@@ -1,0 +1,17 @@
+# Datos operativos de PiKaraoke
+data/
+songs/
+
+# Copias de seguridad
+backups/
+
+# Secretos y configuración local
+.env
+.env.*
+!.env.example
+
+# Archivos temporales
+*.log
+*.tmp
+*.swp
+.DS_Store

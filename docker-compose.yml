@@ -1,0 +1,25 @@
+services:
+  karaoke:
+    image: vicwomg/pikaraoke:1.21.0
+    container_name: app-karaoke
+    restart: unless-stopped
+
+    ports:
+      - "5555:5555"
+
+    volumes:
+      - ./songs:/app/pikaraoke-songs
+      - ./data:/home/pikaraoke/.pikaraoke
+
+    command:
+      - "--url"
+      - "${KARAOKE_PUBLIC_URL}"
+      - "--preferred-language"
+      - "es_VE"
+
+    networks:
+      - nginx-proxy
+
+networks:
+  nginx-proxy:
+    external: true
