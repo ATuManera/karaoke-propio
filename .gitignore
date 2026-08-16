@@ -15,3 +15,10 @@ backups/
 *.tmp
 *.swp
 .DS_Store
+
+# Runtime data — MUST stay out of the repository.
+# ke-config holds database.sqlite3, which contains user accounts (password
+# hashes), room invite codes (the credential that guards public access) and
+# uploaded event photos. Publishing it would hand out the invite code.
+ke-config/
+pitch-cache/

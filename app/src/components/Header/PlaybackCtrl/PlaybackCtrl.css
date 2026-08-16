@@ -1,0 +1,39 @@
+.container {
+  display: flex;
+  align-items: center;
+  padding: 0 var(--container-padding);
+}
+
+.btn {
+  color: var(--transport-btn-bg-color);
+  filter: var(--transport-btn-filter);
+
+  svg {
+    height: var(--icon-size-xl);
+  }
+}
+
+.btnAnimate {
+  animation: var(--animation-btn-danger-activate);
+}
+
+.play,
+.pause {
+  svg {
+    height: 2.66rem;
+  }
+}
+
+.next {
+  margin: 0 var(--space-s);
+}
+
+.displayCtrl {
+  color: var(--btn-active-bg-color);
+  filter: var(--btn-active-filter);
+}
+
+.fullscreen {
+  color: var(--btn-active-bg-color);
+  filter: var(--btn-active-filter);
+}

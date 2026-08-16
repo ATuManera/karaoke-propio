@@ -1,0 +1,115 @@
+.container {
+  padding: var(--space-s);
+  padding-top: calc(var(--space-s) + 56px);
+  padding-bottom: calc(var(--space-s) + 56px);
+  height: 100%;
+  overflow-y: auto;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-s);
+  margin-bottom: var(--space-m);
+}
+
+/* Sized to their content, never stretched: a full-width button scales its icon
+   with it, which is what blew the camera glyph up to fill a desktop screen. */
+.actions button {
+  flex: 0 0 auto;
+  min-height: 44px; /* comfortable tap target on a phone */
+}
+
+.count {
+  margin-left: auto;
+  font-size: var(--font-size-s);
+  color: var(--color-gray-6);
+}
+
+/* on a narrow screen the two actions share the row evenly */
+@media (max-width: 480px) {
+  .actions button { flex: 1 1 0; }
+  .count { display: none; }
+}
+
+.hidden { display: none; }
+
+.status {
+  display: flex;
+  align-items: center;
+  gap: var(--space-s);
+  margin-bottom: var(--space-s);
+  font-size: var(--font-size-s);
+}
+
+.error { color: var(--btn-danger-bg-color); }
+
+/* square tiles that reflow from 3 across on a phone to more on a TV */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(104px, 1fr));
+  gap: var(--space-xs);
+}
+
+.thumb {
+  padding: 0;
+  border: none;
+  border-radius: var(--border-radius);
+  overflow: hidden;
+  aspect-ratio: 1;
+  background-color: hsl(var(--hue-blue), 40%, 10%);
+  cursor: pointer;
+}
+
+.thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.viewer {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  background-color: rgb(0 0 0 / 92%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.viewer img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+.viewerBar {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--space-m);
+  padding: var(--space-s) var(--space-m);
+  background: linear-gradient(to top, rgb(0 0 0 / 80%), transparent);
+}
+
+.credit {
+  flex: 1;
+  color: var(--color-gray-8);
+  font-size: var(--font-size-s);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.viewerBtn {
+  border: none;
+  background: none;
+  color: #fff;
+  cursor: pointer;
+  padding: var(--space-xs);
+  display: flex;
+}

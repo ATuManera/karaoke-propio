@@ -1,0 +1,22 @@
+.container {
+  font-size: 5vw;
+  text-rendering: optimizeLegibility;
+  text-shadow: 0px 5px 5px #000;
+}
+
+.char {
+  animation: color-cycle;
+  animation-duration: 10s;
+  animation-direction: alternate;
+  animation-iteration-count: infinite;
+}
+
+@keyframes color-cycle {
+  0% {color: red;}
+  16% {color: orange;}
+  32% {color: yellow;}
+  49% {color: green;}
+  66% {color: blue;}
+  83% {color: indigo;}
+  100% {color: violet;}
+}

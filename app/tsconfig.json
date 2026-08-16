@@ -1,0 +1,26 @@
+{
+  "files": [],
+  "references": [
+    {
+      "path": "./config/tsconfig.client.json"
+    },
+    {
+      "path": "./config/tsconfig.server.json"
+    }
+  ],
+  "compilerOptions": {
+    "paths": {
+      "shared/*": [
+        "./shared/*"
+      ]
+    },
+    "skipLibCheck": true,
+    "noImplicitAny": true,
+    "downlevelIteration": true,
+    "esModuleInterop": true,
+    "typeRoots": [
+      "types",
+      "node_modules/@types"
+    ]
+  }
+}

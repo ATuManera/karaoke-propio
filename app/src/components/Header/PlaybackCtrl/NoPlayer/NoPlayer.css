@@ -1,0 +1,11 @@
+.container {
+  font-size: 16px;
+  color: var(--header-notice-color);
+  background-color: var(--header-notice-bg-color);
+}
+
+.msg {
+  margin: 0;
+  padding: 5px;
+  text-align: center;
+}

@@ -1,0 +1,34 @@
+.pathItem {
+  display: flex;
+  align-items: center;
+  background-color: var(--panel-bg-color);
+  padding: var(--space-xs);
+  margin-bottom: var(--space-s);
+  border-radius: var(--border-radius);
+}
+
+.pathName {
+  flex: 1;
+  user-select: text;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  direction: rtl;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.btnDrag {
+  cursor: grab;
+  color: var(--btn-bg-color);
+  height: var(--icon-size-l);
+}
+
+.btnRefresh,
+.btnInfo {
+  color: var(--btn-active-bg-color);
+  padding: var(--space-xs);
+
+  svg {
+    height: var(--icon-size-l);
+  }
+}

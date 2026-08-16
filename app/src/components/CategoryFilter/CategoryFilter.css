@@ -1,0 +1,111 @@
+.container {
+  padding: var(--space-xs) var(--space-s);
+  background-color: hsl(var(--hue-blue), 40%, 8%);
+  border-radius: var(--border-radius);
+  margin-bottom: var(--space-xs);
+}
+
+/* one compact row: sorting plus the filter toggle */
+.bar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-s);
+}
+
+.toggle {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4em;
+  padding: 0.25em 0.7em;
+  border: none;
+  border-radius: 999px;
+  background-color: hsl(var(--hue-blue), 40%, 16%);
+  color: var(--color-gray-8);
+  font-size: var(--font-size-xs);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.toggleActive {
+  background-color: hsl(var(--hue-blue), 60%, 40%);
+  color: #fff;
+  font-weight: bold;
+}
+
+.caret { font-size: 0.7em; opacity: 0.8; }
+
+/* Capped and scrollable: the list of categories grows with the library, and
+   without a ceiling it pushed the songs off a phone screen entirely. */
+.panel {
+  max-height: 42vh;
+  overflow-y: auto;
+  margin-top: var(--space-xs);
+  padding-top: var(--space-xs);
+  border-top: 1px solid hsl(var(--hue-blue), 30%, 18%);
+}
+
+.group {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-xs);
+  margin-bottom: var(--space-xs);
+}
+
+.groupLabel {
+  font-size: var(--font-size-xs);
+  color: var(--color-gray-6);
+  min-width: 4.5em;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35em;
+  padding: 0.2em 0.6em;
+  border: none;
+  border-radius: 999px;
+  background-color: hsl(var(--hue-blue), 40%, 16%);
+  color: var(--color-gray-8);
+  font-size: var(--font-size-xs);
+  cursor: pointer;
+}
+
+.chip:hover { background-color: hsl(var(--hue-blue), 40%, 24%); }
+
+.selected {
+  background-color: hsl(var(--hue-blue), 60%, 40%);
+  color: #fff;
+  font-weight: bold;
+}
+
+.count { opacity: 0.6; font-size: 0.85em; }
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-m);
+  padding-top: var(--space-xs);
+}
+
+.clear {
+  border: none;
+  background: none;
+  color: var(--btn-danger-bg-color);
+  font-size: var(--font-size-xs);
+  cursor: pointer;
+  padding: 0;
+}
+
+.scan {
+  border: none;
+  background: none;
+  color: var(--color-gray-6);
+  font-size: var(--font-size-xs);
+  cursor: pointer;
+  padding: 0;
+  text-decoration: underline;
+}
+
+.scan:disabled { opacity: 0.5; cursor: default; }

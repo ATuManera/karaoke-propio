@@ -1,0 +1,45 @@
+.container {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  display: flex;
+  width: 100%;
+  background-color: var(--chrome-bg-color);
+  border-top: 1px solid var(--chrome-border-color);
+  z-index: 99;
+
+  a {
+    flex: 1;
+    padding: var(--space-xs) 0;
+  }
+
+  span {
+    display: flex;
+    justify-content: center;
+    color: var(--btn-bg-color);
+    /* filter: drop-shadow(0px 1px 0px hsl(var(--hue-blue), 100%, 30%)); */
+
+    svg {
+      height: var(--icon-size-xl);
+    }
+  }
+
+  .active span {
+    color: var(--link-color);
+    filter: var(--btn-active-filter) drop-shadow(0 0 1px rgba(0, 0, 0, 1));
+  }
+}
+
+.btnAnimate {
+  animation: nav-glow 1s var(--activate-1);
+}
+
+@keyframes nav-glow {
+  from {
+    filter: var(--btn-activate-filter) drop-shadow(0 0 0 transparent);
+  }
+
+  to {
+    filter: var(--btn-active-filter) drop-shadow(0 0 1px rgba(0, 0, 0, 1));
+  }
+}

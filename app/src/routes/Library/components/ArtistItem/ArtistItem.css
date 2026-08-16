@@ -1,0 +1,62 @@
+.container {
+  --artist-item-height: 48px;
+
+  display: flex;
+  height: var(--artist-item-height);
+  align-items: center;
+  overflow: hidden;
+}
+
+.name {
+  color: var(--artist-name-color);
+  flex: 1;
+  font-size: 20px;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+  padding-left: 3px;
+  cursor: pointer;
+}
+
+.folderContainer {
+  position: relative;
+  color: var(--artist-folder-bg-color);
+
+  svg {
+    height: var(--artist-item-height);
+  }
+
+  .iconChevronContainer svg {
+    height: 24px;
+  }
+
+  div {
+    position: absolute;
+    top: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-color);
+    width: 100%;
+    height: 100%;
+  }
+}
+
+.hasStarred .folderContainer {
+  color: var(--artist-folder-starred-bg-color);
+  filter: var(--artist-folder-starred-filter);
+}
+
+.hasStarred .iconChevronContainer,
+.hasStarred .count {
+  color: #000;
+}
+
+.animateGlow {
+  animation: var(--animation-text-shadow-glow);
+}
+
+.isChildUpcoming {
+  color: var(--queued-item-color);
+  text-shadow: var(--queued-item-text-shadow);
+}

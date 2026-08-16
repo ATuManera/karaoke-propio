@@ -1,0 +1,77 @@
+import { createAction, createReducer } from '@reduxjs/toolkit'
+import { RootState, AppDispatch, AppThunk } from 'store/store'
+import getUpcoming from '../selectors/getUpcoming'
+import {
+  QUEUE_ADD,
+  QUEUE_MOVE,
+  QUEUE_PUSH,
+  QUEUE_REMOVE,
+  LOGOUT,
+} from 'shared/actionTypes'
+import type { QueueItem, OptimisticQueueItem } from 'shared/types'
+import { PITCH_DEFAULT } from 'shared/pitch'
+
+// ------------------------------------
+// Actions
+// ------------------------------------
+const logout = createAction(LOGOUT)
+export const moveItem = createAction<{ queueId: number, prevQueueId: number }>(QUEUE_MOVE)
+export const removeItem = createAction<{ queueId: number | number[] }>(QUEUE_REMOVE)
+export const queuePush = createAction<QueueState>(QUEUE_PUSH)
+
+export const queueSong = createAction(QUEUE_ADD, (
+  songId: number,
+  pitchSemitones: number = PITCH_DEFAULT,
+  // which recording to play, when the song has more than one (see VersionModal)
+  mediaId?: number,
+) => ({
+  payload: { songId, pitchSemitones, mediaId: mediaId ?? null },
+  meta: { isOptimistic: true },
+}))
+
+export const removeUpcomingItems = (userId: number): AppThunk => (dispatch: AppDispatch, getState: () => RootState) => {
+  const upcomingQueueIds = getUpcoming(getState(), userId)
+  dispatch(removeItem({ queueId: upcomingQueueIds }))
+}
+
+// ------------------------------------
+// Reducer
+// ------------------------------------
+interface QueueState {
+  isLoading: boolean
+  result: number[] // queueIds
+  entities: Record<number, QueueItem | OptimisticQueueItem>
+}
+
+const initialState: QueueState = {
+  isLoading: true,
+  result: [],
+  entities: {},
+}
+
+const queueReducer = createReducer(initialState, (builder) => {
+  builder
+    .addCase(queueSong, (state, { payload }) => {
+      // optimistic
+      const nextQueueId = state.result.length ? (state.result[state.result.length - 1] as number) + 1 : 1
+
+      state.result.push(nextQueueId)
+      state.entities[nextQueueId] = {
+        ...payload,
+        queueId: nextQueueId,
+        prevQueueId: nextQueueId - 1 || null,
+        isOptimistic: true,
+      }
+    })
+    .addCase(queuePush, (state, { payload }) => ({
+      isLoading: false,
+      result: payload.result,
+      entities: payload.entities,
+    }))
+    .addCase(logout, (state) => {
+      state.result = []
+      state.entities = {}
+    })
+})
+
+export default queueReducer

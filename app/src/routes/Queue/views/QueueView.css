@@ -1,0 +1,23 @@
+.container {
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.container h1 {
+  font-family: var(--font-family-custom);
+}
+
+.adminBar {
+  position: fixed;
+  right: var(--space-s);
+  z-index: 2;
+}
+
+.clearBtn {
+  padding: var(--space-xs) var(--space-s);
+  font-size: var(--font-size-xs);
+  background-color: hsl(var(--hue-blue), 40%, 18%);
+  color: var(--btn-danger-bg-color);
+  box-shadow: 0 2px 8px rgb(0 0 0 / 50%);
+}

@@ -1,0 +1,27 @@
+.container {
+  margin: 0 auto;
+  overflow: hidden;
+  padding: var(--container-padding);
+
+  h1 {
+    margin: var(--space-l) 0 var(--space-m) 0;
+    font-family: var(--font-family-custom);
+    font-size: var(--font-size-l);
+    color: hsl(var(--hue-blue), 10%, 60%);
+  }
+
+  button {
+    margin-top: var(--space-s);
+  }
+}
+
+.logo {
+  margin-bottom: var(--space-xl);
+  text-align: center;
+  font-size: 30px;
+
+  @media (min-width: 42em) {
+    margin: var(--space-xl) 0;
+    font-size: 36px;
+  }
+}

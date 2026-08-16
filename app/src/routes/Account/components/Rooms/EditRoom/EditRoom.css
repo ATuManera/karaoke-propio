@@ -1,0 +1,32 @@
+.modal {
+  min-width: 360px;
+}
+
+.fieldContainer,
+.prefsContainer,
+.btnContainer {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-s);
+  margin: var(--space-l) 0;
+
+  &:first-child {
+    margin-top: 0;
+  }
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+.fieldContainer select {
+  width: fit-content;
+}
+.inviteRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-s);
+  margin-bottom: var(--space-s);
+  font-size: var(--font-size-s);
+}

@@ -1,0 +1,48 @@
+.container {
+  display: flex;
+  align-items: center;
+  padding: var(--space-xs);
+
+  button {
+    cursor: pointer;
+    color: var(--btn-bg-color);
+  }
+
+  button.active {
+    color: var(--btn-active-bg-color);
+    filter: var(--btn-active-filter);
+  }
+}
+
+.searchInput {
+  align-self: stretch;
+  padding: var(--space-xs) var(--space-s) var(--space-xs) var(--space-xs) !important;
+  font-size: var(--font-size-m) !important;
+  color: var(--text-color) !important;
+  background-color: transparent !important;
+  box-shadow: none !important;
+}
+
+.searchInput::placeholder {
+  color: var(--btn-bg-color) !important;
+}
+
+.btnMagnifier svg {
+  height: 2.5rem;
+}
+
+.btnClear {
+  height: 2.75rem;
+
+  svg {
+    height: 3rem;
+  }
+}
+
+.btnStar {
+  margin-right: var(--space-s);
+
+  svg {
+    height: 3rem;
+  }
+}

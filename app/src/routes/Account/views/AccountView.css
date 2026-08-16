@@ -1,0 +1,10 @@
+.container {
+  margin: 0 auto;
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+
+  & > div {
+    margin: var(--space-m) auto;
+  }
+}

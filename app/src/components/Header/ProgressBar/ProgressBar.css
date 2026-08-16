@@ -1,0 +1,30 @@
+.container {
+  --progress-color: hsl(var(--hue-blue), 100%, 20%);
+
+  display: flex;
+  align-items: center;
+  height: 40px;
+  width: 100%;
+  background-image: linear-gradient(to right, var(--progress-color), var(--progress-color));
+  background-repeat: no-repeat;
+}
+
+.text {
+  flex: 1;
+  font-size: 16px;
+  text-align: center;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  color: var(--text-color);
+}
+
+.cancel {
+  color: var(--btn-danger-bg-color);
+  filter: var(--btn-danger-filter);
+}
+
+.close {
+  color: var(--btn-active-bg-color);
+  filter: var(--btn-active-filter);
+}

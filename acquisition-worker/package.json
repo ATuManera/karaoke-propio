@@ -1,0 +1,11 @@
+{
+  "name": "karaoke-propio-acquisition-worker",
+  "version": "0.1.0",
+  "private": true,
+  "description": "yt-dlp search/download service for Karaoke Propio song acquisition",
+  "license": "Apache-2.0",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  }
+}

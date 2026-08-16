@@ -1,25 +1,165 @@
 services:
-  karaoke:
-    image: vicwomg/pikaraoke:1.21.0
-    container_name: app-karaoke
+  # Docker creates named volumes owned by root on first use; karaoke-eternal
+  # and pitch-worker both run as non-root (UID/GID 1000 by default — see
+  # prompt_de_implementacion.md #45) and would fail to write to pitch-cache
+  # otherwise. This one-shot init container fixes ownership once, then exits;
+  # the real services wait for it via service_completed_successfully.
+  pitch-cache-init:
+    image: busybox:latest
+    container_name: app-pitch-cache-init
+    user: root
+    command: ["sh", "-c", "chown -R ${PUID:-1000}:${PGID:-1000} /data/pitch-cache"]
+    volumes:
+      - pitch-cache:/data/pitch-cache
+
+  karaoke-eternal:
+    build:
+      context: ./app
+      dockerfile: Dockerfile
+      args:
+        PUID: "${PUID:-1000}"
+        PGID: "${PGID:-1000}"
+    image: karaoke-propio:latest
+    container_name: app-karaoke-eternal
     restart: unless-stopped
 
     ports:
-      - "5555:5555"
+      - "8080:8080"
 
     volumes:
-      - ./songs:/app/pikaraoke-songs
-      - ./data:/home/pikaraoke/.pikaraoke
+      - ./ke-config:/config
+      - ./songs:/mnt/karaoke
+      - pitch-cache:/data/pitch-cache
 
-    command:
-      - "--url"
-      - "${KARAOKE_PUBLIC_URL}"
-      - "--preferred-language"
-      - "es_VE"
+    environment:
+      # server timezone; affects log timestamps and any server-side formatting
+      - TZ=${TZ:-America/Lima}
+      - KES_PITCH_WORKER_URL=http://pitch-worker:4000
+      - KES_PITCH_CACHE_DIR=/data/pitch-cache
+      # How many pitch transcodes may run at once. Each one is an ffmpeg +
+      # rubberband process, so this is the main CPU knob: raise it on a
+      # stronger machine, lower it to 1 if playback stutters while a song is
+      # being prepared.
+      - KES_PITCH_MAX_CONCURRENCY=${PITCH_MAX_CONCURRENCY:-2}
+      - KES_ACQUISITION_WORKER_URL=http://acquisition-worker:4100
+      - KES_CDG_WORKER_URL=http://cdg-worker:4200
+      # optional: enables USDB/UltraStar acquisition (requires an
+      # authenticated USDB session even for search — see
+      # server/Acquisition/UsdbClient.ts). Leave unset to disable that source;
+      # YouTube acquisition works without it.
+      - USDB_USERNAME=${USDB_USERNAME:-}
+      - USDB_PASSWORD=${USDB_PASSWORD:-}
+
+      # Public exposure. Set KARAOKE_DOMAIN in .env (comma-separated for
+      # several names) and the existing nginx-proxy + acme-companion pick it
+      # up automatically: virtual host, certificate and renewal, no extra
+      # container. Left empty, all three are ignored and the app stays
+      # LAN-only exactly as before.
+      - VIRTUAL_HOST=${KARAOKE_DOMAIN:-}
+      - LETSENCRYPT_HOST=${KARAOKE_DOMAIN:-}
+      - VIRTUAL_PORT=8080
+      # what the QR encodes; guests may be off the LAN, so it must be the
+      # public name rather than whatever address the Player happens to be open at
+      - KES_PUBLIC_URL=${KARAOKE_PUBLIC_URL:-}
+
+    depends_on:
+      pitch-cache-init:
+        condition: service_completed_successfully
+      pitch-worker:
+        condition: service_started
+      acquisition-worker:
+        condition: service_started
+      cdg-worker:
+        condition: service_started
 
     networks:
       - nginx-proxy
+      - karaoke-internal
+
+  # FFmpeg + rubberband pitch shifting. Separate Debian-based service because
+  # karaoke-eternal's Alpine image lacks the rubberband filter (see
+  # prompt_de_implementacion.md #16). Never published — internal network only.
+  pitch-worker:
+    build:
+      context: ./pitch-worker
+      dockerfile: Dockerfile
+      args:
+        PUID: "${PUID:-1000}"
+        PGID: "${PGID:-1000}"
+    image: karaoke-propio-pitch-worker:latest
+    container_name: app-pitch-worker
+    restart: unless-stopped
+
+    volumes:
+      - ./songs:/mnt/karaoke:ro
+      - pitch-cache:/data/pitch-cache
+
+    depends_on:
+      pitch-cache-init:
+        condition: service_completed_successfully
+
+    networks:
+      - karaoke-internal
+
+  # yt-dlp + ffmpeg song acquisition from YouTube (see
+  # prompt_de_implementacion.md #34). Separate from pitch-worker: different
+  # responsibility (download vs. transcode) and different runtime needs
+  # (Python for yt-dlp). Never published — internal network only. Needs
+  # WRITE access to the library: it stages downloads under
+  # <library>/_staging/<requestId>/ before AcquisitionManager atomically
+  # publishes them.
+  acquisition-worker:
+    build:
+      context: ./acquisition-worker
+      dockerfile: Dockerfile
+      args:
+        PUID: "${PUID:-1000}"
+        PGID: "${PGID:-1000}"
+    image: karaoke-propio-acquisition-worker:latest
+    container_name: app-acquisition-worker
+    restart: unless-stopped
+
+    volumes:
+      - ./songs:/mnt/karaoke
+
+    networks:
+      - karaoke-internal
+
+  # UltraStar song.txt -> .cdg generation (vendored CDGSharp, MIT — see
+  # cdg-worker/CDGSharp/LICENSE). Separate .NET runtime from the two Node
+  # workers above. Never published — internal network only. It receives
+  # already-valid .lrc TEXT over HTTP (not a path), but writes its .cdg
+  # OUTPUT directly to the shared library path (same convention as
+  # pitch-worker/acquisition-worker), since AcquisitionManager gives it an
+  # absolute path under <library>/_staging/<requestId>/.
+  cdg-worker:
+    build:
+      context: ./cdg-worker
+      dockerfile: Dockerfile
+      args:
+        PUID: "${PUID:-1000}"
+        PGID: "${PGID:-1000}"
+    image: karaoke-propio-cdg-worker:latest
+    container_name: app-cdg-worker
+    restart: unless-stopped
+
+    volumes:
+      - ./songs:/mnt/karaoke
+
+    networks:
+      - karaoke-internal
 
 networks:
   nginx-proxy:
     external: true
+  # pitch-worker and acquisition-worker are reachable ONLY from
+  # karaoke-eternal on this network — neither has a ports: mapping, and
+  # neither is attached to nginx-proxy, so neither is reachable from the
+  # host or the internet. This is deliberately NOT marked internal:true:
+  # acquisition-worker needs outbound internet access to reach YouTube via
+  # yt-dlp. pitch-worker doesn't need it but shares the network for
+  # simplicity (one extra worker isn't worth a second Docker network).
+  karaoke-internal:
+
+volumes:
+  pitch-cache:

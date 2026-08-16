@@ -1,0 +1,10 @@
+.content p {
+  margin-top: var(--space-s);
+}
+
+.btnContainer {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-s);
+  margin-top: var(--space-s);
+}

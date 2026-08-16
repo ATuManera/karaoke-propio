@@ -1,0 +1,198 @@
+import sql from 'sqlate'
+import { db } from '../lib/Database.js'
+import getLogger from '../lib/Log.js'
+import Queue from '../Queue/Queue.js'
+
+const log = getLogger('Media')
+
+class Media {
+  /**
+   * Get media matching all search criteria
+   */
+  static search (filter: object): { result: number[], entities: Record<string, any> } {
+    const media = {
+      result: [],
+      entities: {},
+    }
+
+    const whereClause = typeof filter !== 'object'
+      ? sql`true`
+      : sql`${sql.tuple(Object.keys(filter).map(sql.column))} = ${sql.tuple(Object.values(filter))}`
+
+    const query = sql`
+      SELECT
+        media.*,
+        songs.*,
+        artists.artistId, artists.name AS artist, artists.nameNorm AS artistNorm,
+        paths.pathId, paths.path
+      FROM media
+        INNER JOIN songs USING (songId)
+        INNER JOIN artists USING (artistId)
+        INNER JOIN paths USING (pathId)
+      WHERE ${whereClause}
+      ORDER BY paths.priority ASC
+    `
+    const rows = db.all<{ mediaId: number } & Record<string, any>>(String(query), query.parameters)
+
+    for (const row of rows) {
+      media.result.push(row.mediaId)
+      media.entities[row.mediaId] = row
+    }
+
+    return media
+  }
+
+  /**
+   * Add media file to the library
+   */
+  static add (media: any): number {
+    if (!Number.isInteger(media.songId)
+      || !Number.isInteger(media.duration)
+      || !Number.isInteger(media.pathId)
+      || !media.relPath
+    ) throw new Error('invalid media data: ' + JSON.stringify(media))
+
+    // currently uses an Object instead of Map
+    const query = sql`
+      INSERT INTO media ${sql.tuple(Object.keys(media).map(sql.column))}
+      VALUES ${sql.tuple(Object.values(media))}
+    `
+    const res = db.run(String(query), query.parameters)
+
+    if (!Number.isInteger(res.lastID)) {
+      throw new Error('invalid lastID from media insert')
+    }
+
+    return res.lastID
+  }
+
+  /**
+   * Update media item
+   */
+  static update (media: any): void {
+    const { mediaId } = media
+
+    if (!Number.isInteger(mediaId)) {
+      throw new Error(`invalid mediaId: ${mediaId}`)
+    }
+
+    // currently uses an Object instead of Map
+    delete media.mediaId
+
+    const query = sql`
+      UPDATE media
+      SET ${sql.tuple(Object.keys(media).map(sql.column))} = ${sql.tuple(Object.values(media))}
+      WHERE mediaId = ${mediaId}
+    `
+    db.run(String(query), query.parameters)
+  }
+
+  /**
+   * The mediaId that should back a new queue request for a song: the
+   * isPreferred one if set, else the highest-priority path's media (same
+   * precedence Queue.get() already applies when a song has multiple media).
+   */
+  static getPreferredMediaId (songId: number): number | null {
+    const res = Media.search({ songId })
+    if (!res.result.length) return null
+
+    const preferred = res.result.find(mediaId => res.entities[mediaId].isPreferred)
+    return preferred ?? res.result[0]
+  }
+
+  /**
+   * Removes media from the db in sqlite-friendly batches
+   */
+  static remove (mediaIds: number[]): void {
+    const batchSize = 999
+
+    while (mediaIds.length) {
+      const query = sql`
+        DELETE FROM media
+        WHERE mediaId IN ${sql.in(mediaIds.splice(0, batchSize))}
+      `
+      const res = db.run(String(query), query.parameters)
+
+      log.info(`removed ${res.changes} media`)
+    }
+  }
+
+  /**
+   * Remove unlinked items and VACUUM
+   */
+  static cleanup (): void {
+    let res
+
+    // remove media in nonexistent paths
+    res = db.run(`
+      DELETE FROM media WHERE mediaId IN (
+        SELECT media.mediaId FROM media LEFT JOIN paths USING(pathId) WHERE paths.pathId IS NULL
+      )
+    `)
+    log.info(`cleanup: ${res.changes} media in nonexistent paths`)
+
+    // remove songs without associated media
+    res = db.run(`
+      DELETE FROM songs WHERE songId IN (
+        SELECT songs.songId FROM songs LEFT JOIN media USING(songId) WHERE media.mediaId IS NULL
+      )
+    `)
+    log.info(`cleanup: ${res.changes} songs with no associated media`)
+
+    // remove stars for nonexistent songs
+    res = db.run(`
+      DELETE FROM songStars WHERE songId IN (
+        SELECT songStars.songId FROM songStars LEFT JOIN songs USING(songId) WHERE songs.songId IS NULL
+      )
+    `)
+    log.info(`cleanup: ${res.changes} stars for nonexistent songs`)
+
+    // remove queue items for nonexistent songs
+    const rows = db.all<{ queueId: number }>(`
+      SELECT queue.queueId FROM queue LEFT JOIN songs USING(songId) WHERE songs.songId IS NULL
+    `)
+
+    for (const row of rows) {
+      Queue.remove(row.queueId)
+    }
+
+    log.info(`cleanup: ${rows.length} queue items for nonexistent songs`)
+
+    log.info('cleanup: vacuuming database')
+    db.run('VACUUM')
+  }
+
+  /**
+   * Set isPreferred flag for a given media item
+   */
+  static setPreferred (mediaId: number, isPreferred: boolean): number {
+    if (!Number.isInteger(mediaId) || typeof isPreferred !== 'boolean') {
+      throw new Error('invalid mediaId or value')
+    }
+
+    // get songId
+    const res = Media.search({ mediaId })
+
+    if (!res.result.length) {
+      throw new Error(`mediaId not found: ${mediaId}`)
+    }
+
+    const songId = res.entities[mediaId].songId
+
+    // clear any currently preferred items
+    const query = sql`
+      UPDATE media
+      SET isPreferred = 0
+      WHERE songId = ${songId}
+    `
+    db.run(String(query), query.parameters)
+
+    if (isPreferred) {
+      Media.update({ mediaId, isPreferred: 1 })
+    }
+
+    return songId
+  }
+}
+
+export default Media

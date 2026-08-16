@@ -1,0 +1,65 @@
+.content {
+  text-align: center;
+}
+
+.logo {
+  font-size: 24px;
+  cursor: pointer;
+}
+
+.sm {
+  color: #aaa;
+  font-size: 75%;
+  margin-top: 1em;
+}
+
+.pseudolink {
+  text-decoration: underline;
+}
+
+.changelog {
+  text-align: left;
+  width: 90%;
+  height: 90%;
+}
+
+.ghButtonContainer {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+}
+
+.ghButton {
+  display: inline-block;
+  white-space: nowrap;
+  border: 1px solid;
+  border-color: rgba(240, 246, 252, .1);
+  background-image: linear-gradient(180deg, #21262d, #1a1e23 90%);
+  border-radius: 0.25em;
+}
+
+.ghButton:hover {
+  border-color: #8b949e;
+  background-image: linear-gradient(180deg, #30363d, #292e33 90%);
+}
+
+.ghButton a {
+  display: inline-flex;
+  color: #c9d1d9;
+  padding: 8px 10px;
+  font-size: 12px;
+  line-height: 16px;
+  text-decoration: none;
+}
+
+.ghButton svg {
+  margin-right: 5px;
+}
+
+.ghButton.star svg {
+  color: #E3B341;
+}
+
+.ghButton.sponsor svg {
+  color: #db61a2;
+}

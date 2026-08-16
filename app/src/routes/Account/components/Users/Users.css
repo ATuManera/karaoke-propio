@@ -1,0 +1,40 @@
+.usersFilter {
+  max-width: 50%;
+}
+
+.showAll {
+  cursor: pointer;
+}
+
+.table {
+  width: 100%;
+}
+
+.table > * {
+  outline: none;
+}
+
+.table th {
+  color: hsl(var(--hue-blue), 10%, 60%);
+  font-weight: normal;
+  text-align: left;
+}
+
+.table th:first-child {
+  width: 100%;
+}
+
+.table th:nth-child(2) {
+  min-width: 70px;
+}
+
+.table td {
+  height: 25px;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.table td:first-child  {
+  text-overflow: ellipsis;
+  max-width: 0;
+}

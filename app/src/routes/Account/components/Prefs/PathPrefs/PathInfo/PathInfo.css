@@ -1,0 +1,15 @@
+.path {
+  overflow-wrap: anywhere;
+}
+
+.label {
+  font-weight: bold;
+  color: #777;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-m);
+  margin-bottom: var(--space-m);
+}

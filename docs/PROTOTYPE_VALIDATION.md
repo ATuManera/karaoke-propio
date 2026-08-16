@@ -4,6 +4,15 @@
 
 6 de agosto de 2026
 
+## Nota (13 de agosto de 2026)
+
+Este documento registra el prototipo inicial basado en PiKaraoke. Karaoke
+Propio ya no usa PiKaraoke como base: desde el 13 de agosto de 2026 el motor
+es un fork modificado de Karaoke Eternal (ver `docs/SESSION_ARCHITECTURE.md`
+y `docs/KARAOKE_ETERNAL_VALIDATION.md`). Este documento se conserva como
+registro histórico del hardware/entorno validado (Fire TV + JBL Charge 6),
+que sigue siendo válido como referencia de despliegue.
+
 ## Estado
 
 El prototipo inicial de Karaoke Propio fue validado satisfactoriamente en un entorno doméstico real.
@@ -38,7 +47,7 @@ JBL Charge 6
 - JBL Charge 6.
 - Dos micrófonos JBL EasySing Mics.
 - Dongle USB-C JBL EasySing.
-- Red local con dirección del servidor `192.168.68.170`.
+- Red local doméstica con acceso al servidor de Karaoke Propio.
 
 ## Pruebas satisfactorias
 

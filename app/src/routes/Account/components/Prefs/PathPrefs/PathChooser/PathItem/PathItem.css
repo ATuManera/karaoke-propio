@@ -1,0 +1,15 @@
+.container {
+  display: flex;
+  height: 40px;
+  cursor: pointer;
+  align-items: center;
+}
+
+.path {
+  flex: 1;
+  font-size: 16px;
+  margin-left: 5px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

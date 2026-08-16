@@ -1,0 +1,85 @@
+.modal {
+  width: 90vw;
+  max-width: 480px;
+}
+
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-m);
+}
+
+.section {
+
+  /* Safari REALLY doesn't like fieldsets to be flex *items*, hence the .section wrapper */
+  fieldset {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-m);
+    margin: 0;
+    padding: var(--container-padding);
+    border: 1px solid var(--btn-bg-color);
+    border-radius: var(--border-radius);
+    /* Prevent fieldset from overflowing parent */
+    min-width: 0;
+  }
+
+  legend {
+    font-size: var(--font-size-m);
+    width: fit-content;
+  }
+}
+
+.visualizer legend {
+  label {
+    display: flex;
+    gap: var(--space-s);
+    align-items: center;
+    cursor: pointer;
+  }
+}
+
+.presetContainer {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-s);
+}
+
+.presetButtons {
+  display: flex;
+  gap: var(--space-s);
+
+  button {
+    display: block;
+    background-color: var(--btn-active-bg-color);
+    border-radius: var(--border-radius);
+    width: 100%;
+
+    svg {
+      height: var(--icon-size-xl);
+      color: #000;
+      margin: 0 auto;
+    }
+  }
+}
+
+.presetName {
+  margin: 0;
+  height: 2lh;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  line-clamp: 2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.unsupported {
+  text-align: center;
+  margin: var(--space-m) 0;
+  color: grey;
+}
+
+.slider {
+  margin: 0 1.25rem;
+}

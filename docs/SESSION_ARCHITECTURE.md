@@ -3,9 +3,57 @@
 ## Estado del documento
 
 - Rama de trabajo: `feature/session-architecture`
-- Estado: propuesta inicial para revisión
-- Fecha: 6 de agosto de 2026
+- Estado: arquitectura revisada después de la validación técnica de Karaoke Eternal
+- Fecha: 10 de agosto de 2026
 - Proyecto: `ATuManera/karaoke-propio`
+
+## 0. Actualización de estado — implementación del 13 de agosto de 2026
+
+**Este documento describe la visión completa (Control Plane propio + Engine
+Adapter + base de datos separada, sección 9). Lo que se implementó el 13 de
+agosto de 2026 es deliberadamente más acotado**: siguiendo
+`prompt_de_implementacion.md`, se extendió Karaoke Eternal directamente (sin
+Control Plane separado, sin base de datos propia adicional, sin Engine
+Adapter) para entregar dos capacidades obligatorias del MVP familiar:
+adquisición de canciones desde la web y cambio de tono por solicitud
+individual de cola. Esta decisión es intencional, no un incumplimiento de
+esta arquitectura: el Control Plane (sección 9.1), el Engine Adapter
+(9.2) y la base de datos propia en PostgreSQL (9.6) siguen **pendientes**
+como evolución futura si el producto crece más allá de un único host
+familiar por instalación.
+
+Mapeo de lo implementado contra este documento:
+
+| Sección de este documento | Estado tras la sesión del 13-ago-2026 |
+| --- | --- |
+| 9.3 Karaoke Eternal (motor) | Vendorizado y modificado en `app/` (fork de KE 2.0.2) |
+| 9.4 Servicio de adquisición | **Implementado y probado end-to-end**: `server/Acquisition/` + `acquisition-worker` (YouTube, real) + `cdg-worker` (UltraStar→CDG, real — ver abajo). USDB está correctamente reimplementado y verificado *estructuralmente* contra el markup real de `usdb.animux.de`, pero bloqueado en vivo por requerir una sesión autenticada que este entorno no tenía (ver `docs/KARAOKE_ETERNAL_VALIDATION.md`) |
+| 9.5 Servicio de pitch | **Implementado y probado**: `server/Pitch/PitchManager.ts` + contenedor `pitch-worker` (FFmpeg/rubberband) |
+| 9.1 Karaoke Propio Control Plane | Pendiente — no implementado en esta sesión |
+| 9.2 Engine Adapter | Pendiente — no implementado en esta sesión |
+| 9.6 Base de datos propia (PostgreSQL) | Pendiente — Karaoke Propio sigue usando únicamente el SQLite de Karaoke Eternal (extendido con las migraciones 006) |
+| 10. Modelo de datos (HostUser, KaraokeSession, etc.) | Pendiente — se usa el modelo nativo de KE (User/Room) directamente |
+
+**UltraStar→CDG (sección 36 del prompt): implementado y probado con datos
+reales el 13-ago-2026**, después de una primera pasada que lo había dejado
+pendiente. CDGSharp (MIT) fue vendorizado en `cdg-worker/CDGSharp/` y
+envuelto en un servicio HTTP (`cdg-worker/CDGSharp.Worker/`), reutilizando
+exactamente el pipeline validado del CLI original. Se escribió un conversor
+propio UltraStar song.txt → `.lrc` (`server/Acquisition/UltraStarToLrc.ts`,
+14 tests contra la referencia real) y se verificó el pipeline completo
+(song.txt real → .lrc → .cdg) contra la misma canción de referencia que
+validó CDGSharp originalmente (Soda Stereo – De música ligera: 150 notas,
+29 frases, GAP 24010, BPM 250), incluyendo decodificación con
+`CDGSharp.CLI explain` e inspección visual de fotogramas renderizados
+("Ella durmio" / "Al calor de las brasas" se leen correctamente). Lo que
+sigue bloqueado es específicamente la obtención EN VIVO de song.txt desde
+USDB (requiere sesión autenticada — ver 9.4 arriba), no la generación de
+CDG en sí.
+
+Detalle completo de arquitectura, archivos, pruebas y limitaciones de la
+implementación de pitch/adquisición: ver el resumen entregado al final de la
+sesión de implementación (disponible en el historial de la conversación que
+generó este cambio) y los tests en `app/server/**/*.test.ts`.
 
 ## 1. Objetivo
 
@@ -13,153 +61,55 @@ Definir la arquitectura funcional y técnica de la capa propia de sesiones de Ka
 
 La solución debe permitir que varios anfitriones ejecuten reuniones de karaoke simultáneas sobre una misma instalación, manteniendo separadas las colas, participantes, reproductores y controles de cada sesión.
 
-PiKaraoke continuará utilizándose inicialmente como motor externo de reproducción y procesamiento audiovisual.
+Después de la prueba de concepto realizada el 10 de agosto de 2026, Karaoke Eternal 2.0.2 pasa a ser el candidato preferente como motor base para las funciones multi-room.
 
-## 2. Requisitos confirmados
+PiKaraoke 1.21.0 se conserva temporalmente como referencia funcional y prototipo validado, especialmente para las capacidades de:
 
-### 2.1 Anfitriones
+- cambio de tonalidad;
+- búsqueda y adquisición de canciones;
+- comparación de comportamiento.
 
-- Los anfitriones deben autenticarse con una cuenta.
-- Un anfitrión puede crear, administrar y cerrar sesiones.
-- Un mismo anfitrión puede consultar su historial de sesiones.
-- La primera versión debe impedir que una misma cuenta cree más sesiones simultáneas que el límite definido por la plataforma.
-- El anfitrión puede controlar la cola, reproducción y participantes de sus sesiones.
+La arquitectura deja de asumir que cada sesión requiere una instancia independiente de PiKaraoke.
 
-### 2.2 Invitados
+## 2. Decisión arquitectónica principal
 
-- Los invitados no necesitan cuenta, correo ni contraseña.
-- Acceden mediante un enlace o código QR.
-- Al ingresar, deben escribir un nombre visible.
-- El sistema debe asignarles un identificador interno independiente del nombre.
-- Dos participantes pueden usar el mismo nombre sin compartir identidad técnica.
-- La identidad anónima debe conservarse durante la sesión en el navegador del invitado.
+### 2.1 Diseño anterior
 
-### 2.3 Sesiones
-
-- Cada sesión recibe un código público único de seis caracteres.
-- Deben excluirse caracteres ambiguos como `0`, `O`, `1`, `I` y `L`.
-- Ejemplo de código: `Z3PNX7`.
-- La duración predeterminada de una sesión es de doce horas.
-- Una sesión puede encontrarse en estado:
-  - `created`
-  - `active`
-  - `paused`
-  - `closing`
-  - `closed`
-  - `expired`
-- La primera versión debe admitir hasta tres sesiones activas simultáneamente.
-- Cada sesión debe mantener de forma aislada:
-  - anfitrión;
-  - participantes;
-  - cola;
-  - canción actual;
-  - tono por canción;
-  - estado de reproducción;
-  - pantalla reproductora;
-  - configuración;
-  - historial de eventos.
-
-### 2.4 Reproductor
-
-- Cada sesión tendrá una pantalla reproductora principal.
-- El reproductor previsto es un Fire TV Stick 4K con Amazon Silk.
-- El reproductor no requiere autenticación completa de anfitrión.
-- Debe vincularse de forma segura a una sesión específica.
-- El reproductor muestra:
-  - video;
-  - letras cuando estén incluidas;
-  - cantante actual;
-  - siguiente turno;
-  - código QR;
-  - estado de espera.
-- Solo una pantalla debe actuar como reproductor principal por sesión en la primera versión.
-
-### 2.5 Dominios
-
-Dominio canónico:
+La propuesta inicial asumía:
 
 ```text
-https://karaoke.gallarday.com
+Karaoke Propio Session Manager
+        |
+        +---- Motor PiKaraoke 1
+        +---- Motor PiKaraoke 2
+        +---- Motor PiKaraoke 3
 ```
 
-Dominios alternativos:
+Cada sesión debía reservar una instancia independiente del motor.
 
-```text
-https://karaoke.smarthome.pe
-https://karaoke.casainteligente.pe
-```
+Ese enfoque requería:
 
-Los dominios alternativos deben redirigir al dominio canónico para evitar fragmentación de cookies, sesiones, WebSockets y URLs públicas.
+- múltiples contenedores;
+- coordinación de lifecycle;
+- asignación y liberación de motores;
+- aislamiento de almacenamiento;
+- coordinación de biblioteca compartida;
+- healthchecks por instancia;
+- mayor complejidad operativa.
 
-## 3. Rutas públicas propuestas
+### 2.2 Diseño revisado
 
-### 3.1 Página inicial
+La prueba técnica demostró que una sola instancia de Karaoke Eternal puede mantener múltiples Rooms con:
 
-```text
-/
-```
+- biblioteca compartida;
+- colas independientes;
+- invitados independientes;
+- players independientes;
+- reproducción simultánea;
+- controles aislados;
+- persistencia.
 
-Funciones:
-
-- acceso de anfitrión;
-- ingreso manual de código de sesión;
-- información básica del servicio.
-
-### 3.2 Invitado
-
-Ruta canónica interna:
-
-```text
-/s/Z3PNX7
-```
-
-Ruta abreviada admitida:
-
-```text
-/Z3PNX7
-```
-
-La ruta abreviada debe redirigir internamente a `/s/Z3PNX7`.
-
-### 3.3 Anfitrión
-
-```text
-/host/Z3PNX7
-```
-
-Requiere autenticación y autorización sobre la sesión.
-
-### 3.4 Reproductor
-
-```text
-/player/Z3PNX7
-```
-
-Debe requerir un token de vinculación o un proceso de emparejamiento controlado por el anfitrión.
-
-### 3.5 Administración
-
-```text
-/admin
-```
-
-Reservado para administración de la plataforma.
-
-### 3.6 API
-
-```text
-/api/v1/
-```
-
-### 3.7 Tiempo real
-
-```text
-/socket.io/
-```
-
-o una ruta WebSocket equivalente.
-
-## 4. Arquitectura lógica
+La arquitectura revisada es:
 
 ```text
 Usuarios y dispositivos
@@ -168,116 +118,618 @@ Usuarios y dispositivos
 Reverse proxy HTTPS
         |
         v
-Karaoke Propio Web / Session Manager
+Karaoke Propio Web / Control Plane
         |
-        +----------------------+
-        |                      |
-        v                      v
-Base de datos             Coordinador de salas
-        |                      |
-        |             +--------+--------+
-        |             |        |        |
-        |             v        v        v
-        |          Room 01  Room 02  Room 03
-        |             |        |        |
-        +-------------+--------+--------+
-                      |
-                      v
-              Biblioteca compartida
+        +---------------------------+
+        |                           |
+        v                           v
+Base de datos propia        Karaoke Eternal
+de Karaoke Propio                  |
+                                    +---- Room 1
+                                    +---- Room 2
+                                    +---- Room 3
+                                    +---- Room N
+                                           |
+                                           v
+                                 Biblioteca compartida
 ```
 
-## 5. Componentes
+Karaoke Eternal se considera el motor de ejecución de salas, colas y player.
 
-### 5.1 Session Manager
+Karaoke Propio se mantiene como la capa de producto, identidad, autorización, lifecycle, política, integración y experiencia de usuario.
+
+## 3. Principios de diseño
+
+La arquitectura debe priorizar:
+
+- simplicidad operativa;
+- baja utilización de recursos;
+- aislamiento lógico por sesión;
+- una única biblioteca multimedia compartida;
+- mínimo acoplamiento con el motor externo;
+- posibilidad de sustituir el motor futuro sin rediseñar toda la plataforma;
+- separación entre reproducción, adquisición de contenido y procesamiento de audio;
+- seguridad por defecto;
+- persistencia de datos críticos;
+- recuperación después de reinicio;
+- experiencia sencilla para anfitriones e invitados.
+
+Karaoke Propio no debe depender de detalles internos de Karaoke Eternal más de lo estrictamente necesario.
+
+## 4. Requisitos confirmados
+
+### 4.1 Anfitriones
+
+- Los anfitriones deben autenticarse con una cuenta.
+- Un anfitrión puede crear, administrar, pausar y cerrar sesiones.
+- Un anfitrión puede consultar su historial de sesiones.
+- La plataforma puede imponer un límite de sesiones simultáneas por anfitrión.
+- El anfitrión puede administrar cola, reproducción y participantes de sus sesiones.
+- La autorización de anfitrión pertenece a Karaoke Propio, no al código público de una sesión.
+- Debe quedar prevista la incorporación futura de coanfitriones.
+
+### 4.2 Invitados
+
+- Los invitados no necesitan cuenta, correo ni contraseña.
+- Acceden mediante enlace o código QR.
+- Al ingresar deben escribir un nombre visible.
+- El nombre visible no debe utilizarse como identificador técnico.
+- La plataforma debe asignar un identificador interno independiente.
+- Dos participantes pueden usar el mismo nombre sin compartir identidad técnica.
+- La identidad anónima debe conservarse durante la sesión en el navegador del invitado.
+- Un invitado solo debe poder operar sobre la sesión a la que se incorporó.
+- Debe existir la posibilidad de limitar canciones pendientes por invitado.
+
+### 4.3 Sesiones
+
+Cada sesión de Karaoke Propio representa conceptualmente una Room de Karaoke Eternal más el metadata y las políticas propias de Karaoke Propio.
+
+Cada sesión debe disponer de:
+
+- identificador interno;
+- código público;
+- anfitrión propietario;
+- nombre visible;
+- estado;
+- Room asociada en Karaoke Eternal;
+- participantes;
+- cola;
+- canción actual;
+- estado de reproducción;
+- player principal;
+- configuración;
+- historial de eventos;
+- vencimiento.
+
+Estados previstos:
+
+- `created`
+- `active`
+- `paused`
+- `closing`
+- `closed`
+- `expired`
+
+La primera versión debe admitir como mínimo tres sesiones simultáneas.
+
+La arquitectura no debe imponer artificialmente un máximo de tres si Karaoke Eternal y la infraestructura permiten más.
+
+### 4.4 Código público
+
+Cada sesión recibe un código público único.
+
+Primera propuesta:
+
+- longitud: seis caracteres;
+- excluir caracteres ambiguos:
+  - `0`
+  - `O`
+  - `1`
+  - `I`
+  - `L`
+
+Ejemplo:
+
+```text
+Z3PNX7
+```
+
+El código identifica una sesión, pero no concede privilegios administrativos.
+
+### 4.5 Duración
+
+Duración predeterminada inicial:
+
+```text
+12 horas
+```
+
+La política debe ser configurable.
+
+Una sesión puede cerrarse manualmente antes de su vencimiento.
+
+### 4.6 Reproductor
+
+Cada sesión tendrá una pantalla reproductora principal.
+
+Dispositivos previstos:
+
+- Fire TV Stick;
+- Smart TV con navegador;
+- computadora;
+- tablet;
+- navegador moderno equivalente.
+
+El player debe vincularse únicamente a una Room/sesión.
+
+Debe mostrar como mínimo:
+
+- video;
+- letras cuando estén incorporadas;
+- cantante actual;
+- siguiente turno cuando sea viable;
+- código QR;
+- estado de espera.
+
+La primera versión debe asumir un player principal por sesión.
+
+### 4.7 Dominios
+
+Dominio canónico previsto:
+
+```text
+https://karaoke.gallarday.com
+```
+
+Dominios alternativos previstos:
+
+```text
+https://karaoke.smarthome.pe
+https://karaoke.casainteligente.pe
+```
+
+Los dominios alternativos deben redirigir al dominio canónico para evitar fragmentación de:
+
+- cookies;
+- sesiones;
+- WebSockets;
+- URLs públicas;
+- tokens de vinculación.
+
+## 5. Capacidades validadas de Karaoke Eternal
+
+La prueba técnica documentada en `docs/KARAOKE_ETERNAL_VALIDATION.md` confirmó:
+
+- una sola instancia de Karaoke Eternal;
+- múltiples Rooms;
+- biblioteca compartida;
+- colas independientes;
+- invitados sin cuenta;
+- QR específico por Room;
+- players simultáneos;
+- reproducción simultánea;
+- aislamiento de Pause;
+- aislamiento de Skip/Next;
+- reproducción MP4;
+- persistencia de Rooms;
+- persistencia de biblioteca;
+- persistencia de colas;
+- política de cola intercalada entre cantantes;
+- bajo consumo de recursos.
+
+Estas capacidades pasan a considerarse parte de la base técnica disponible y no deben reimplementarse innecesariamente en Karaoke Propio.
+
+## 6. Brechas funcionales confirmadas
+
+### 6.1 Cambio de tonalidad
+
+> **Implementado y probado (13-ago-2026).** Estrategia elegida: FFmpeg +
+> filtro `rubberband` en un servicio Docker separado (`pitch-worker`), pitch
+> como propiedad de cada fila de `queue` (no de la Room), cache por
+> `(mediaId, sourceFingerprint, pitch)`, concurrencia global máxima 2. Ver
+> sección 0 de este documento y `docs/KARAOKE_ETERNAL_VALIDATION.md`.
+
+Karaoke Eternal 2.0.2 no ofrece cambio nativo de pitch/key.
+
+PiKaraoke 1.21.0 sí lo ofrece y fue validado previamente.
+
+Karaoke Propio debe incorporar una estrategia propia para esta función.
+
+Opciones a evaluar:
+
+- procesamiento previo con FFmpeg;
+- Rubber Band Library;
+- procesamiento de audio en backend;
+- procesamiento en navegador mediante Web Audio;
+- extensión directa del player;
+- generación de variantes temporales por semitono;
+- integración selectiva de componentes de terceros compatibles.
+
+La solución debe mantener:
+
+- velocidad de reproducción;
+- sincronización audio/video;
+- latencia aceptable;
+- uso razonable de CPU;
+- aislamiento por sesión.
+
+### 6.2 Adquisición de canciones
+
+> **YouTube: implementado y probado (13-ago-2026).** Servicio Docker
+> separado (`acquisition-worker`, yt-dlp+ffmpeg), orquestado por
+> `server/Acquisition/AcquisitionManager.ts`: búsqueda → descarga a staging →
+> publicación atómica → registro puntual (sin full scan) → cola,
+> preservando room/user/pitch.
+>
+> **UltraStar→CDG: implementado y probado con datos reales (13-ago-2026).**
+> CDGSharp (MIT) vendorizado en `cdg-worker/`, conversor propio
+> song.txt→.lrc (`server/Acquisition/UltraStarToLrc.ts`), pipeline completo
+> verificado contra la referencia validada originalmente (Soda Stereo – De
+> música ligera) con inspección visual de los fotogramas CD+G resultantes.
+>
+> **USDB: cliente reimplementado y verificado estructuralmente contra el
+> markup real, pero bloqueado en vivo.** `usdb.animux.de` requiere una
+> sesión autenticada para TODO (búsqueda incluida, no solo song.txt como se
+> asumía originalmente) — confirmado en vivo el 13-ago-2026 con la respuesta
+> real "You are not logged in". `UsdbClient.login()` está implementado
+> contra la forma de solicitud documentada por UltraScrap, activable vía
+> `USDB_USERNAME`/`USDB_PASSWORD`, pero no se probó con credenciales reales
+> (no debía leerse `credentials.json` de UltraScrap ni obtenerse credenciales
+> sin que el operador las configure explícitamente). Ver sección 0 y
+> `docs/KARAOKE_ETERNAL_VALIDATION.md`.
+
+Karaoke Eternal busca únicamente en la biblioteca local.
+
+No se observó un flujo nativo equivalente a la búsqueda/descarga online de PiKaraoke.
+
+Karaoke Propio debe separar la adquisición de contenido del motor de reproducción.
+
+Arquitectura conceptual:
+
+```text
+Fuentes de contenido
+        |
+        v
+Servicio de adquisición
+        |
+        v
+Validación / normalización
+        |
+        v
+Biblioteca compartida
+        |
+        v
+Karaoke Eternal
+```
+
+El servicio de adquisición podrá incorporar en el futuro:
+
+- descarga desde fuentes compatibles;
+- carga manual;
+- importación de archivos;
+- normalización de nombres;
+- extracción de metadata;
+- detección de duplicados;
+- validación de codecs;
+- generación de derivados.
+
+La implementación debe respetar licencias, términos de servicio y derechos sobre el contenido.
+
+## 7. Rutas públicas propuestas
+
+### 7.1 Página inicial
+
+```text
+/
+```
+
+Funciones:
+
+- acceso de anfitrión;
+- ingreso manual de código;
+- información básica del servicio.
+
+### 7.2 Invitado
+
+Ruta canónica de Karaoke Propio:
+
+```text
+/s/{codigo}
+```
+
+Ejemplo:
+
+```text
+/s/Z3PNX7
+```
+
+La capa propia resolverá el código y dirigirá al invitado a la Room correspondiente.
+
+No se debe exponer `roomid` como contrato público estable si puede evitarse.
+
+### 7.3 Ruta abreviada
+
+Opcionalmente:
+
+```text
+/{codigo}
+```
+
+Debe redirigir internamente a:
+
+```text
+/s/{codigo}
+```
+
+### 7.4 Anfitrión
+
+```text
+/host/{codigo}
+```
+
+Requiere:
+
+- autenticación;
+- autorización sobre la sesión;
+- validación de estado.
+
+### 7.5 Reproductor
+
+Ruta pública propia prevista:
+
+```text
+/player/{codigo}
+```
+
+La capa de Karaoke Propio resolverá la sesión y establecerá el vínculo con la Room correspondiente.
+
+El detalle interno de Karaoke Eternal no debe convertirse en contrato público permanente.
+
+### 7.6 Administración
+
+```text
+/admin
+```
+
+Reservado para administración de plataforma.
+
+### 7.7 API
+
+```text
+/api/v1/
+```
+
+### 7.8 Tiempo real
+
+Puede utilizarse:
+
+```text
+/socket.io/
+```
+
+o WebSocket equivalente.
+
+La implementación final dependerá de la estrategia de integración seleccionada.
+
+## 8. Arquitectura lógica
+
+```text
+                        +----------------------+
+                        |   Host / Invitados   |
+                        +----------+-----------+
+                                   |
+                                   v
+                         Reverse Proxy HTTPS
+                                   |
+                                   v
+                    +---------------------------+
+                    | Karaoke Propio Control    |
+                    | Plane / Web Application   |
+                    +-------------+-------------+
+                                  |
+              +-------------------+-------------------+
+              |                                       |
+              v                                       v
+      Base de datos propia                      Adapter / Engine API
+              |                                       |
+              |                                       v
+              |                               Karaoke Eternal
+              |                                       |
+              |                     +-----------------+-----------------+
+              |                     |                 |                 |
+              |                     v                 v                 v
+              |                   Room 1            Room 2            Room N
+              |                     |                 |                 |
+              +---------------------+-----------------+-----------------+
+                                    |
+                                    v
+                           Biblioteca compartida
+                                    |
+                    +---------------+---------------+
+                    |                               |
+                    v                               v
+          Servicio de adquisición          Servicio de pitch
+                futuro                          futuro
+```
+
+## 9. Componentes
+
+### 9.1 Karaoke Propio Control Plane
 
 Responsabilidades:
 
 - autenticación de anfitriones;
+- autorización;
 - creación de sesiones;
 - generación de códigos;
-- expiración de sesiones;
-- administración de invitados;
-- autorización;
+- expiración;
+- lifecycle de sesiones;
+- asignación y mapeo de Room;
+- registro de invitados;
 - generación de QR;
-- asignación de salas;
-- coordinación de estado en tiempo real;
-- registro de eventos;
-- liberación de recursos.
+- player binding;
+- políticas por sesión;
+- historial;
+- auditoría;
+- límites;
+- integración con servicios externos.
 
-### 5.2 Room Coordinator
+No debe duplicar innecesariamente:
 
-Responsabilidades:
+- cola;
+- player;
+- biblioteca;
+- round-robin;
 
-- mantener un inventario de motores disponibles;
-- asignar una sala libre a una sesión;
-- iniciar o preparar el motor;
-- verificar salud;
-- aislar configuración y cola;
-- cerrar y liberar la sala;
-- impedir asignaciones duplicadas.
+si esas funciones se delegan de forma estable a Karaoke Eternal.
 
-### 5.3 Motores PiKaraoke
+### 9.2 Engine Adapter
 
-Primera versión:
+Debe existir una capa explícita de adaptación entre Karaoke Propio y Karaoke Eternal.
 
-- tres instancias independientes;
-- una por sala;
-- puertos internos distintos;
-- datos de sesión separados;
-- biblioteca de canciones compartida en modo controlado;
-- acceso únicamente desde la red Docker;
-- sin exposición directa a Internet.
+Objetivo:
 
-Ejemplo conceptual:
+evitar que el resto del sistema dependa directamente de endpoints, eventos o estructuras internas del motor.
+
+Contrato conceptual:
 
 ```text
-app-karaoke-room-01
-app-karaoke-room-02
-app-karaoke-room-03
+create_room()
+close_room()
+get_room()
+list_rooms()
+join_guest()
+get_queue()
+enqueue_song()
+remove_queue_item()
+pause()
+resume()
+skip()
+get_player_state()
+start_player()
 ```
 
-### 5.4 Base de datos
+No se asume que todos estos métodos existan como API pública actual.
 
-Recomendación inicial: PostgreSQL.
+La fase de integración debe determinar:
+
+- API disponible;
+- WebSocket;
+- eventos;
+- llamadas internas;
+- adaptación mediante wrapper;
+- necesidad de contribuciones upstream.
+
+### 9.3 Karaoke Eternal
+
+Responsabilidades delegadas inicialmente:
+
+- Rooms;
+- biblioteca;
+- cola;
+- política de turnos;
+- player web;
+- reproducción;
+- persistencia interna del motor;
+- asociación player-room;
+- QR interno de prueba.
+
+No debe asumir responsabilidades de plataforma como:
+
+- códigos públicos de Karaoke Propio;
+- políticas comerciales;
+- autorización de anfitrión;
+- expiración de sesiones;
+- auditoría de plataforma.
+
+### 9.4 Servicio de adquisición
+
+Componente separado, futuro.
+
+Responsabilidades previstas:
+
+- recibir búsquedas o solicitudes;
+- descargar/importar contenido permitido;
+- validar formatos;
+- limpiar nombres;
+- detectar duplicados;
+- mover archivos a la biblioteca;
+- solicitar o esperar reindexación.
+
+El motor no debe ser responsable de adquirir contenido.
+
+### 9.5 Servicio de pitch
+
+Componente separado o extensión del player.
+
+Responsabilidades previstas:
+
+- aplicar cambio de tonalidad;
+- mantener tempo;
+- preservar sincronización;
+- exponer estado y parámetros por canción;
+- evitar afectar otras Rooms.
+
+Su diseño queda pendiente de PoC.
+
+### 9.6 Base de datos propia
+
+Recomendación inicial:
+
+PostgreSQL.
 
 Motivos:
 
-- usuarios anfitriones;
+- anfitriones;
 - sesiones;
 - invitados;
-- asignaciones de sala;
-- historial;
-- concurrencia;
-- restricciones de integridad;
-- crecimiento futuro.
+- códigos públicos;
+- player bindings;
+- eventos;
+- auditoría;
+- integridad;
+- crecimiento;
+- concurrencia.
 
-SQLite puede seguir perteneciendo internamente a cada PiKaraoke, pero no debe ser la base principal de la capa multiusuario.
+La base SQLite interna de Karaoke Eternal pertenece al motor.
 
-### 5.5 Estado en tiempo real
+No debe convertirse en la base principal de datos de negocio de Karaoke Propio.
 
-Primera versión recomendada:
+### 9.7 Estado en tiempo real
 
-- Socket.IO o WebSocket;
-- estado persistente esencial en PostgreSQL;
-- estado efímero inicialmente en memoria si se ejecuta una sola instancia del Session Manager.
+La aplicación propia puede necesitar:
 
-Redis no es obligatorio para el primer prototipo, pero debe quedar previsto si se despliegan varias réplicas del Session Manager o se requiere coordinación distribuida.
+- WebSocket;
+- Socket.IO;
+- Server-Sent Events;
 
-### 5.6 Reverse proxy
+para reflejar cambios de estado.
 
-El contenedor propio debe conectarse a la red Docker externa:
+El estado esencial debe persistir en PostgreSQL.
 
-```text
-nginx-proxy
-```
+Estado efímero puede mantenerse inicialmente en memoria si existe una única instancia del Control Plane.
 
-El tráfico público debe ingresar únicamente mediante `app-proxy`.
+Redis no es obligatorio para la primera versión.
 
-Los motores PiKaraoke no deben publicar puertos directamente a Internet.
+Debe quedar previsto si se requiere:
 
-## 6. Modelo de datos inicial
+- múltiples réplicas;
+- coordinación distribuida;
+- pub/sub;
+- locks;
+- cache compartido.
 
-### 6.1 HostUser
+### 9.8 Reverse proxy
+
+El tráfico público debe ingresar únicamente mediante el reverse proxy HTTPS.
+
+Los componentes internos no deben exponerse directamente a Internet salvo necesidad justificada.
+
+Karaoke Eternal debe quedar detrás de la capa de proxy o adapter cuando la arquitectura propia esté implementada.
+
+## 10. Modelo de datos inicial
+
+### 10.1 HostUser
 
 Campos mínimos:
 
@@ -290,7 +742,7 @@ Campos mínimos:
 - `updated_at`
 - `last_login_at`
 
-### 6.2 KaraokeSession
+### 10.2 KaraokeSession
 
 Campos mínimos:
 
@@ -299,14 +751,18 @@ Campos mínimos:
 - `host_user_id`
 - `name`
 - `status`
-- `room_id`
+- `engine_room_id`
 - `created_at`
 - `activated_at`
 - `expires_at`
 - `closed_at`
 - `settings_json`
 
-### 6.3 GuestParticipant
+`engine_room_id` identifica la Room del motor asociada a la sesión.
+
+No debe exponerse necesariamente al cliente final.
+
+### 10.3 GuestParticipant
 
 Campos mínimos:
 
@@ -319,19 +775,7 @@ Campos mínimos:
 - `last_seen_at`
 - `removed_at`
 
-### 6.4 Room
-
-Campos mínimos:
-
-- `id`
-- `name`
-- `engine_type`
-- `internal_url`
-- `status`
-- `current_session_id`
-- `last_healthcheck_at`
-
-### 6.5 PlayerBinding
+### 10.4 PlayerBinding
 
 Campos mínimos:
 
@@ -344,7 +788,7 @@ Campos mínimos:
 - `last_seen_at`
 - `revoked_at`
 
-### 6.6 SessionEvent
+### 10.5 SessionEvent
 
 Campos mínimos:
 
@@ -356,232 +800,645 @@ Campos mínimos:
 - `event_payload`
 - `created_at`
 
-## 7. Flujo de creación de sesión
+### 10.6 MediaAsset
+
+Componente propio futuro.
+
+Campos sugeridos:
+
+- `id`
+- `canonical_title`
+- `artist`
+- `source_type`
+- `source_reference`
+- `local_path_ref`
+- `media_type`
+- `duration`
+- `checksum`
+- `status`
+- `created_at`
+- `updated_at`
+
+No debe almacenar necesariamente una ruta física absoluta del host en el modelo público.
+
+### 10.7 SongVariant
+
+Para cambio de tonalidad futuro:
+
+- `id`
+- `media_asset_id`
+- `semitones`
+- `status`
+- `cache_ref`
+- `created_at`
+- `expires_at`
+
+Este modelo solo será necesario si se implementan derivados precalculados.
+
+## 11. Mapeo Session ↔ Room
+
+Karaoke Propio mantiene su propia entidad `KaraokeSession`.
+
+Karaoke Eternal mantiene su propia entidad `Room`.
+
+La relación conceptual es:
+
+```text
+KaraokeSession 1 ---- 1 Engine Room
+```
+
+La sesión puede existir en estado `created` antes de que la Room esté completamente preparada.
+
+El adapter debe impedir:
+
+- una Room asignada a dos sesiones activas;
+- una sesión apuntando a una Room inexistente;
+- reutilización accidental de una Room cerrada sin limpieza;
+- pérdida silenciosa del vínculo.
+
+Debe existir reconciliación después de reinicios.
+
+## 12. Flujo de creación de sesión
 
 1. El anfitrión inicia sesión.
-2. Selecciona “Crear sesión”.
-3. El Session Manager comprueba:
-   - límite global de sesiones;
+2. Selecciona `Crear sesión`.
+3. Karaoke Propio valida:
+   - límite global;
    - límite por anfitrión;
-   - existencia de una sala disponible.
+   - políticas vigentes.
 4. Genera un código público único.
-5. Reserva una sala.
-6. Inicializa o limpia el motor asignado.
-7. Crea la sesión con vencimiento de doce horas.
-8. Muestra:
+5. Solicita la creación o preparación de una Room en Karaoke Eternal.
+6. Persiste el identificador de la Room.
+7. Define vencimiento.
+8. La sesión pasa a `active`.
+9. Muestra al anfitrión:
    - enlace de invitados;
    - QR;
-   - enlace o código de emparejamiento del reproductor;
-   - panel del anfitrión.
-9. La sesión pasa a estado `active`.
+   - control de player;
+   - panel de sesión.
 
-## 8. Flujo de acceso de invitado
+La creación de Room debe ser idempotente o recuperable.
+
+## 13. Flujo de acceso de invitado
 
 1. El invitado escanea el QR.
-2. Accede a `/s/{codigo}`.
-3. El sistema verifica que la sesión esté activa.
+2. Accede a:
+
+```text
+/s/{codigo}
+```
+
+3. Karaoke Propio verifica que:
+   - el código exista;
+   - la sesión esté activa;
+   - no esté vencida;
+   - permita invitados.
 4. Solicita un nombre visible.
 5. Genera un token anónimo de alta entropía.
 6. Almacena solo el hash del token en el servidor.
-7. Conserva el token en una cookie segura del navegador.
-8. El invitado puede:
-   - buscar canciones;
-   - elegir tono;
-   - agregar a la cola;
-   - ver su posición;
-   - retirar una solicitud propia si la política lo permite.
+7. Conserva el token en cookie o storage seguro.
+8. Registra al invitado en la sesión.
+9. Resuelve la Room asociada.
+10. El invitado puede:
+    - buscar en biblioteca;
+    - agregar canciones;
+    - ver cola;
+    - retirar solicitudes propias si la política lo permite;
+    - seleccionar tonalidad cuando esa función exista.
 
-## 9. Flujo de vinculación del reproductor
+La integración puede utilizar mecanismos nativos de Guest de Karaoke Eternal, pero Karaoke Propio debe mantener su propia identidad lógica.
 
-Propuesta:
+## 14. Flujo de vinculación del reproductor
 
-1. El Fire TV abre `/player`.
-2. El sistema muestra un código temporal de vinculación.
-3. El anfitrión introduce ese código desde su panel.
-4. El Session Manager vincula el dispositivo con la sesión.
-5. El Fire TV recibe un token de reproductor.
-6. El token se guarda localmente.
-7. El reproductor abre automáticamente `/player/{codigo}`.
-8. El anfitrión puede revocar el vínculo.
+Propuesta de producto:
 
-Este flujo es preferible a colocar un token sensible directamente en el QR público de invitados.
+1. El player abre:
 
-## 10. Seguridad
+```text
+/player
+```
 
-### 10.1 Autenticación
+2. Karaoke Propio muestra un código temporal de vinculación.
+3. El anfitrión introduce o aprueba ese código.
+4. La plataforma vincula el dispositivo con una sesión.
+5. El player recibe un token propio de dispositivo.
+6. El token se conserva localmente.
+7. Karaoke Propio resuelve la Room correspondiente.
+8. El player inicia la vista del motor en esa Room.
+9. El anfitrión puede revocar el vínculo.
 
-- Contraseñas con Argon2id o bcrypt.
-- Cookies de sesión `HttpOnly`, `Secure` y `SameSite=Lax`.
-- Protección CSRF en operaciones de anfitrión.
-- Limitación de intentos de inicio de sesión.
+Este flujo evita utilizar el QR público de invitados como mecanismo administrativo.
 
-### 10.2 Invitados
+Mientras esta capa no exista, la funcionalidad nativa de Karaoke Eternal puede utilizarse únicamente como mecanismo de PoC.
 
-- Tokens anónimos aleatorios.
-- No usar el nombre visible como identidad.
-- Rate limiting por sesión, IP y token.
-- Límite de canciones pendientes por invitado.
-- Validación y normalización de nombres.
+## 15. Gestión de cola
 
-### 10.3 Códigos de sesión
+Karaoke Eternal demostró una política de cola justa entre cantantes.
 
-- Seis caracteres no ambiguos.
-- Generación criptográficamente segura.
-- Comprobación de unicidad.
-- Expiración.
-- No otorgan privilegios administrativos.
-- Posibilidad de regeneración por el anfitrión.
+Comportamiento observado:
 
-### 10.4 Contenedores
+```text
+Host A  -> Canción 1
+Guest A -> Canción 2
+Host A  -> Canción 3
+```
 
-- Motores sin acceso público directo.
-- Redes Docker separadas cuando corresponda.
-- Volúmenes con permisos mínimos.
-- Imágenes fijadas por versión.
-- Sin secretos dentro del repositorio.
-- Healthchecks.
-- Copias de seguridad consistentes.
+Esto debe preservarse salvo que exista una razón funcional para sustituirlo.
 
-### 10.5 Contenido
+También se observó que una misma canción no puede agregarse simultáneamente más de una vez a una misma cola.
 
-- El repositorio no distribuye contenido multimedia.
-- Las canciones permanecen fuera de Git.
-- La responsabilidad de derechos recae en el operador de la instalación.
+La política de Karaoke Propio debe definir:
 
-## 11. Biblioteca compartida
+- máximo de canciones pendientes por invitado;
+- posibilidad de eliminar canción propia;
+- prioridad administrativa del anfitrión;
+- tratamiento de duplicados;
+- solicitudes especiales;
+- canciones bloqueadas;
+- comportamiento al abandonar la sesión.
 
-La biblioteca de canciones puede compartirse entre las tres salas para evitar descargas duplicadas.
+## 16. Biblioteca compartida
 
-Debe evaluarse cuidadosamente:
+La prueba demostró que múltiples Rooms pueden utilizar una única biblioteca.
+
+Por tanto, se elimina la necesidad de mantener varias copias por sala.
+
+Modelo:
+
+```text
+Biblioteca única
+      |
+      +---- Room 1
+      +---- Room 2
+      +---- Room 3
+      +---- Room N
+```
+
+La biblioteca debe permanecer fuera de Git.
+
+Debe considerarse:
 
 - acceso concurrente;
-- escritura simultánea;
-- escaneo de archivos;
-- nombres temporales;
-- posibles bloqueos;
-- consistencia de la base interna de cada PiKaraoke.
+- escaneo;
+- importación;
+- archivos temporales;
+- validación de formatos;
+- detección de duplicados;
+- backups;
+- permisos.
 
-La primera implementación debe validar si múltiples instancias de PiKaraoke pueden leer y escribir de forma segura sobre una carpeta común.
+La escritura debe concentrarse preferentemente en el servicio de adquisición.
 
-Alternativa conservadora:
+Karaoke Eternal debería consumir la biblioteca como repositorio operativo, evitando que múltiples componentes escriban sin coordinación.
 
-- una carpeta central de biblioteca;
-- un servicio de descarga único;
-- motores de sala con acceso de solo lectura;
-- sincronización o indexación controlada.
+## 17. Cambio de tonalidad
 
-Esta decisión requiere una prueba técnica específica antes de cerrar la arquitectura física.
+La selección de tonalidad debe ser un atributo de una solicitud de canción.
 
-## 12. Decisiones abiertas
+Modelo conceptual:
 
-Antes de iniciar desarrollo deben resolverse:
+```text
+QueueRequest
+  song
+  singer
+  semitones
+```
 
-1. Lenguaje y framework del Session Manager.
-2. Método de integración con PiKaraoke:
-   - API existente;
-   - WebSocket;
-   - proxy;
-   - automatización de interfaz;
-   - adaptación futura del código.
-3. Estrategia segura para biblioteca compartida.
-4. Control del tono antes de insertar una canción.
-5. Persistencia de la cola por sesión.
-6. Política de cola justa.
-7. Cantidad máxima de canciones pendientes por invitado.
-8. Coanfitriones.
-9. Recuperación después de reinicio.
-10. Política de cierre y conservación del historial.
+Rango inicial por definir.
 
-## 13. Recomendación tecnológica inicial
+PiKaraoke demostró técnicamente que cambios amplios de tonalidad son posibles, pero Karaoke Propio debe establecer un rango de producto razonable.
 
-Propuesta para evaluación:
+La arquitectura debe evitar reiniciar innecesariamente una canción en reproducción.
 
-### Backend
+Preferencia:
 
-- Python 3.12
-- FastAPI
-- SQLAlchemy
-- Alembic
-- PostgreSQL
-- Socket.IO o WebSocket nativo
+- seleccionar tonalidad antes de encolar;
+- preparar variante antes del turno;
+- cachear si resulta eficiente.
+
+## 18. Persistencia y recuperación
+
+Karaoke Eternal demostró persistencia de:
+
+- Rooms;
+- biblioteca;
+- colas.
+
+Karaoke Propio debe persistir independientemente:
+
+- sesión;
+- código;
+- anfitrión;
+- invitados;
+- player bindings;
+- políticas;
+- eventos.
+
+Después de reinicio:
+
+1. Control Plane carga sesiones `active`.
+2. Consulta el estado del motor.
+3. Reconcilia `engine_room_id`.
+4. Marca inconsistencias.
+5. Recupera bindings.
+6. Notifica al anfitrión si una Room no puede recuperarse.
+
+No debe crearse automáticamente una nueva Room sin evaluar si la anterior sigue existiendo.
+
+## 19. Seguridad
+
+### 19.1 Autenticación
+
+- Argon2id preferido o bcrypt.
+- Cookies `HttpOnly`.
+- Cookies `Secure`.
+- `SameSite=Lax` o política equivalente.
+- protección CSRF;
+- rate limiting;
+- bloqueo progresivo ante intentos abusivos.
+
+### 19.2 Invitados
+
+- tokens aleatorios;
+- no usar nombre como identidad;
+- rate limiting por sesión, token e IP cuando corresponda;
+- límites de cola;
+- sanitización de nombre;
+- capacidad de expulsión;
+- revocación del token.
+
+### 19.3 Códigos
+
+- generación criptográficamente segura;
+- unicidad;
+- expiración;
+- regeneración;
+- no conceder privilegios administrativos.
+
+### 19.4 Player binding
+
+- tokens independientes;
+- revocables;
+- con alcance limitado a una sesión;
+- no reutilizar credenciales de anfitrión;
+- no incrustar secretos administrativos en QR público.
+
+### 19.5 Contenedores
+
+- imágenes fijadas por versión o digest cuando sea razonable;
+- sin secretos en Git;
+- volúmenes con permisos mínimos;
+- healthchecks;
+- backups;
+- redes internas;
+- exposición pública mínima.
+
+### 19.6 Datos públicos
+
+La documentación pública no debe incluir:
+
+- IP internas reales;
+- rutas privadas del host;
+- credenciales;
+- tokens;
+- secretos;
+- hostnames internos;
+- correos personales innecesarios;
+- datos que no sean requeridos para reproducibilidad.
+
+### 19.7 Contenido multimedia
+
+El repositorio no distribuye contenido multimedia.
+
+Las canciones permanecen fuera de Git.
+
+Cada operador es responsable de contar con derechos o autorizaciones suficientes para el contenido utilizado.
+
+## 20. Observabilidad
+
+La primera versión debe registrar como mínimo:
+
+- creación de sesión;
+- activación;
+- cierre;
+- invitado unido;
+- invitado expulsado;
+- canción agregada;
+- canción eliminada;
+- player vinculado;
+- player revocado;
+- errores del motor;
+- fallos de reproducción;
+- recuperación después de reinicio.
+
+No deben registrarse secretos.
+
+## 21. Backups
+
+Deben respaldarse:
+
+### Karaoke Propio
+
+- PostgreSQL;
+- configuración;
+- claves necesarias para operación;
+- metadata propia.
+
+### Karaoke Eternal
+
+- `/config`;
+- base interna del motor.
+
+### Biblioteca
+
+Debe existir una estrategia separada para los archivos multimedia.
+
+Los backups de medios pueden tener RPO y retención diferentes a los metadatos.
+
+## 22. Integración con Karaoke Eternal
+
+La siguiente etapa técnica debe identificar el contrato de integración real.
+
+Debe documentarse:
+
+- API HTTP disponible;
+- endpoints internos;
+- WebSocket;
+- eventos;
+- autenticación;
+- estructura de Room;
+- estructura de Queue;
+- lifecycle;
+- player binding;
+- señales de error.
+
+No debe implementarse automatización de UI si existe una interfaz programática estable.
+
+Si la API pública es insuficiente, las alternativas en orden de preferencia son:
+
+1. contribución upstream;
+2. wrapper/adapter mantenido por Karaoke Propio;
+3. fork mínimo y documentado;
+4. automatización de UI solo como último recurso.
+
+## 23. Dependencia del motor
+
+El objetivo no es convertir Karaoke Propio en un fork irreconocible de Karaoke Eternal.
+
+La arquitectura debe conservar este límite:
+
+```text
+Karaoke Propio
+   |
+   v
+Engine Adapter
+   |
+   v
+Karaoke Eternal
+```
+
+En el futuro debería ser posible incorporar otro motor mediante un adapter equivalente.
+
+## 24. Recomendación tecnológica inicial
+
+### Backend propio
+
+Candidatos:
+
+- Python 3.12;
+- FastAPI;
+- SQLAlchemy;
+- Alembic;
+- PostgreSQL.
+
+La elección debe validarse frente a la integración con el motor.
 
 ### Frontend
 
-Opción inicial de menor complejidad:
+Opciones:
 
-- plantillas del servidor;
-- HTMX;
-- Alpine.js;
-- CSS propio.
+- servidor + HTMX + Alpine.js;
+- React;
+- Vue.
 
-Opción posterior si la interfaz lo exige:
+Para una experiencia altamente interactiva, multiusuario y orientada a dispositivos móviles, React o Vue pueden resultar más adecuados a mediano plazo.
 
-- React o Vue.
+La primera implementación debe priorizar rapidez y mantenibilidad.
 
-La primera versión debe priorizar simplicidad operativa, baja utilización de recursos y facilidad de mantenimiento.
+### Tiempo real
 
-## 14. Fases de implementación
+- WebSocket;
+- Socket.IO;
+- mecanismo equivalente.
 
-### Fase 1 — Diseño y pruebas de integración
+### Infraestructura
 
-- documentar API y comportamiento de PiKaraoke;
-- probar tres instancias simultáneas;
-- verificar aislamiento;
-- probar biblioteca compartida;
-- definir contratos internos.
+- Docker;
+- Docker Compose;
+- reverse proxy HTTPS;
+- healthchecks;
+- persistencia externa.
 
-### Fase 2 — Session Manager mínimo
+## 25. Fases de implementación revisadas
+
+### Fase 1 — Contrato con Karaoke Eternal
+
+- documentar API y eventos;
+- determinar cómo crear y cerrar Rooms;
+- determinar cómo obtener cola y estado;
+- determinar cómo controlar player;
+- validar integración sin automatización de interfaz;
+- definir `EngineAdapter`.
+
+### Fase 2 — Control Plane mínimo
 
 - cuentas de anfitrión;
+- PostgreSQL;
 - creación de sesión;
 - códigos;
-- asignación de sala;
-- QR;
-- ingreso de invitados;
-- vínculo de reproductor.
+- mapeo Session ↔ Room;
+- expiración;
+- QR propio.
 
-### Fase 3 — Cola y control
+### Fase 3 — Invitados y player binding
 
-- búsqueda;
-- tono;
-- inserción en cola;
-- estado en tiempo real;
+- identidad anónima;
+- enlace público;
+- vínculo seguro de player;
+- autorización;
+- reconexión.
+
+### Fase 4 — Cola y estado en tiempo real
+
+- búsqueda de biblioteca;
+- agregar/eliminar solicitudes;
+- sincronización;
 - controles del anfitrión;
-- límites por invitado.
+- límites;
+- política de cola.
 
-### Fase 4 — Seguridad y operación
+### Fase 5 — Servicio de adquisición
+
+- búsqueda externa;
+- descarga/importación;
+- normalización;
+- validación;
+- escaneo;
+- manejo de duplicados.
+
+### Fase 6 — Pitch
+
+- PoC;
+- selección tecnológica;
+- integración por canción;
+- cache;
+- sincronización;
+- pruebas de CPU y latencia.
+
+### Fase 7 — Seguridad y operación
 
 - rate limiting;
 - auditoría;
 - backups;
 - healthchecks;
 - recuperación;
-- cierre automático.
+- cierre automático;
+- reconciliación.
 
-### Fase 5 — UX y dispositivos
+### Fase 8 — UX y dispositivos
 
-- optimización móvil;
-- pantalla Fire TV;
+- móvil;
+- Fire TV;
+- Smart TV;
 - PWA;
-- reconexión automática;
+- reconexión;
 - accesibilidad.
 
-## 15. Criterios de aceptación de la arquitectura
+## 26. Criterios de aceptación
 
-La arquitectura se considerará validada cuando se demuestre que:
+La arquitectura se considerará validada para primera versión cuando se demuestre que:
 
 - tres sesiones funcionan simultáneamente;
-- cada sesión mantiene su propia cola;
-- los invitados no necesitan cuenta;
-- los códigos no conceden privilegios administrativos;
-- cada Fire TV controla únicamente su sala;
-- una sesión no puede ver ni alterar otra;
-- el cierre libera correctamente la sala;
+- una sola instancia del motor puede servirlas;
+- cada sesión mantiene cola independiente;
+- invitados no necesitan cuenta;
+- el QR dirige a la sesión correcta;
+- el código público no concede privilegios;
+- cada player controla únicamente su sesión;
+- Pause y Skip no afectan otras salas;
+- una sesión no puede alterar otra;
+- la biblioteca es compartida;
 - el reinicio no corrompe datos;
+- sesiones pueden reconciliarse después de reinicio;
 - el acceso público utiliza HTTPS;
-- los motores no están expuestos directamente;
-- canciones y secretos permanecen fuera del repositorio.
+- los motores no quedan expuestos directamente;
+- canciones y secretos permanecen fuera del repositorio;
+- existe una estrategia viable de adquisición;
+- existe una estrategia viable de pitch.
 
-## 16. Próximo paso
+## 27. Decisiones resueltas
 
-Ejecutar una prueba técnica de tres instancias PiKaraoke aisladas antes de seleccionar definitivamente el framework y comenzar la implementación del Session Manager.
+Se consideran resueltas por evidencia técnica:
+
+1. Una sola instancia de Karaoke Eternal puede servir múltiples Rooms.
+2. Las Rooms mantienen colas independientes.
+3. La biblioteca puede compartirse.
+4. Players simultáneos funcionan.
+5. Pause y Skip están aislados.
+6. La cola intercala cantantes.
+7. Rooms y colas persisten después de reinicio.
+8. El consumo de servidor observado es bajo.
+9. Karaoke Eternal no cubre pitch.
+10. Karaoke Eternal no cubre adquisición online.
+
+## 28. Decisiones abiertas
+
+Antes de iniciar desarrollo sustancial deben resolverse:
+
+1. API exacta de integración con Karaoke Eternal.
+2. Framework definitivo del Control Plane.
+3. Modelo final de autenticación.
+4. Mecanismo de player binding.
+5. Estrategia de pitch.
+6. Estrategia de adquisición.
+7. política de máximo de canciones por invitado;
+8. coanfitriones;
+9. política de cierre e historial;
+10. reconciliación ante Room faltante;
+11. gestión de errores de codecs;
+12. límites de concurrencia reales;
+13. estrategia de actualización del motor.
+
+## 29. Riesgos principales
+
+### Dependencia de API no documentada
+
+Mitigación:
+
+- adapter;
+- pruebas de contrato;
+- versionado;
+- contribución upstream.
+
+### Falta de pitch
+
+Mitigación:
+
+- PoC temprano antes de producción.
+
+### Adquisición de contenido
+
+Mitigación:
+
+- servicio separado;
+- validación legal y técnica.
+
+### Cambios upstream
+
+Mitigación:
+
+- fijar versión;
+- pruebas de regresión;
+- changelog;
+- actualización controlada.
+
+### Player web
+
+Los navegadores pueden presentar diferencias de codecs o autoplay.
+
+Mitigación:
+
+- matriz de dispositivos;
+- formatos recomendados;
+- pruebas Fire TV/Smart TV;
+- detección de errores.
+
+## 30. Documentos relacionados
+
+- `README.md`
+- `docs/PROTOTYPE_VALIDATION.md`
+- `docs/KARAOKE_ETERNAL_VALIDATION.md`
+- `THIRD_PARTY_NOTICES.md`
+
+`PROTOTYPE_VALIDATION.md` conserva la validación histórica de PiKaraoke.
+
+`KARAOKE_ETERNAL_VALIDATION.md` documenta la prueba de concepto que motivó esta revisión arquitectónica.
+
+## 31. Próximo paso
+
+El siguiente paso ya no es probar múltiples instancias PiKaraoke.
+
+El próximo trabajo técnico debe ser:
+
+```text
+documentar y validar el contrato programático entre Karaoke Propio y Karaoke Eternal
+```
+
+Objetivos inmediatos:
+
+1. identificar API y eventos;
+2. determinar lifecycle de Rooms;
+3. determinar acceso programático a Queue;
+4. determinar control de Player;
+5. definir el primer `EngineAdapter`;
+6. mantener PiKaraoke sin cambios como referencia funcional hasta resolver pitch y adquisición.

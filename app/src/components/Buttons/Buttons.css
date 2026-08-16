@@ -1,0 +1,16 @@
+.container {
+  display: flex;
+  align-items: center;
+  transition: width var(--spring-duration) var(--spring-function);
+
+  button {
+    margin-right: var(--space-s);
+    cursor: pointer;
+    transition: opacity .3s linear;
+    flex-shrink: 0;
+  }
+}
+
+.btnHide {
+  opacity: 0;
+}

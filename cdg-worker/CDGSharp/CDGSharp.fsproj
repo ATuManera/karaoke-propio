@@ -1,0 +1,41 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <PackageId>CDGSharp</PackageId>
+    <Version>0.0.2</Version>
+    <Authors>Johannes Egger</Authors>
+    <Description>CD+G parser, serializer and karaoke generator</Description>
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="Array2D.fs" />
+    <Compile Include="Seq.fs" />
+    <Compile Include="CDG.fs" />
+    <Compile Include="CDG.BinaryFormat.fs" />
+    <Compile Include="CDG.Parser.fs" />
+    <Compile Include="CDG.Explainer.fs" />
+    <Compile Include="CDG.Formatter.fs" />
+    <Compile Include="CDG.Serializer.fs" />
+    <Compile Include="CDG.Renderer.fs" />
+    <Compile Include="CDG.ImageProcessing.fs" />
+    <Compile Include="CDG.ImageRenderer.fs" />
+    <Compile Include="CDG.KaraokeGenerator.fs" />
+    <Compile Include="CDG.LrcParser.fs" />
+    <Compile Include="CDG.LrcToKaraoke.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="SixLabors.ImageSharp" Version="1.0.4" />
+    <PackageReference Include="SixLabors.ImageSharp.Drawing" Version="1.0.0-beta13" />
+    <PackageReference Include="System.Drawing.Common" Version="7.0.0" />
+  </ItemGroup>
+
+</Project>

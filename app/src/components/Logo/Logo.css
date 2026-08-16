@@ -1,0 +1,56 @@
+.container {
+  font-family: Beon;
+  white-space: nowrap;
+  flex: 1;
+}
+
+.title {
+  border: none;
+  color: hsl(var(--hue-blue), 10%, 80%);
+  display: inline-block;
+  font-size: 200%;
+  font-weight: normal;
+  text-transform: uppercase;
+  margin: 0;
+  text-shadow:
+    0 0 .1em hsl(var(--hue-pink), 100%, 100%),
+    0 0 .5em hsl(var(--hue-pink), 100%, 100%),
+    0 0 .25em hsl(var(--hue-pink), 100%, 50%),
+    0 0 .5em hsl(var(--hue-pink), 100%, 50%),
+    0 0 .75em hsl(var(--hue-pink), 100%, 50%),
+    0 0 1em hsl(var(--hue-pink), 100%, 50%),
+    0 0 1.5em hsl(var(--hue-pink), 100%, 50%),
+    0 0 3em hsl(var(--hue-pink), 100%, 50%),
+    0 0 6em hsl(var(--hue-pink), 100%, 50%),
+    0 0 9em hsl(var(--hue-pink), 100%, 50%);
+}
+
+.eternal {
+  font-size: 40%;
+  text-transform: uppercase;
+  display: block;
+  letter-spacing: .9em;
+  border: .1em solid transparent;
+  border-radius: .25em;
+  padding: .25em;
+  text-shadow:
+    0 0 .1em hsl(var(--hue-blue), 100%, 90%),
+    0 0 .25em hsl(var(--hue-blue), 100%, 90%),
+    0 0 .25em hsl(var(--hue-blue), 100%, 50%),
+    0 0 .5em hsl(var(--hue-blue), 100%, 50%);
+}
+
+.eternalVisible {
+  border-color: hsl(var(--hue-blue), 100%, 90%);
+  box-shadow:
+    0 0 .1em hsl(var(--hue-blue), 100%, 90%),
+    0 0 .25em hsl(var(--hue-blue), 100%, 90%),
+    0 0 .5em hsl(var(--hue-blue), 100%, 50%),
+    0 0 .75em hsl(var(--hue-blue), 100%, 50%),
+    inset 0 0 .5em hsl(var(--hue-blue), 100%, 50%),
+    inset 0 0 .75em hsl(var(--hue-blue), 100%, 50%);
+}
+
+.lastChar {
+  letter-spacing: normal;
+}

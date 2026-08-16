@@ -1,0 +1,403 @@
+import crypto from 'node:crypto'
+import fsPromises from 'node:fs/promises'
+import path from 'node:path'
+import type { Server as SocketIOServer } from 'socket.io'
+import getLogger from '../lib/Log.js'
+import Library from '../Library/Library.js'
+import { registerMedia, publishAtomically, sanitizePathSegment, type RegisterResult } from '../Media/MediaRegistrar.js'
+import { withSourceIdSuffix } from '../lib/util.js'
+import PitchManager from '../Pitch/PitchManager.js'
+import Categories from '../Categories/Categories.js'
+import { setViewCount } from '../Media/popularity.js'
+import Prefs from '../Prefs/Prefs.js'
+import Queue from '../Queue/Queue.js'
+import Rooms from '../Rooms/Rooms.js'
+import AcquisitionWorkerClient from './AcquisitionWorkerClient.js'
+import CdgWorkerClient from './CdgWorkerClient.js'
+import UsdbClient from './UsdbClient.js'
+import { parseUltraStarHeaders, ultraStarToLrc } from './UltraStarToLrc.js'
+import { ACQUISITION_PUSH, LIBRARY_PUSH, LIBRARY_PUSH_SONG, QUEUE_PUSH } from '../../shared/actionTypes.js'
+import type { AcquisitionRequest, AcquisitionSource, AcquisitionState } from '../../shared/types.js'
+
+const log = getLogger('AcquisitionManager')
+
+// standard YouTube video id shape; anything else is rejected before it ever
+// reaches a URL string (defense in depth on top of the worker's own
+// youtube.com/youtu.be host allowlist)
+const YOUTUBE_ID_RE = /^[\w-]{11}$/
+
+interface StartParams {
+  /** popularity of the chosen source, kept so the library can be ordered by it */
+  viewCount?: number | null
+  roomId: number
+  userId: number
+  pitchSemitones: number
+  source: AcquisitionSource
+  query: string
+  resultId: string
+  title: string
+  /** user-confirmed metadata (see shared/acquisitionMeta.ts) */
+  artist?: string
+  songTitle?: string
+}
+
+/**
+ * Orchestrates ACQUISITION — turning a search result the user picked into a
+ * registered library song, queued with the room/user/pitch identity that
+ * requested it (see prompt_de_implementacion.md #33-#41).
+ *
+ * This is a DIFFERENT workflow than PitchManager: acquisition gets the song
+ * into the library at all; pitch prepares one transposed variant of a song
+ * that's already there. State here is intentionally in-memory/ephemeral
+ * (unlike queue.pitchSemitones) — losing an in-progress acquisition on
+ * restart just means the user re-searches, which is an acceptable MVP
+ * trade-off explicitly allowed by the prompt ("puede implementarse de forma
+ * durable si es razonable").
+ */
+class AcquisitionManager {
+  private static io: SocketIOServer
+  private static worker: AcquisitionWorkerClient
+  private static cdgWorker: CdgWorkerClient
+  private static usdb: UsdbClient
+  private static requests = new Map<string, AcquisitionRequest>()
+
+  static init ({ io, workerUrl, cdgWorkerUrl, usdbCredentials }: {
+    io: SocketIOServer
+    workerUrl: string
+    cdgWorkerUrl: string
+    usdbCredentials?: { username: string, password: string }
+  }): void {
+    this.io = io
+    this.worker = new AcquisitionWorkerClient(workerUrl)
+    this.cdgWorker = new CdgWorkerClient(cdgWorkerUrl)
+    this.usdb = new UsdbClient(usdbCredentials)
+  }
+
+  static async searchYouTube (query: string, karaokeOnly = true) {
+    return this.worker.search(query, 10, karaokeOnly)
+  }
+
+  /** single free-text query, matched against USDB's title field (most common single-box search intent) */
+  static async searchUsdb (query: string) {
+    return this.usdb.search('', query)
+  }
+
+  /**
+   * Resolve a directly-playable stream URL for a search result BEFORE
+   * committing to a download (see prompt discussion: "análogo a PiKaraoke"
+   * — let the user confirm the version is good on their own screen, not the
+   * room's shared Player, before adding it to the queue).
+   *
+   * Deliberately mirrors PiKaraoke's approach rather than the YouTube IFrame
+   * Player API: many karaoke-relevant uploads (Sing King etc.) disable
+   * embedding on third-party sites, which the IFrame API respects and shows
+   * as "video unavailable" for — confirmed live 2026-08-13 previewing "La
+   * Bikina". yt-dlp extracting a direct progressive stream URL (same
+   * mechanism used for the real download) bypasses that restriction
+   * entirely, since playback never goes through YouTube's own player.
+   *
+   * For 'youtube' results the search result id already IS the video id — no
+   * extra lookup needed. For 'usdb' results this fetches the same
+   * community-posted YouTube link `runUsdb()` will download later (comments
+   * on the USDB detail page); resolving it once here at preview time and
+   * again at download time is deliberate — a preview should never trigger a
+   * download, and the two are cheap, independent reads.
+   */
+  static async resolvePreview (source: AcquisitionSource, resultId: string): Promise<{ videoId: string }> {
+    if (source === 'youtube') {
+      if (!YOUTUBE_ID_RE.test(resultId)) throw new Error('invalid YouTube video id')
+      return { videoId: resultId }
+    }
+
+    if (!/^\d+$/.test(resultId)) throw new Error('invalid USDB song id')
+    const links = await this.usdb.fetchYoutubeLinks(resultId)
+    if (!links.length) throw new Error('no YouTube link found in USDB comments for this song')
+    return { videoId: links[0].videoId }
+  }
+
+  /**
+   * The actual playable bytes' source, resolved fresh per request by the
+   * preview proxy (see Acquisition/router.ts). Kept separate from
+   * resolvePreview() on purpose: that one must stay cheap (for 'youtube' it's
+   * pure validation, no network at all), because it runs on the socket path
+   * that gates the preview UI. Folding the yt-dlp resolve into it meant every
+   * preview paid ~4s before rendering anything AND could fail the whole
+   * preview on a transient googlevideo 403 — the proxy retries instead.
+   */
+  static async resolvePreviewStreamUrl (source: AcquisitionSource, resultId: string): Promise<string> {
+    const { videoId } = await this.resolvePreview(source, resultId)
+    const url = `https://www.youtube.com/watch?v=${encodeURIComponent(videoId)}`
+    const { streamUrl } = await this.worker.getPreviewStreamUrl(url)
+    return streamUrl
+  }
+
+  /**
+   * Kicks off the full pipeline asynchronously and returns immediately with
+   * a requestId — same "never hold the ack open" principle as pitch requests.
+   */
+  static start (params: StartParams): string {
+    const requestId = crypto.randomUUID()
+
+    const request: AcquisitionRequest = {
+      requestId,
+      roomId: params.roomId,
+      userId: params.userId,
+      pitchSemitones: params.pitchSemitones,
+      source: params.source,
+      query: params.query,
+      result: { id: params.resultId, title: params.title },
+      artist: params.artist,
+      songTitle: params.songTitle,
+      viewCount: params.viewCount ?? null,
+      state: 'downloading',
+      dateCreated: Math.floor(Date.now() / 1000),
+    }
+
+    this.requests.set(requestId, request)
+    this.pushStatus(request)
+
+    const pipeline = params.source === 'youtube' ? this.runYouTube(request) : this.runUsdb(request)
+    pipeline.catch(err => this.fail(request, err))
+
+    return requestId
+  }
+
+  static get (requestId: string): AcquisitionRequest | undefined {
+    return this.requests.get(requestId)
+  }
+
+  private static async runYouTube (request: AcquisitionRequest): Promise<void> {
+    const videoId = request.result.id
+
+    if (!YOUTUBE_ID_RE.test(videoId)) {
+      throw new Error('invalid YouTube video id')
+    }
+
+    const { paths } = Prefs.get()
+    const pathId = paths.result[0]
+    if (typeof pathId !== 'number') {
+      throw new Error('no library path configured to publish into')
+    }
+
+    const basePath = paths.entities[pathId].path
+    const stagingDir = path.join(basePath, '_staging', request.requestId)
+    await fsPromises.mkdir(stagingDir, { recursive: true })
+
+    const stagedFile = path.join(stagingDir, `${videoId}.mp4`)
+    // NOTE: must end in .mp4 (not e.g. "*.mp4.downloading") — yt-dlp's
+    // --merge-output-format mp4 enforces its own final extension on the -o
+    // template, so a tmp path whose extension it wouldn't otherwise produce
+    // gets silently rewritten out from under a naive rename(). The staging
+    // dir is already unique per requestId, so a random infix is enough.
+    const tmpFile = path.join(stagingDir, `.tmp-${videoId}-${crypto.randomBytes(4).toString('hex')}.mp4`)
+
+    try {
+      // ---- downloading ----
+      const url = `https://www.youtube.com/watch?v=${encodeURIComponent(videoId)}`
+      await this.worker.download(url, stagedFile, tmpFile)
+
+      // ---- publishing (atomic move into the real library path) ----
+      this.setState(request, 'publishing')
+      // Publish as "Artist - Title---videoId" when the user confirmed the
+      // metadata, so MetaParser derives exactly those (and normalizes
+      // articles: "The Beatles" -> "Beatles, The", matching the rest of the
+      // library). Deliberately NOT metadataOverride: parsing the canonical
+      // filename keeps a later rescan idempotent instead of silently
+      // re-deriving something different.
+      const baseName = request.artist && request.songTitle
+        ? `${sanitizePathSegment(request.artist)} - ${sanitizePathSegment(request.songTitle)}`
+        : sanitizePathSegment(request.result.title)
+      const destRelPath = `${withSourceIdSuffix(baseName, videoId)}.mp4`
+      const finalPath = await publishAtomically(stagedFile, pathId, destRelPath)
+
+      // ---- registering (point registration; no full library scan) ----
+      this.setState(request, 'registering')
+      const reg = await registerMedia(finalPath, pathId)
+
+      await this.queueAndFinish(request, reg)
+    } finally {
+      await fsPromises.rm(stagingDir, { recursive: true, force: true }).catch(() => {})
+    }
+  }
+
+  /**
+   * UltraStar/USDB path: song.txt (lyrics+timing) + a community-posted
+   * YouTube link (USDB never hosts audio itself) -> extracted audio +
+   * CDGSharp-rendered .cdg, published as a pair.
+   *
+   * NOTE: every USDB call below requires an authenticated session — verified
+   * live against usdb.animux.de on 2026-08-13 (see UsdbClient.ts). Without
+   * USDB_USERNAME/USDB_PASSWORD configured, this fails fast with a clear
+   * error instead of hanging or silently returning nothing.
+   */
+  private static async runUsdb (request: AcquisitionRequest): Promise<void> {
+    const usdbId = request.result.id
+    if (!/^\d+$/.test(usdbId)) {
+      throw new Error('invalid USDB song id')
+    }
+
+    const { paths } = Prefs.get()
+    const pathId = paths.result[0]
+    if (typeof pathId !== 'number') {
+      throw new Error('no library path configured to publish into')
+    }
+
+    const basePath = paths.entities[pathId].path
+    const stagingDir = path.join(basePath, '_staging', request.requestId)
+    await fsPromises.mkdir(stagingDir, { recursive: true })
+
+    try {
+      // ---- downloading: song.txt + locate a source video ----
+      const songTxt = await this.usdb.fetchSongTxt(usdbId)
+      const song = parseUltraStarHeaders(songTxt) // throws a clear error on malformed song.txt
+
+      const youtubeLinks = await this.usdb.fetchYoutubeLinks(usdbId)
+      if (!youtubeLinks.length) {
+        throw new Error(`no YouTube link found in USDB comments for song ${usdbId}`)
+      }
+      const videoId = youtubeLinks[0].videoId
+
+      const rand = () => crypto.randomBytes(4).toString('hex')
+      const videoFile = path.join(stagingDir, `${videoId}.mp4`)
+      const videoTmp = path.join(stagingDir, `.tmp-${videoId}-${rand()}.mp4`)
+      await this.worker.download(`https://www.youtube.com/watch?v=${encodeURIComponent(videoId)}`, videoFile, videoTmp)
+
+      // ---- processing: extract audio, generate CD+G from song.txt ----
+      this.setState(request, 'processing')
+
+      const audioFile = path.join(stagingDir, `${videoId}.m4a`)
+      const audioTmp = path.join(stagingDir, `.tmp-${videoId}-${rand()}.m4a`)
+      await this.worker.extractAudio(videoFile, audioFile, audioTmp)
+
+      const lrc = ultraStarToLrc(songTxt)
+      const cdgFile = path.join(stagingDir, `${videoId}.cdg`)
+      const cdgTmp = path.join(stagingDir, `.tmp-${videoId}-${rand()}.cdg`)
+      await this.cdgWorker.convertLrc(lrc, cdgFile, cdgTmp)
+
+      // ---- publishing: audio + .cdg as a matching-basename pair ----
+      this.setState(request, 'publishing')
+      const baseName = withSourceIdSuffix(`${sanitizePathSegment(song.artist)} - ${sanitizePathSegment(song.title)}`, videoId)
+      const finalAudioPath = await publishAtomically(audioFile, pathId, `${baseName}.m4a`)
+      await publishAtomically(cdgFile, pathId, `${baseName}.cdg`)
+
+      // keep song.txt beside the media: it carries the melody note by note,
+      // which the CD+G rendering throws away (it only needs the words and
+      // their timing). Without it the notes cannot be shown later.
+      const songTxtFile = path.join(stagingDir, `${videoId}.song.txt`)
+      await fsPromises.writeFile(songTxtFile, songTxt, 'utf8')
+      await publishAtomically(songTxtFile, pathId, `${baseName}.song.txt`)
+
+      // ---- registering (point registration; the .cdg sidecar is now in
+      // place, so probeMedia/resolveMedia's getCdgName() lookup finds it).
+      // song.txt already gave us the correct artist/title — never let
+      // MetaParser re-derive them from the constructed filename, which
+      // contains a SECOND "artist - title"-shaped delimiter plus the
+      // "---videoId" suffix and can misparse (see MediaRegistrar.ts) ----
+      this.setState(request, 'registering')
+      const reg = await registerMedia(finalAudioPath, pathId, { artist: song.artist, title: song.title })
+
+      await this.queueAndFinish(request, reg)
+    } finally {
+      await fsPromises.rm(stagingDir, { recursive: true, force: true }).catch(() => {})
+    }
+  }
+
+  /**
+   * Shared tail for every acquisition source: queue with preserved
+   * room/user/pitch identity, register the pitch job if needed (mirrors what
+   * QUEUE_ADD's socket handler does — acquisition never goes through that
+   * handler), push library + queue updates, mark 'queued'.
+   */
+  private static async queueAndFinish (request: AcquisitionRequest, reg: RegisterResult): Promise<void> {
+    request.songId = reg.songId
+    request.mediaId = reg.mediaId
+
+    const queueId = Queue.add({
+      roomId: request.roomId,
+      songId: reg.songId,
+      userId: request.userId,
+      pitchSemitones: request.pitchSemitones,
+    })
+    request.queueId = queueId
+
+    if (request.pitchSemitones !== 0) {
+      try {
+        await PitchManager.request({
+          mediaId: reg.mediaId,
+          pitchSemitones: request.pitchSemitones,
+          queueId,
+          roomId: request.roomId,
+        })
+      } catch (err) {
+        log.error('pitch registration failed for acquired song %s: %s', reg.mediaId, (err as Error).message)
+      }
+    }
+
+    if (typeof request.viewCount === 'number') setViewCount(reg.mediaId, request.viewCount)
+
+    this.notifyLibrary(reg)
+
+    this.io.to(Rooms.prefix(request.roomId)).emit('action', {
+      type: QUEUE_PUSH,
+      payload: Queue.get(request.roomId),
+    })
+
+    this.setState(request, 'queued')
+
+    // Categorize in the background: MusicBrainz is rate limited to ~1 request
+    // per second and this needs two of them, which is far too long to keep a
+    // singer waiting on a song that is already queued and playable. Failures
+    // are logged and ignored — a missing category must never turn a successful
+    // acquisition into a failed one.
+    if (reg.isNewSong) {
+      Categories.categorizeSong(reg.songId)
+        .then((categories): undefined => {
+          if (categories.length) {
+            this.io.emit('action', { type: LIBRARY_PUSH, payload: Library.get() })
+          }
+          return undefined
+        })
+        .catch((err: Error): undefined => {
+          log.warn('could not categorize new song %s: %s', reg.songId, err.message)
+          return undefined
+        })
+    }
+  }
+
+  /**
+   * Same LIBRARY_PUSH vs LIBRARY_PUSH_SONG distinction pitch/scan code
+   * already has to respect (see prompt_de_implementacion.md #38):
+   * LIBRARY_PUSH_SONG can't introduce a brand new songId into
+   * `songs.result` client-side, so a genuinely new song/artist needs the
+   * full LIBRARY_PUSH.
+   */
+  private static notifyLibrary (reg: { songId: number, isNewSong: boolean, isNewArtist: boolean }): void {
+    Library.cache.version = null // invalidate
+
+    if (reg.isNewSong || reg.isNewArtist) {
+      this.io.emit('action', { type: LIBRARY_PUSH, payload: Library.get() })
+    } else {
+      this.io.emit('action', { type: LIBRARY_PUSH_SONG, payload: Library.getSong(reg.songId) })
+    }
+  }
+
+  private static fail (request: AcquisitionRequest, err: unknown): void {
+    request.error = (err as Error).message
+    this.setState(request, 'error')
+    log.error('acquisition %s failed: %s', request.requestId, request.error)
+  }
+
+  private static setState (request: AcquisitionRequest, state: AcquisitionState): void {
+    request.state = state
+    this.pushStatus(request)
+  }
+
+  private static pushStatus (request: AcquisitionRequest): void {
+    this.io?.to(Rooms.prefix(request.roomId)).emit('action', {
+      type: ACQUISITION_PUSH,
+      payload: request,
+    })
+  }
+}
+
+export default AcquisitionManager

@@ -1,0 +1,71 @@
+.container {
+  position: absolute;
+  left: 100vw;
+  top: 0;
+}
+
+.innerContainer {
+  margin-top: 2vh;
+  margin-right: 2vh;
+  padding: 2vh;
+  background-color: var(--chrome-bg-color);
+  border: 1px solid var(--chrome-border-color);
+  border-radius: var(--border-radius);
+  text-align: center;
+}
+
+@supports (backdrop-filter: blur(20px) brightness(50%) saturate(50%)) or (-webkit-backdrop-filter: blur(20px) brightness(50%) saturate(50%)) {
+  .innerContainer {
+    background-color: transparent !important;
+    -webkit-backdrop-filter: blur(20px) brightness(50%) saturate(50%);
+    backdrop-filter: blur(20px) brightness(50%) saturate(50%);
+  }
+}
+
+.enterActive {
+  animation: slide-in .25s ease-out;
+  animation-fill-mode: forwards;
+  animation-delay: .25s;
+}
+
+.enterDone {
+  transform: translateX(-100%);
+}
+
+.exitActive {
+  animation: slide-out .25s ease-in;
+  animation-fill-mode: forwards;
+}
+
+.user {
+  font-size: 6vh;
+  text-rendering: optimizeLegibility;
+  text-shadow: 1px 1px 5px #000;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  max-width: 33vw;
+}
+
+.userImage {
+  height: 20vh;
+}
+
+@keyframes slide-in {
+  0% {
+    transform: translateX(0%);
+  }
+
+  100% {
+    transform: translateX(-100%);
+  }
+}
+
+@keyframes slide-out {
+  0% {
+    transform: translateX(-100%);
+  }
+
+  100% {
+    transform: translateX(0%);
+  }
+}

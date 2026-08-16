@@ -1,0 +1,13 @@
+.container {
+  align-items: center;
+  color: var(--alpha-picker-color);
+  display: flex;
+  flex-direction: column;
+  font-size: 2vh;
+  padding: 5px 0;
+  position: fixed;
+  right: 0;
+  width: 32px;
+  cursor: pointer;
+  touch-action: none;
+}

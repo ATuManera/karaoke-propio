@@ -8,4 +8,13 @@ This product includes software developed specifically for the Karaoke Propio
 project and may integrate with third-party components that retain their own
 copyright notices and license terms.
 
-See THIRD_PARTY_NOTICES.md for additional information.
+This product incorporates source code from Karaoke Eternal (ISC License),
+Copyright (c) RadRoot LLC, vendored and modified under ./app.
+
+This product incorporates source code from CDGSharp (MIT License),
+Copyright (c) 2022 Johannes Egger, vendored unmodified under
+./cdg-worker/CDGSharp.
+
+See THIRD_PARTY_NOTICES.md for the full list of third-party components,
+including those consumed as external tools (FFmpeg, Rubber Band, yt-dlp)
+rather than incorporated source.

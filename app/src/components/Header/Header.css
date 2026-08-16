@@ -1,0 +1,13 @@
+.container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  background-color: var(--chrome-bg-color);
+  border-bottom: 1px solid var(--chrome-border-color);
+  z-index: 1;
+
+  &:empty {
+    display: none;
+  }
+}

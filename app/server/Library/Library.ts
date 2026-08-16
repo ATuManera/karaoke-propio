@@ -1,0 +1,368 @@
+import sql from 'sqlate'
+import { db } from '../lib/Database.js'
+import getLogger from '../lib/Log.js'
+import { performance } from 'perf_hooks'
+import { Song, Artist } from '../../shared/types.js'
+import Media from '../Media/Media.js'
+
+const log = getLogger('Library')
+
+class Library {
+  static cache: {
+    version: number | null
+    artists?: { result: number[], entities: Record<number, Artist> }
+    songs?: { result: number[], entities: Record<number, Song> }
+  } = { version: null }
+
+  static starCountsCache: {
+    version: number | null
+    artists?: Record<number, number>
+    songs?: Record<number, number>
+  } = { version: null }
+
+  /**
+  * Get artists and songs in a format suitable for sending to clients.
+  * Should not include songs or artists for which there are no media.
+  */
+  static get (): typeof Library.cache {
+    // already cached?
+    if (this.cache.version) return this.cache
+
+    const startTime = performance.now()
+
+    const SongIdsByArtist = {}
+    const artists = {
+      result: [],
+      entities: {},
+    }
+    const songs = {
+      result: [],
+      entities: {},
+    }
+
+    // query #1: songs
+    {
+      const query = sql`
+        SELECT duration, songs.artistId AS artistId, songs.songId AS songId, songs.title AS title,
+          MAX(isPreferred) AS isPreferred, COUNT(DISTINCT media.mediaId) AS numMedia,
+          -- the best-known version represents the song; summing would just
+          -- reward songs that happen to have several versions stored
+          MAX(media.viewCount) AS viewCount
+        FROM media
+          INNER JOIN songs USING (songId)
+          INNER JOIN paths USING (pathId)
+        GROUP BY songId
+        ORDER BY songs.titleNorm, paths.priority ASC
+      `
+      const rows = db.all<Song & { isPreferred: number }>(String(query), query.parameters)
+
+      for (const row of rows) {
+        delete row.isPreferred
+        songs.entities[row.songId] = row
+        songs.result.push(row.songId)
+
+        // add to artist's songIds
+        if (typeof SongIdsByArtist[row.artistId] === 'undefined') {
+          SongIdsByArtist[row.artistId] = []
+        }
+
+        SongIdsByArtist[row.artistId].push(row.songId)
+      }
+    }
+
+    // query #2: artists
+    {
+      const query = sql`
+        SELECT artistId, name
+        FROM artists
+        ORDER BY nameNorm ASC
+      `
+      const rows = db.all<Artist>(String(query), query.parameters)
+
+      for (const row of rows) {
+        if (SongIdsByArtist[row.artistId]) {
+          artists.result.push(row.artistId)
+          artists.entities[row.artistId] = row
+          artists.entities[row.artistId].songIds = SongIdsByArtist[row.artistId]
+
+          // an artist is as popular as their best-known song here: summing
+          // would rank whoever has the most songs stored, not who people know
+          const counts = SongIdsByArtist[row.artistId]
+            .map(songId => songs.entities[songId]?.viewCount)
+            .filter(v => typeof v === 'number')
+
+          artists.entities[row.artistId].viewCount = counts.length ? Math.max(...counts) : null
+        }
+      }
+    }
+
+    log.info('built library cache in %sms', (performance.now() - startTime).toFixed(3))
+
+    // cache result
+    this.cache = {
+      artists,
+      songs,
+      version: Date.now(),
+    }
+
+    return this.cache
+  }
+
+  /**
+  * Get single song in format similar to get()
+  */
+  static getSong (songId: number): Record<number, Song> {
+    const { result, entities } = Media.search({ songId })
+    if (!result.length) return {}
+
+    // should be in order of path priority...
+    let media = entities[result[0]]
+
+    // ...but are any preferred?
+    for (const mediaId of result) {
+      if (entities[mediaId].isPreferred) media = entities[mediaId]
+    }
+
+    return {
+      [songId]: {
+        artistId: media.artistId,
+        duration: media.duration,
+        songId: media.songId,
+        title: media.title,
+        numMedia: result.length,
+      },
+    }
+  }
+
+  /**
+  * Matches or creates artist and song
+  */
+  static matchSong (parsed: { artist: string, artistNorm: string, title: string, titleNorm: string }): {
+    artistId?: number
+    artist?: string
+    artistNorm?: string
+    songId?: number
+    title?: string
+    titleNorm?: string
+    isNewArtist?: boolean
+    isNewSong?: boolean
+  } {
+    const match: {
+      artistId?: number
+      artist?: string
+      artistNorm?: string
+      songId?: number
+      title?: string
+      titleNorm?: string
+      isNewArtist?: boolean
+      isNewSong?: boolean
+    } = {}
+
+    // match artist
+    {
+      const query = sql`
+        SELECT *
+        FROM artists
+        WHERE nameNorm = ${parsed.artistNorm}
+      `
+      const row = db.get<{ artistId: number, name: string, nameNorm: string }>(String(query), query.parameters)
+
+      if (row) {
+        log.debug('matched artist: %s', row.name)
+        match.artistId = row.artistId
+        match.artist = row.name
+        match.artistNorm = row.nameNorm
+        match.isNewArtist = false
+      } else {
+        log.debug('new artist: %s', parsed.artist)
+
+        const fields = new Map()
+        fields.set('name', parsed.artist)
+        fields.set('nameNorm', parsed.artistNorm)
+
+        const query = sql`
+          INSERT INTO artists ${sql.tuple(Array.from(fields.keys()).map(sql.column))}
+          VALUES ${sql.tuple(Array.from(fields.values()))}
+        `
+        const res = db.run(String(query), query.parameters)
+
+        if (!Number.isInteger(res.lastID)) {
+          throw new Error('invalid artistId after insert')
+        }
+
+        match.artistId = res.lastID
+        match.artist = parsed.artist
+        match.artistNorm = parsed.artistNorm
+        match.isNewArtist = true
+      }
+    }
+
+    // match song title
+    {
+      const query = sql`
+        SELECT *
+        FROM songs
+        WHERE artistId = ${match.artistId} AND titleNorm = ${parsed.titleNorm}
+      `
+      const row = db.get<{ songId: number, title: string, titleNorm: string }>(String(query), query.parameters)
+
+      if (row) {
+        log.debug('matched song: %s', row.title)
+        match.songId = row.songId
+        match.title = row.title
+        match.titleNorm = row.titleNorm
+        match.isNewSong = false
+      } else {
+        log.debug('new song: %s', parsed.title)
+
+        const fields = new Map()
+        fields.set('artistId', match.artistId)
+        fields.set('title', parsed.title)
+        fields.set('titleNorm', parsed.titleNorm)
+
+        const query = sql`
+          INSERT INTO songs ${sql.tuple(Array.from(fields.keys()).map(sql.column))}
+          VALUES ${sql.tuple(Array.from(fields.values()))}
+        `
+        const res = db.run(String(query), query.parameters)
+
+        if (!Number.isInteger(res.lastID)) {
+          throw new Error('invalid songId after insert')
+        }
+
+        match.songId = res.lastID
+        match.title = parsed.title
+        match.titleNorm = parsed.titleNorm
+        match.isNewSong = true
+      }
+    }
+
+    return match
+  }
+
+  /**
+  * Gets a user's starred artists and songs
+  */
+  static getUserStars (userId: number): { starredArtists: number[], starredSongs: number[] } {
+    let starredArtists, starredSongs
+
+    // get starred artists
+    {
+      const query = sql`
+        SELECT artistId
+        FROM artistStars
+        WHERE userId = ${userId}
+      `
+      const rows = db.all<{ artistId: number }>(String(query), query.parameters)
+
+      starredArtists = rows.map(row => row.artistId)
+    }
+
+    // get starred songs
+    {
+      const query = sql`
+        SELECT songId
+        FROM songStars
+        WHERE userId = ${userId}
+      `
+      const rows = db.all<{ songId: number }>(String(query), query.parameters)
+
+      starredSongs = rows.map(row => row.songId)
+    }
+
+    return { starredArtists, starredSongs }
+  }
+
+  /**
+  * Add a user's star to a song
+  */
+  static starSong (songId: number, userId: number): number {
+    const fields = new Map()
+    fields.set('songId', songId)
+    fields.set('userId', userId)
+
+    const query = sql`
+      INSERT OR IGNORE INTO songStars ${sql.tuple(Array.from(fields.keys()).map(sql.column))}
+      VALUES ${sql.tuple(Array.from(fields.values()))}
+    `
+    const res = db.run(String(query), query.parameters)
+
+    if (res.changes) {
+      // invalidate cache
+      this.starCountsCache.version = null
+    }
+
+    return res.changes
+  }
+
+  /**
+  * Remove a user's star from a song
+  */
+  static unstarSong (songId: number, userId: number): number {
+    const query = sql`
+      DELETE FROM songStars
+      WHERE userId = ${userId} AND songId = ${songId}
+    `
+    const res = db.run(String(query), query.parameters)
+
+    if (res.changes) {
+      // invalidate cache
+      this.starCountsCache.version = null
+    }
+
+    return res.changes
+  }
+
+  /**
+  * Gets artist and song star counts
+  */
+  static getStarCounts (): typeof Library.starCountsCache {
+    // already cached?
+    if (this.starCountsCache.version) return this.starCountsCache
+
+    const startTime = performance.now()
+
+    const artists = {}
+    const songs = {}
+
+    // get artist star counts
+    {
+      const query = sql`
+        SELECT artistId, COUNT(userId) AS count
+        FROM artistStars
+        GROUP BY artistId
+      `
+      const rows = db.all<{ artistId: number, count: number }>(String(query), query.parameters)
+
+      rows.forEach((row) => {
+        artists[row.artistId] = row.count
+      })
+    }
+
+    // get song star counts
+    {
+      const query = sql`
+        SELECT songId, COUNT(userId) AS count
+        FROM songStars
+        GROUP BY songId
+      `
+      const rows = db.all<{ songId: number, count: number }>(String(query), query.parameters)
+
+      rows.forEach((row) => {
+        songs[row.songId] = row.count
+      })
+    }
+
+    log.info('built star count cache in %sms', (performance.now() - startTime).toFixed(3))
+
+    this.starCountsCache = {
+      artists,
+      songs,
+      version: Date.now(),
+    }
+
+    return this.starCountsCache
+  }
+}
+
+export default Library

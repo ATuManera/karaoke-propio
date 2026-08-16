@@ -1,0 +1,167 @@
+:root {
+  --hue-blue: 209;
+  --hue-pink: 270;
+  --color-gray-1: hsl(var(--hue-blue), 10%, 10%);
+  --color-gray-2: hsl(var(--hue-blue), 10%, 20%);
+  --color-gray-3: hsl(var(--hue-blue), 10%, 30%);
+  --color-gray-4: hsl(var(--hue-blue), 10%, 40%);
+  --color-gray-5: hsl(var(--hue-blue), 10%, 50%);
+  --color-gray-6: hsl(var(--hue-blue), 10%, 60%);
+  --color-gray-7: hsl(var(--hue-blue), 10%, 70%);
+  --color-gray-8: hsl(var(--hue-blue), 10%, 80%);
+  --color-gray-9: hsl(var(--hue-blue), 10%, 90%);
+
+  --font-family: system-ui, sans-serif;
+  --font-family-custom: system-ui, sans-serif;
+  --font-weight-light: 300;
+  --font-weight-normal: 400;
+  --font-weight-bold: 600;
+
+  --font-size-xs: 0.75rem;
+  --font-size-s: 1rem;
+  --font-size-m: 1.25rem;
+  --font-size-l: 1.5rem;
+  --font-size-xl: 2rem;
+
+  --icon-size-s: 1rem;
+  --icon-size-m: 1.5rem;
+  --icon-size-l: 2rem;
+  --icon-size-xl: 3rem;
+
+  --space-xs: 4px;
+  --space-s: 8px;
+  --space-m: 16px;
+  --space-l: 24px;
+  --space-xl: 32px;
+  --container-padding: 12px;
+
+  --bg-color: hsl(var(--hue-blue), 40%, 2%);
+  --text-color: var(--color-gray-8);
+  --link-color: hsl(var(--hue-blue), 92%, 69%);
+  --mark-bg-color: hsl(var(--hue-blue), 50%, 30%);
+
+  --text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.5);
+  --box-shadow: 0 2px 5px 0 rgba(0, 0, 0, 0.26);
+  --drop-shadow-filter: drop-shadow(0 2px 5px #222);
+  --border-radius: 8px;
+  --focus-outline: 4px solid var(--btn-danger-bg-color);
+
+  --input-color: var(--color-gray-1);
+  --input-placeholder-color: var(--color-gray-5);
+  --input-bg-color: hsl(var(--hue-blue), 10%, 80%);
+  --input-outline-color: hsl(var(--hue-blue), 90%, 50%);
+  --input-margin: 7px;
+
+  --btn-bg-color: hsl(var(--hue-blue), 40%, 30%);
+  --btn-active-bg-color: var(--link-color);
+  --btn-active-filter: drop-shadow(0 0 10px hsla(var(--hue-blue), 100%, 100%, .5));
+  --btn-activate-filter: drop-shadow(-.25rem 0 .75rem hsl(var(--hue-blue), 80%, 50%)) drop-shadow(.25rem 0 .75rem hsl(var(--hue-blue), 80%, 50%)) drop-shadow(0 0 1rem hsla(var(--hue-blue), 80%, 50%, 0.5));
+
+  --btn-danger-bg-color: hsl(var(--hue-pink), 60%, 57%);
+  --btn-danger-filter: drop-shadow(0 0 10px hsla(var(--hue-pink), 100%, 100%, .5));
+  --btn-danger-activate-filter:
+    drop-shadow(-5px 0 10px hsl(var(--hue-pink), 80%, 70%)) drop-shadow(5px 0 10px hsl(var(--hue-pink), 80%, 70%)) drop-shadow(0 0 10px hsla(var(--hue-pink), 80%, 70%, 0.5));
+
+  /* UI chrome (header/footer) */
+  --chrome-bg-color: hsla(var(--hue-blue), 100%, 5%, .8);
+  --chrome-border-color: hsla(var(--hue-blue), 24%, 26%, 0.5);
+  --header-notice-color: var(--text-color);
+  --header-notice-bg-color: hsl(var(--hue-blue), 100%, 27%);
+
+  /* Library */
+  --artist-folder-color: var(--text-color);
+  --artist-folder-bg-color: hsl(var(--hue-blue), 90%, 25%);
+  --artist-folder-starred-color: #000;
+  --artist-folder-starred-bg-color: var(--link-color);
+  --artist-folder-starred-filter: var(--btn-active-filter);
+  --artist-name-color: hsl(var(--hue-blue), 10%, 85%);
+
+  --song-item-btn-bg-color: hsl(var(--hue-blue), 100%, 15%);
+  --song-item-btn-active-color: #333;
+  --song-item-btn-active-bg-color: var(--btn-active-bg-color);
+  --song-item-btn-active-filter: var(--btn-active-filter);
+
+  --alpha-picker-color: var(--artist-folder-bg-color);
+  --queued-item-color: hsl(var(--hue-pink), 70%, 80%);
+  --queued-item-text-shadow: var(--text-shadow-glow);
+
+  /* Account panels */
+  --panel-bg-color: hsl(var(--hue-blue), 20%, 10%);
+
+  /* PlaybackCtrl */
+  --transport-btn-bg-color: var(--btn-danger-bg-color);
+  --transport-btn-filter: var(--btn-danger-filter);
+  --transport-volume-track-color: var(--btn-bg-color);
+  --transport-volume-track-active-color: var(--btn-active-bg-color);
+  --transport-volume-track-active-filter: var(--btn-active-filter);
+
+  /* Up Next header/banner */
+  --up-next-bg-color-from: hsl(var(--hue-blue), 70%, 20%);
+  --up-next-bg-color-to: hsl(var(--hue-blue), 70%, 35%);
+  --up-next-filter: none;
+
+  --up-now-bg-color-from: hsl(var(--hue-pink), 70%, 20%);
+  --up-now-bg-color-to: hsl(var(--hue-pink), 50%, 40%);
+  --up-now-filter: none;
+
+  /* <button> colors */
+  --btn-primary-color: #333;
+  --btn-primary-bg-color: var(--btn-active-bg-color);
+
+  /* Animation */
+  --spring-duration: .5s;
+  --spring-function: cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  --animation-text-shadow-glow: glow .25s ease-out;
+  --animation-btn-danger-activate: btn-danger-activate 1s var(--activate-1);
+  --text-shadow-glow: 0 0 .25em hsl(var(--hue-pink), 100%, 50%), 0 0 .5em hsl(var(--hue-pink), 100%, 50%);
+
+  --animation-btn-star: starBounce .5s var(--bounce-1);
+  --bounce-1: linear(0, 0.74 5.9%, 0.911 8.5%, 0.954 9.8%, 0.969 11.1%, 0.956 12.4%, 0.919 13.7%, 0.766 16.5%, -0.246 28.6%, -0.382 31.4%, -0.449 34.2%, -0.456 35.4%, -0.452 36.6%, -0.405 39.3%, 0.012 50.9%, 0.09 54.1%, 0.131 57.3%, 0.138 59.7%, 0.127 62.4%, 0.022 72.7%, -0.011 78.2%, -0.016 82.9%, 0);
+
+  --animation-btn-activate: btn-activate 1s var(--activate-1);
+  --activate-1: ease-out;
+}
+
+@keyframes starBounce {
+  0% {
+    transform: scale(1);
+  }
+
+  100% {
+    transform: scale(1.5);
+  }
+}
+
+@keyframes glow {
+  from {
+    text-shadow: none;
+  }
+
+  25% {
+    text-shadow: 0 0 4px hsl(var(--hue-pink), 100%, 100%), 0 0 8px hsl(var(--hue-pink), 100%, 100%), 0 0 12px hsl(var(--hue-pink), 100%, 100%);
+  }
+
+  to {
+    text-shadow: var(--text-shadow-glow);
+  }
+}
+
+@keyframes btn-activate {
+  from {
+    filter: var(--btn-activate-filter);
+  }
+
+  to {
+    filter: var(--btn-active-filter);
+  }
+}
+
+@keyframes btn-danger-activate {
+  from {
+    filter: var(--btn-danger-activate-filter);
+  }
+
+  to {
+    filter: var(--btn-danger-filter);
+  }
+}
