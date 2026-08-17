@@ -15,7 +15,9 @@
 > de Karaoke Eternal ni cuenta con el respaldo de sus autores.
 
 **Author / Autor:** A Tu Manera Digital — Fernando Gallarday ([@fgallarday](https://github.com/fgallarday))
+
 **AI Assistance / Asistencia de IA:** Developed with the support of GPT 5.6 Sol, Claude Opus 4.8, and Claude Sonnet 5.
+
 **Version / Versión:** 1.0.0
 
 ---
