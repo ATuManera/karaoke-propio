@@ -1,4 +1,5 @@
 import getLogger from '../lib/Log.js'
+import type { PlaylistImportEntry } from '../../shared/types.js'
 
 const log = getLogger('AcquisitionWorker')
 
@@ -47,6 +48,41 @@ export default class AcquisitionWorkerClient {
 
     const json: { results?: YouTubeSearchResult[] } = await res.json()
     return json.results ?? []
+  }
+
+  /**
+   * The listing of a playlist — titles only, nothing downloaded and no video
+   * touched. Used to work out which of someone's songs the library already
+   * has; what to do about the rest is the singer's call, one song at a time.
+   *
+   * No limit is sent on purpose: how many entries are worth reading is a cost
+   * the worker knows and this side does not, so PLAYLIST_MAX_ENTRIES lives
+   * there and applies by default. The real total comes back either way, so a
+   * truncated listing can still say how much it left out.
+   */
+  async fetchPlaylist (url: string): Promise<{ title: string, total: number | null, entries: PlaylistImportEntry[] }> {
+    let res: Response
+    try {
+      const reqUrl = new URL('/playlist', this.baseUrl)
+      reqUrl.searchParams.set('url', url)
+      res = await fetch(reqUrl)
+    } catch (err) {
+      throw new AcquisitionWorkerError(`acquisition-worker unreachable: ${(err as Error).message}`, err)
+    }
+
+    if (!res.ok) {
+      const body: { error?: string } = await res.json().catch(() => ({}))
+      // the worker answers 422 with YouTube's own words for a playlist that is
+      // private, deleted or mistyped — those are worth passing through as-is
+      throw new AcquisitionWorkerError(body.error || `playlist failed (${res.status})`)
+    }
+
+    const json: { playlist?: { title?: string, total?: number | null, entries?: PlaylistImportEntry[] } } = await res.json()
+    return {
+      title: json.playlist?.title ?? '',
+      total: json.playlist?.total ?? null,
+      entries: json.playlist?.entries ?? [],
+    }
   }
 
   /**

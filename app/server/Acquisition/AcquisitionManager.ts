@@ -16,8 +16,9 @@ import AcquisitionWorkerClient from './AcquisitionWorkerClient.js'
 import CdgWorkerClient from './CdgWorkerClient.js'
 import UsdbClient from './UsdbClient.js'
 import { parseUltraStarHeaders, ultraStarToLrc } from './UltraStarToLrc.js'
+import { isPrivatePlaylistId, parsePlaylistId, playlistUrl } from '../../shared/youtubePlaylist.js'
 import { ACQUISITION_PUSH, LIBRARY_PUSH, LIBRARY_PUSH_SONG, QUEUE_PUSH } from '../../shared/actionTypes.js'
-import type { AcquisitionRequest, AcquisitionSource, AcquisitionState } from '../../shared/types.js'
+import type { AcquisitionRequest, AcquisitionSource, AcquisitionState, PlaylistImport } from '../../shared/types.js'
 
 const log = getLogger('AcquisitionManager')
 
@@ -80,6 +81,29 @@ class AcquisitionManager {
   /** single free-text query, matched against USDB's title field (most common single-box search intent) */
   static async searchUsdb (query: string) {
     return this.usdb.search('', query)
+  }
+
+  /**
+   * What is in a playlist someone pasted a link to. Reading only: this never
+   * downloads anything, and the answer is a listing to compare against the
+   * library — see shared/playlistMatch.ts for what the client does with it.
+   *
+   * The link is reduced to its list id and rebuilt from scratch, so whatever
+   * else it carried (a video id, an index, tracking parameters) never reaches
+   * yt-dlp.
+   */
+  static async fetchPlaylist (url: string): Promise<PlaylistImport> {
+    const playlistId = parsePlaylistId(url)
+    if (!playlistId) throw new Error(`That doesn't look like a link to a YouTube playlist.`)
+
+    if (isPrivatePlaylistId(playlistId)) {
+      throw new Error(`YouTube keeps Liked songs and Watch later private, so nothing can read them from here. Copy them into a playlist and set it to public or unlisted.`)
+    }
+
+    const { title, total, entries } = await this.worker.fetchPlaylist(playlistUrl(playlistId))
+    log.info('read playlist %s: %d of %s entries', playlistId, entries.length, total ?? '?')
+
+    return { playlistId, title, total, entries }
   }
 
   /**

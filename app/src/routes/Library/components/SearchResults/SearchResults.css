@@ -20,6 +20,7 @@
   right: 0;
   display: flex;
   justify-content: center;
+  gap: var(--space-s);
   padding: var(--space-s);
   pointer-events: none;
 }

@@ -30,6 +30,15 @@ describe('guessArtistTitle', () => {
       .toEqual({ artist: 'Jeanette', title: 'Soy Rebelde' })
   })
 
+  // official artist channels publish with an en dash, and a playlist of them
+  // used to come back with the whole title sitting in the artist field
+  it('splits on an en or em dash too', () => {
+    expect(guessArtistTitle('Queen – Bohemian Rhapsody (Official Video Remastered)'))
+      .toEqual({ artist: 'Queen', title: 'Bohemian Rhapsody' })
+    expect(guessArtistTitle('Soda Stereo — De Música Ligera'))
+      .toEqual({ artist: 'Soda Stereo', title: 'De Música Ligera' })
+  })
+
   it('cannot tell a reversed title apart — which is exactly why the user confirms it', () => {
     // "Here Comes The Sun" is the song, not the artist; guessing puts it in the
     // artist field and only the user can catch that

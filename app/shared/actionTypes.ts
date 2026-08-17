@@ -22,6 +22,8 @@ export const QUEUE_REMOVE = 'server/QUEUE_REMOVE'
 
 // Acquisition (fetch a song from an external source: YouTube, USDB)
 export const ACQUISITION_SEARCH = 'server/ACQUISITION_SEARCH'
+/** read a public playlist's listing, to see which of its songs are already here */
+export const ACQUISITION_PLAYLIST = 'server/ACQUISITION_PLAYLIST'
 export const ACQUISITION_PREVIEW = 'server/ACQUISITION_PREVIEW'
 export const ACQUISITION_ADD = 'server/ACQUISITION_ADD'
 export const ACQUISITION_PUSH = 'acquisition/PUSH'

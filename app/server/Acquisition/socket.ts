@@ -1,9 +1,12 @@
 import AcquisitionManager from './AcquisitionManager.js'
 import Rooms from '../Rooms/Rooms.js'
 import { isValidPitch } from '../../shared/pitch.js'
-import { ACQUISITION_SEARCH, ACQUISITION_PREVIEW, ACQUISITION_ADD } from '../../shared/actionTypes.js'
+import { ACQUISITION_SEARCH, ACQUISITION_PLAYLIST, ACQUISITION_PREVIEW, ACQUISITION_ADD } from '../../shared/actionTypes.js'
 
 const MAX_QUERY_LENGTH = 200
+// a share link with every tracking parameter YouTube attaches is still well
+// under this; anything longer is not a link anyone copied
+const MAX_URL_LENGTH = 2000
 
 const ACTION_HANDLERS = {
   [ACQUISITION_SEARCH]: async (sock, { payload }, acknowledge) => {
@@ -36,6 +39,34 @@ const ACTION_HANDLERS = {
       acknowledge({ type: ACQUISITION_SEARCH + '_SUCCESS', payload: { results } })
     } catch (err) {
       acknowledge({ type: ACQUISITION_SEARCH + '_ERROR', error: err.message })
+    }
+  },
+
+  [ACQUISITION_PLAYLIST]: async (sock, { payload }, acknowledge) => {
+    const { url } = payload ?? {}
+
+    if (typeof url !== 'string' || !url.trim() || url.length > MAX_URL_LENGTH) {
+      return acknowledge({ type: ACQUISITION_PLAYLIST + '_ERROR', error: 'Invalid playlist link' })
+    }
+
+    // Reading a public playlist touches no room state, so this check is not
+    // there to protect anything — it is there because ACQUISITION_SEARCH has
+    // it. Half of what an import is for is fetching the songs that turned out
+    // to be missing, and that half needs a room; letting the listing through
+    // without one would just move the refusal to the next tap.
+    try {
+      await Rooms.validate(sock.user.roomId, null, { validatePassword: false })
+    } catch (err) {
+      return acknowledge({ type: ACQUISITION_PLAYLIST + '_ERROR', error: err.message })
+    }
+
+    try {
+      // acknowledged rather than pushed: this is one person looking at their
+      // own playlist, and nobody else in the room has any use for the answer
+      const playlist = await AcquisitionManager.fetchPlaylist(url.trim())
+      acknowledge({ type: ACQUISITION_PLAYLIST + '_SUCCESS', payload: { playlist } })
+    } catch (err) {
+      acknowledge({ type: ACQUISITION_PLAYLIST + '_ERROR', error: err.message })
     }
   },
 

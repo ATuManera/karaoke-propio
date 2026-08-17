@@ -14,6 +14,9 @@ const { execFile } = require('node:child_process')
 
 const PORT = parseInt(process.env.PORT, 10) || 4100
 const SEARCH_TIMEOUT_MS = parseInt(process.env.ACQ_WORKER_SEARCH_TIMEOUT_MS, 10) || 30 * 1000
+// a playlist is read a page of ~100 entries at a time, so it takes longer than
+// a single search but nothing like a download
+const PLAYLIST_TIMEOUT_MS = parseInt(process.env.ACQ_WORKER_PLAYLIST_TIMEOUT_MS, 10) || 60 * 1000
 const DOWNLOAD_TIMEOUT_MS = parseInt(process.env.ACQ_WORKER_DOWNLOAD_TIMEOUT_MS, 10) || 10 * 60 * 1000
 
 // Reimplementation of the search-and-download shape PiKaraoke uses
@@ -165,6 +168,91 @@ async function handleSearch (req, res, query) {
     .slice(0, limit)
 
   return sendJson(res, 200, { results })
+}
+
+// A playlist is read to find out which of its songs the library already has, so
+// what matters is covering the list, not the detail of each entry: --flat-playlist
+// asks YouTube for the listing itself and never touches the videos. The cap is
+// on this side because a 1600-entry channel upload playlist is a legitimate
+// thing to paste, and every entry past a party's worth of songs is a page of
+// scrolling nobody reads. The caller is told the real total so it can say so.
+const PLAYLIST_MAX_ENTRIES = 100
+
+// yt-dlp's own message is the useful part ("The playlist does not exist", "This
+// playlist is private") — the wrapper prefix, the extractor tag and the id are
+// noise to whoever pasted the link
+function ytDlpMessage (raw) {
+  const lines = String(raw ?? '').split('\n').map(l => l.trim()).filter(Boolean)
+  const line = lines.filter(l => l.includes('ERROR:')).pop() ?? lines.pop() ?? 'yt-dlp failed'
+
+  return line
+    .replace(/^.*?ERROR:\s*/, '')
+    .replace(/^\[[^\]]+\]\s*/, '')
+    .replace(/^[\w-]+:\s+/, '')
+    .replace(/^YouTube said:\s*/, '')
+    .trim()
+}
+
+async function handlePlaylist (req, res, query) {
+  const url = query.get('url')
+  const limit = Math.min(
+    PLAYLIST_MAX_ENTRIES,
+    Math.max(1, parseInt(query.get('limit'), 10) || PLAYLIST_MAX_ENTRIES),
+  )
+
+  if (!isAllowedYouTubeUrl(url)) {
+    return sendJson(res, 422, { error: 'url must be a youtube.com/youtu.be URL' })
+  }
+
+  let stdout
+
+  try {
+    ({ stdout } = await execFileP('yt-dlp', [
+      url,
+      '--flat-playlist',
+      '--dump-single-json',
+      '--playlist-end', String(limit),
+      '--no-warnings',
+      ...JS_RUNTIME_ARGS,
+    ], { timeout: PLAYLIST_TIMEOUT_MS, maxBuffer: 32 * 1024 * 1024 }))
+  } catch (err) {
+    // a private, deleted or mistyped playlist is the user's problem to fix, not
+    // a server fault — 422 with what YouTube actually said, unless what it said
+    // was an HTTP status (which is true, and useless to whoever pasted a link)
+    const detail = ytDlpMessage(err.message)
+
+    return sendJson(res, 422, {
+      error: /HTTP Error|Unable to download|urlopen|SSL/i.test(detail)
+        ? 'YouTube would not open this playlist. Check the link, and that the playlist is public or unlisted.'
+        : detail,
+    })
+  }
+
+  const parsed = JSON.parse(stdout)
+  const entries = Array.isArray(parsed.entries) ? parsed.entries : []
+
+  return sendJson(res, 200, {
+    playlist: {
+      title: parsed.title ?? '',
+      // present on a real playlist, null on an auto-generated mix
+      total: Number.isFinite(parsed.playlist_count) ? parsed.playlist_count : null,
+      entries: entries
+        .filter(e => e && e.id && !LIVE_STATUSES.has(e.live_status))
+        // a playlist keeps its place for videos that have since been taken
+        // down; "[Deleted video]" is not a song anyone can be helped to find
+        .filter(e => !/^\[(deleted|private|unavailable) video\]$/i.test((e.title ?? '').trim()))
+        .map(e => ({
+          id: e.id,
+          title: e.title,
+          durationSeconds: typeof e.duration === 'number' ? Math.round(e.duration) : null,
+          uploader: e.uploader || e.channel || null,
+          // smallest thumbnail, not the largest the search uses: this is a list
+          // of up to 100 rows on a phone, so 100 full-size images is the wrong
+          // trade
+          thumbnail: Array.isArray(e.thumbnails) && e.thumbnails.length ? e.thumbnails[0].url : null,
+        })),
+    },
+  })
 }
 
 // yt-dlp reports HLS variants as ext=mp4 even though their URL is an .m3u8
@@ -334,6 +422,12 @@ const server = http.createServer((req, res) => {
 
   if (req.method === 'GET' && url.pathname === '/search') {
     return handleSearch(req, res, url.searchParams).catch((err) => {
+      sendJson(res, 500, { error: err.message })
+    })
+  }
+
+  if (req.method === 'GET' && url.pathname === '/playlist') {
+    return handlePlaylist(req, res, url.searchParams).catch((err) => {
       sendJson(res, 500, { error: err.message })
     })
   }

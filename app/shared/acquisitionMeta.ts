@@ -41,6 +41,14 @@ export interface GuessedMeta {
   title: string
 }
 
+// A dash *surrounded by spaces* is the separator uploaders actually use; a bare
+// hyphen is far more likely to be part of a name ("Jay-Z", "Blink-182"). The
+// en/em dashes are not decoration: official artist channels publish with them
+// ("Queen – Bohemian Rhapsody (Official Video Remastered)", verified against
+// YouTube on 2026-08-17), and a title split on the hyphen alone leaves the
+// whole thing sitting in the artist field.
+const SEPARATOR_RE = /\s+[-–—]\s+/
+
 /**
  * Best-effort split of a YouTube title. Assumes "Artist - Title", which is the
  * more common convention; the UI must let the user swap them.
@@ -48,13 +56,11 @@ export interface GuessedMeta {
 export function guessArtistTitle (youtubeTitle: string): GuessedMeta {
   const cleaned = cleanSongText(youtubeTitle ?? '')
 
-  // " - " (with spaces) is the separator uploaders actually use; a bare hyphen
-  // is far more likely to be part of a name ("Jay-Z", "Blink-182")
-  const idx = cleaned.indexOf(' - ')
-  if (idx === -1) return { artist: '', title: cleaned }
+  const separator = SEPARATOR_RE.exec(cleaned)
+  if (!separator) return { artist: '', title: cleaned }
 
   return {
-    artist: cleanSongText(cleaned.slice(0, idx)),
-    title: cleanSongText(cleaned.slice(idx + 3)),
+    artist: cleanSongText(cleaned.slice(0, separator.index)),
+    title: cleanSongText(cleaned.slice(separator.index + separator[0].length)),
   }
 }

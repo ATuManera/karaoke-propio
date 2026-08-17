@@ -23,6 +23,55 @@ before anything is downloaded.
   embedding, which that player honours. A direct progressive stream URL is
   proxied instead, so playback never goes through YouTube's player.
 
+## Playlist import
+
+A link to a public YouTube playlist, answered against the library: which of
+these can be sung tonight, and what it would take to sing the rest.
+
+The entry point is the search box, not a new button. Anything pasted with a
+`list=` in it is a playlist, so the gesture is just paste — including in the
+library's own search field, which is where a link actually gets pasted (it
+filters as you type, finds nothing, and offers the acquisition modal, so the
+same check runs on mount there).
+
+Comparing happens on the client, against the library already in the store.
+Cheaper than asking the server, and it keeps the list honest: a song acquired
+from the import crosses from one half of the list to the other on the next
+render after `LIBRARY_PUSH`, with no bookkeeping of its own — in practice, by
+the time the singer taps back to the playlist it has already moved.
+
+Matching is the whole problem. A playlist entry is whatever the uploader typed;
+the library holds an artist and title parsed from a file. yt-dlp's structured
+`artist`/`track` fields would settle it and are always null under
+`--flat-playlist` (verified 2026-08-17), so the material is the title string and
+the channel name. What earns its keep in `shared/playlistMatch.ts`:
+
+- Articles. The library stores `Beatles, The`; a playlist says `The Beatles`.
+  Without `stripArticles` on both sides, an ordinary English-language playlist
+  reads as almost entirely missing.
+- Apostrophes are removed, not split on: a filename has usually lost the one in
+  `Don't Stop Me Now`.
+- `- Topic` channels. YouTube Music's auto-generated uploads put the bare song
+  name in the title and the artist only in the channel.
+- Both readings of `A - B` are tried, because `Here Comes The Sun - The
+  Beatles` is a real and common way to write a title.
+
+Where the evidence is ambiguous — a title two songs share, no artist to
+separate them — it reports "not here". A false match hides a song someone
+wanted; a false miss downloads a second copy of what is already on disk, and
+that one is worse.
+
+Nothing downloads from the import. A missing song opens the same search,
+preview and pitch flow as any other acquisition, one at a time: forty songs
+someone liked in 2011, fetched unattended, would fill the library with versions
+nobody chose. Which is also why this is not the tool that inspired the question
+([yt_playlists_from_karaoke_services](https://github.com/Deastrom/yt_playlists_from_karaoke_services)
+matches liked songs against catalogs you cannot change; here the catalog is the
+thing you can change).
+
+Liked songs and Watch later are private to their owner's account and are
+refused by name, with what to do instead, rather than relaying a login error.
+
 ## Per-request pitch
 
 Pitch is a property of each queue entry, not of the room. Transposition starts

@@ -10,6 +10,7 @@ import PaddedList from 'components/PaddedList/PaddedList'
 import TextOverlay from 'components/TextOverlay/TextOverlay'
 import Button from 'components/Button/Button'
 import AcquisitionModal from 'components/AcquisitionModal/AcquisitionModal'
+import { parsePlaylistId } from 'shared/youtubePlaylist'
 import ArtistItem from '../ArtistItem/ArtistItem'
 import SongList from '../SongList/SongList'
 import type { ListImperativeAPI, RowComponentProps } from 'react-window'
@@ -128,9 +129,16 @@ const SearchResults = ({ ui }: SearchResultsProps) => {
   const { filterStr, filterStarred } = useAppSelector(state => state.library)
   const { artistsResult, songsResult } = useAppSelector(getSearchResults)
 
+  const playlist = useAppSelector(state => state.acquisition.playlist)
+
   const listRef = useRef<ListImperativeAPI | null>(null)
   const filterKeywords = filterStr.trim() ? filterStr.trim().toLowerCase().split(' ') : []
-  const [isAcquisitionOpen, setAcquisitionOpen] = useState(false)
+  // null when closed; otherwise which half of the modal to open on
+  const [acquisitionView, setAcquisitionView] = useState<'search' | 'playlist' | null>(null)
+
+  // a link pasted into the library's search box is not a search anyone meant to
+  // run, so say what it actually is instead of reporting nothing found
+  const isPlaylistLink = !!parsePlaylistId(filterStr.trim())
 
   // The "Search YouTube" bar floats over the list, so the list has to end above
   // it — otherwise the last row sits underneath and cannot be reached by
@@ -180,15 +188,22 @@ const SearchResults = ({ ui }: SearchResultsProps) => {
     return (
       <>
         <TextOverlay className={styles.noResults}>
-          <h1>No local results</h1>
-          <p>Try searching YouTube instead.</p>
-          <Button variant='primary' onClick={() => setAcquisitionOpen(true)}>Search YouTube</Button>
+          <h1>{isPlaylistLink ? 'That’s a playlist' : 'No local results'}</h1>
+          <p>
+            {isPlaylistLink
+              ? 'See which of its songs are already here.'
+              : 'Try searching YouTube instead.'}
+          </p>
+          <Button variant='primary' onClick={() => setAcquisitionView('search')}>
+            {isPlaylistLink ? 'Open playlist' : 'Search YouTube'}
+          </Button>
         </TextOverlay>
 
-        {isAcquisitionOpen && (
+        {acquisitionView && (
           <AcquisitionModal
             initialQuery={filterStr.trim()}
-            onClose={() => setAcquisitionOpen(false)}
+            initialView={acquisitionView}
+            onClose={() => setAcquisitionView(null)}
           />
         )}
       </>
@@ -223,20 +238,29 @@ const SearchResults = ({ ui }: SearchResultsProps) => {
           reachable without scrolling the virtualized list to its end. */}
       {!!filterStr.trim() && (
         <div ref={moreBarRef} className={styles.moreBar} style={{ bottom: ui.footerHeight }}>
+          {/* tapping a song the playlist turned up leaves this list filtered to
+              it, so the way back has to be somewhere — the playlist itself
+              survives in the store until another one replaces it */}
+          {playlist && (
+            <Button className={styles.moreButton} onClick={() => setAcquisitionView('playlist')}>
+              Your playlist
+            </Button>
+          )}
           <Button
             className={styles.moreButton}
             variant='primary'
-            onClick={() => setAcquisitionOpen(true)}
+            onClick={() => setAcquisitionView('search')}
           >
             Not what you wanted? Search YouTube
           </Button>
         </div>
       )}
 
-      {isAcquisitionOpen && (
+      {acquisitionView && (
         <AcquisitionModal
           initialQuery={filterStr.trim()}
-          onClose={() => setAcquisitionOpen(false)}
+          initialView={acquisitionView}
+          onClose={() => setAcquisitionView(null)}
         />
       )}
     </>

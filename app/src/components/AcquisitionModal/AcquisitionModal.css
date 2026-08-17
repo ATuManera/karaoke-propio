@@ -33,6 +33,16 @@
   flex: 1;
 }
 
+.hint {
+  margin: 0 0 var(--space-m);
+  font-size: var(--font-size-xs);
+  color: var(--color-gray-6);
+}
+
+.backToPlaylist {
+  margin-bottom: var(--space-m);
+}
+
 .status {
   margin-bottom: var(--space-m);
   padding: var(--space-s);

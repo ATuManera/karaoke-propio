@@ -1,12 +1,13 @@
 import { createAction, createReducer } from '@reduxjs/toolkit'
 import {
   ACQUISITION_SEARCH,
+  ACQUISITION_PLAYLIST,
   ACQUISITION_PREVIEW,
   ACQUISITION_ADD,
   ACQUISITION_PUSH,
   LOGOUT,
 } from 'shared/actionTypes'
-import type { AcquisitionRequest, AcquisitionSearchResult, AcquisitionSource } from 'shared/types'
+import type { AcquisitionRequest, AcquisitionSearchResult, AcquisitionSource, PlaylistImport } from 'shared/types'
 
 // ------------------------------------
 // Actions
@@ -19,6 +20,14 @@ export const searchAcquisition = createAction(
     payload: { query, source, karaokeOnly },
   }),
 )
+
+// reads a public playlist's listing so the singer can see which of its songs
+// are already here; nothing is downloaded by importing one
+export const importPlaylist = createAction(ACQUISITION_PLAYLIST, (url: string) => ({
+  payload: { url },
+}))
+
+export const clearPlaylist = createAction('acquisition/CLEAR_PLAYLIST')
 
 // resolves a YouTube video id to embed as a preview BEFORE committing to a
 // download — the user confirms the version is good on their own screen
@@ -63,6 +72,11 @@ interface PreviewSuccessAction {
   payload: { videoId: string }
 }
 
+interface PlaylistSuccessAction {
+  type: string
+  payload: { playlist: PlaylistImport }
+}
+
 interface AckErrorAction {
   type: string
   error: string
@@ -78,6 +92,10 @@ interface AcquisitionState {
   /** query/source of the search currently in flight; promoted to results* on success */
   pendingQuery: string | null
   pendingSource: AcquisitionSource | null
+  isPlaylistLoading: boolean
+  playlistError: string | null
+  /** the playlist last imported, kept so closing and reopening the modal does not lose it */
+  playlist: PlaylistImport | null
   isPreviewLoading: boolean
   previewError: string | null
   /** null until ACQUISITION_PREVIEW resolves — the resolved YouTube video id (used for the "Watch on YouTube" fallback link) */
@@ -95,6 +113,9 @@ const initialState: AcquisitionState = {
   resultsSource: null,
   pendingQuery: null,
   pendingSource: null,
+  isPlaylistLoading: false,
+  playlistError: null,
+  playlist: null,
   isPreviewLoading: false,
   previewError: null,
   previewVideoId: null,
@@ -106,6 +127,10 @@ const isSearchSuccess = (action: { type: string }): action is SearchSuccessActio
   action.type === `${ACQUISITION_SEARCH}_SUCCESS`
 const isSearchError = (action: { type: string }): action is AckErrorAction =>
   action.type === `${ACQUISITION_SEARCH}_ERROR`
+const isPlaylistSuccess = (action: { type: string }): action is PlaylistSuccessAction =>
+  action.type === `${ACQUISITION_PLAYLIST}_SUCCESS`
+const isPlaylistError = (action: { type: string }): action is AckErrorAction =>
+  action.type === `${ACQUISITION_PLAYLIST}_ERROR`
 const isPreviewSuccess = (action: { type: string }): action is PreviewSuccessAction =>
   action.type === `${ACQUISITION_PREVIEW}_SUCCESS`
 const isPreviewError = (action: { type: string }): action is AckErrorAction =>
@@ -120,6 +145,15 @@ const acquisitionReducer = createReducer(initialState, (builder) => {
       state.searchError = null
       state.pendingQuery = payload.query
       state.pendingSource = payload.source
+    })
+    .addCase(importPlaylist, (state) => {
+      state.isPlaylistLoading = true
+      state.playlistError = null
+    })
+    .addCase(clearPlaylist, (state) => {
+      state.isPlaylistLoading = false
+      state.playlistError = null
+      state.playlist = null
     })
     .addCase(previewAcquisition, (state) => {
       state.isPreviewLoading = true
@@ -151,6 +185,17 @@ const acquisitionReducer = createReducer(initialState, (builder) => {
     .addMatcher(isSearchError, (state, action) => {
       state.isSearching = false
       state.searchError = action.error
+    })
+    .addMatcher(isPlaylistSuccess, (state, action) => {
+      state.isPlaylistLoading = false
+      state.playlist = action.payload.playlist
+    })
+    .addMatcher(isPlaylistError, (state, action) => {
+      state.isPlaylistLoading = false
+      state.playlistError = action.error
+      // a failed import must not leave the previous playlist on screen looking
+      // like the answer to the link just pasted
+      state.playlist = null
     })
     .addMatcher(isPreviewSuccess, (state, action) => {
       state.isPreviewLoading = false

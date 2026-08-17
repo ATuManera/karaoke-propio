@@ -156,6 +156,24 @@ export interface AcquisitionSearchResult {
   isVerified?: boolean
 }
 
+/** one song in someone's YouTube playlist, as a flat listing describes it */
+export interface PlaylistImportEntry {
+  /** YouTube video id */
+  id: string
+  title: string
+  uploader?: string | null
+  durationSeconds?: number | null
+  thumbnail?: string | null
+}
+
+export interface PlaylistImport {
+  playlistId: string
+  title: string
+  entries: PlaylistImportEntry[]
+  /** how many songs the playlist really holds, when YouTube says (null on a mix) */
+  total: number | null
+}
+
 export interface AcquisitionRequest {
   requestId: string
   roomId: number
