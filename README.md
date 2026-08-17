@@ -34,6 +34,7 @@ does well — library, queue, player, phone remote — and adds what a real part
 | **Song acquisition** | Search YouTube or UltraStar/USDB from inside the app and download straight into the library, with a preview before committing. |
 | **Per-request pitch** | Each singer picks their own key when queueing. Transposition starts immediately in the background, so there is no wait at showtime. |
 | **Personal pitch memory** | The pitch each singer sings a song best in, remembered per person — the same song is -4 for one voice and +2 for another. Shown on the library row, and saved songs become a repertoire that queues in one tap. |
+| **Pitch assistant** | When a song finishes, its singer is asked on their own phone how the pitch felt — too high, just right, a little low — and their saved pitch is corrected accordingly. No semitones to understand, and nobody else sees the question. |
 | **Version picker** | When a song has several recordings, the singer chooses which one. |
 | **Categories** | Genre, decade, voice (male/female/duet/group) and language, looked up automatically from MusicBrainz and editable by hand. |
 | **Popularity sorting** | Order the library by how watched each source recording is. |
@@ -112,6 +113,7 @@ fiesta real necesita.
 | **Adquisición de canciones** | Buscar en YouTube o UltraStar/USDB desde la app y descargar directo a la biblioteca, con vista previa antes de decidir. |
 | **Tono por solicitud** | Cada cantante elige su tonalidad al encolar. La transposición empieza de inmediato en segundo plano, sin espera al momento de cantar. |
 | **Tono personal** | El tono en que cada cantante canta mejor una canción, recordado por persona — la misma canción es -4 para una voz y +2 para otra. Se ve en la fila de la biblioteca, y las canciones guardadas forman un repertorio que se encola con un toque. |
+| **Asistente de tono** | Al terminar una canción, se le pregunta a quien la cantó, en su propio celular, cómo le quedó el tono — muy alta, perfecta, un poco baja — y su tono personal se corrige solo. Sin necesidad de entender semitonos, y sin que nadie más vea la pregunta. |
 | **Selector de versión** | Cuando una canción tiene varias grabaciones, el cantante elige cuál. |
 | **Categorías** | Género, década, voz (hombre/mujer/dúo/grupo) e idioma, obtenidos automáticamente de MusicBrainz y editables a mano. |
 | **Orden por popularidad** | Ordenar la biblioteca según qué tan vista es cada grabación de origen. |

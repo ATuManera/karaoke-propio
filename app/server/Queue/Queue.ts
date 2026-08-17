@@ -76,6 +76,53 @@ class Queue {
   }
 
   /**
+   * Everything about one queue entry that describes the performance it stands
+   * for, including the version that actually played.
+   *
+   * getRow() cannot answer that last part: `queue.mediaId` is NULL whenever the
+   * singer didn't pick a version, and which recording then plays is decided by
+   * the same isPreferred contest Queue.get() runs. Asking for "some preferred
+   * media of this song" afterwards can land on a different one, and two YouTube
+   * karaoke rips of the same song are routinely in different keys — so a pitch
+   * filed against the wrong recording is a wrong number, not a rounding error.
+   * Hence the query below deliberately mirrors Queue.get()'s joins.
+   */
+  static getPerformance (queueId: number): {
+    queueId: number
+    roomId: number
+    songId: number
+    userId: number
+    pitchSemitones: number
+    mediaId: number
+  } | undefined {
+    const query = sql`
+      SELECT queue.queueId, queue.roomId, queue.songId, queue.userId, queue.pitchSemitones,
+        media.mediaId, MAX(isPreferred) AS isPreferred
+      FROM queue
+        INNER JOIN media ON media.songId = queue.songId
+          AND (queue.mediaId IS NULL OR media.mediaId = queue.mediaId)
+        INNER JOIN paths USING(pathId)
+      WHERE queue.queueId = ${queueId}
+      GROUP BY queue.queueId
+      ORDER BY paths.priority ASC
+    `
+    const row = db.get<{
+      queueId: number
+      roomId: number
+      songId: number
+      userId: number
+      pitchSemitones: number
+      mediaId: number
+      isPreferred: number
+    }>(String(query), query.parameters)
+
+    if (!row) return undefined
+
+    const { isPreferred, ...performance } = row // eslint-disable-line @typescript-eslint/no-unused-vars
+    return performance
+  }
+
+  /**
    * All queue rows with a non-zero pitch request, across every room.
    * Used by PitchManager.reconcile() at startup so no row is left "eternally
    * preparing" after a restart.

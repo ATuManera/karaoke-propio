@@ -49,8 +49,32 @@ devices at once.
 Not broadcast, unlike stars: a star count is public by design, but the key
 someone can comfortably reach is information about their body.
 
-Full design, including the assistant that helps find the number in the first
-place: `docs/PERSONAL_PITCH.md`.
+## Pitch assistant
+
+The number is asked for at the only moment it is cheap to answer: right after
+the song ends, on the singer's own phone. "Too high / a little high / just
+right / a little low / too low" — the semitone arithmetic happens on the server,
+so nobody has to know what a semitone is. Answers are saved as `assistant`,
+which outranks `inferred` and can correct a `manual` value.
+
+Only a media element's `ended` event triggers it. Skipping, removing, erroring
+out and reloading the Player all reach the "next song" path too, and none of
+them mean anyone sang anything — a heuristic like "played more than 80%" would
+have to guess, and guessing wrong asks people about songs they never finished.
+
+The pitch is measured from the performance, never from what was already saved:
+someone who saved -3 and decided to try -1 tonight is answering about the -1.
+The version is the one that actually played, resolved server-side with the same
+isPreferred rule the queue uses (`Queue.getPerformance`) — two YouTube rips of
+the same song are routinely in different keys, so a pitch filed against the
+wrong recording is a wrong number.
+
+The question itself lives in memory only (`server/Pitch/PitchFeedback.ts`): one
+per singer, replaced by their next performance, gone after 15 minutes or a
+restart. What is worth keeping is the answer, and that lands in `songPitchPrefs`
+like any other saved pitch — hence no new table.
+
+Full design and the roadmap beyond this phase: `docs/PERSONAL_PITCH.md`.
 
 ## Categories
 

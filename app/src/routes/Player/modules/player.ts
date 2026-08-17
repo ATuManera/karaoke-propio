@@ -11,6 +11,7 @@ import {
   PLAYER_CMD_SEEK,
   PLAYER_REQ_SEEK,
   PLAYER_CMD_VOLUME,
+  PLAYER_EMIT_ENDED,
   PLAYER_EMIT_LEAVE,
   PLAYER_EMIT_STATUS,
   PLAYER_ERROR,
@@ -28,6 +29,15 @@ export const playerError = createAction<string>(PLAYER_ERROR)
 export const playerLoad = createAction(PLAYER_LOAD)
 export const playerPlay = createAction(PLAYER_PLAY)
 export const playerCmdNext = createAction(PLAYER_CMD_NEXT)
+
+/**
+ * Tell the server a song reached its own end, so it can ask whoever sang it how
+ * the pitch felt. Emit-only: nothing in this slice changes, and the Player must
+ * not wait for it before starting the next song.
+ */
+export const playerEnded = createAction(PLAYER_EMIT_ENDED, (queueId: number) => ({
+  payload: { queueId },
+}))
 
 // triggered by clients
 const playerCmdPause = createAction(PLAYER_CMD_PAUSE)

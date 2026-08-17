@@ -4,7 +4,7 @@ import Player from '../Player/Player'
 import PlayerTextOverlay from '../PlayerTextOverlay/PlayerTextOverlay'
 import PlayerQR from '../PlayerQR/PlayerQR'
 import getRoundRobinQueue from 'routes/Queue/selectors/getRoundRobinQueue'
-import { playerLeave, playerError, playerLoad, playerPlay, playerStatus, type PlayerState } from '../../modules/player'
+import { playerEnded, playerLeave, playerError, playerLoad, playerPlay, playerStatus, type PlayerState } from '../../modules/player'
 import getRoomPrefs from '../../selectors/getRoomPrefs'
 import type { QueueItem } from 'shared/types'
 
@@ -90,6 +90,20 @@ const PlayerController = (props: PlayerControllerProps) => {
     })
   }, [handleStatus, nextQueueItem, player.historyJSON, queueItem])
 
+  /**
+   * A song that reaches its own end is the one case where someone demonstrably
+   * sang the whole thing — chorus, high notes and all — which is what makes
+   * "how was that pitch?" worth asking. Skipping, removing and erroring out
+   * take other paths and stay silent.
+   *
+   * Reported first and never waited on: the next song loads in the same tick,
+   * exactly as it did before, so the room hears no gap.
+   */
+  const handleEnd = useCallback(() => {
+    if (queueItem) dispatch(playerEnded(queueItem.queueId))
+    handleLoadNext()
+  }, [dispatch, handleLoadNext, queueItem])
+
   // "lock in" the next user that isn't the currently up user, if possible
   useEffect(() => {
     if (!player.nextUserId || queueItem?.userId === nextQueueItem?.userId) {
@@ -162,7 +176,7 @@ const PlayerController = (props: PlayerControllerProps) => {
         seekNonce={player._seekNonce}
         mediaType={queueItem ? queueItem.mediaType : null}
         mp4Alpha={player.mp4Alpha}
-        onEnd={handleLoadNext}
+        onEnd={handleEnd}
         onError={handleError}
         onLoad={handleLoad}
         onPlay={handlePlay}

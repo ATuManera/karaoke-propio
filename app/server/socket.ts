@@ -5,7 +5,7 @@ import AcquisitionSocket from './Acquisition/socket.js'
 import Library from './Library/Library.js'
 import LibrarySocket from './Library/socket.js'
 import PitchPrefs from './Pitch/PitchPrefs.js'
-import PitchSocket from './Pitch/socket.js'
+import PitchSocket, { pushPitchFeedback } from './Pitch/socket.js'
 import PlayerSocket from './Player/socket.js'
 import Prefs from './Prefs/Prefs.js'
 import PrefsSocket from './Prefs/socket.js'
@@ -179,6 +179,10 @@ export default function (io, jwtKey) {
       type: PITCH_PREFS_PUSH,
       payload: PitchPrefs.get(sock.user.userId),
     })
+
+    // a phone that locked itself mid-song comes back to the question it was
+    // asked; one that comes back after 15 minutes doesn't (see PitchFeedback)
+    pushPitchFeedback(io, sock)
 
     // push star counts (only if client's is outdated)
     if (clientStarsVersion !== Library.starCountsCache.version) {

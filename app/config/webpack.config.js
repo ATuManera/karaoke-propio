@@ -28,6 +28,12 @@ let config = {
   },
   resolve: {
     extensions: ['.ts', '.tsx', '.js', '.json'],
+    // shared/ sources import each other with an explicit .js specifier, which
+    // the server's node16 module resolution requires; point those at the .ts
+    // that produces them rather than a file that only exists after a build
+    extensionAlias: {
+      '.js': ['.ts', '.tsx', '.js'],
+    },
     modules: [
       path.join(baseDir, 'src'),
       'node_modules',

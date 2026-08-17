@@ -1,0 +1,130 @@
+/* Anchored above the nav rather than centered: the question is an aside, and a
+   centered dialog would stop whatever the singer was doing to read it. */
+.container {
+  position: fixed;
+  left: 0;
+  right: 0;
+  z-index: 98; /* under the nav (99), which stays reachable */
+  display: flex;
+  justify-content: center;
+  padding: var(--space-s);
+  pointer-events: none;
+}
+
+.sheet {
+  pointer-events: auto;
+  width: 100%;
+  max-width: 480px;
+  padding: var(--container-padding);
+  color: var(--text-color);
+  background-color: hsl(var(--hue-blue), 30%, 12%);
+  border: 1.5px solid hsl(var(--hue-blue), 20%, 30%);
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgb(0 0 0 / 60%);
+  animation: slideUp var(--spring-duration) var(--spring-function);
+}
+
+.heading {
+  display: flex;
+  align-items: center;
+  gap: var(--space-s);
+}
+
+.icon {
+  flex: none;
+  color: var(--link-color);
+}
+
+.title {
+  flex: 1;
+  margin: 0;
+  font-family: var(--font-family-custom);
+  font-size: var(--font-size-m);
+  font-weight: var(--font-weight-bold);
+  line-height: 1.2em;
+}
+
+.close {
+  flex: none;
+  align-self: flex-start;
+  padding: var(--space-xs);
+  color: var(--btn-active-bg-color);
+  line-height: 1em;
+
+  svg {
+    height: var(--icon-size-m);
+  }
+}
+
+.song {
+  margin: var(--space-s) 0 0 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--color-gray-9);
+}
+
+.artist {
+  color: var(--color-gray-6);
+  font-size: var(--font-size-s);
+
+  &::before {
+    content: ' — ';
+  }
+}
+
+.performed {
+  margin: 0 0 var(--space-m) 0;
+  color: var(--color-gray-6);
+  font-size: var(--font-size-s);
+
+  strong {
+    color: var(--text-color);
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+/* Two columns so the whole scale fits on a phone without scrolling, with the
+   confirming answer spanning the middle: high answers above it, low below. */
+.choices {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-s);
+}
+
+.choice,
+.wideChoice {
+  padding: var(--space-s);
+  min-height: 44px; /* stays tappable with a microphone in the other hand */
+  font-size: var(--font-size-s);
+}
+
+.wideChoice {
+  grid-column: 1 / -1;
+}
+
+.unsure {
+  display: block;
+  margin-top: var(--space-s);
+  color: var(--color-gray-6);
+  font-size: var(--font-size-s);
+  text-align: center;
+}
+
+.confirmation {
+  margin: 0;
+  color: var(--color-gray-8);
+  font-size: var(--font-size-s);
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(100%);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

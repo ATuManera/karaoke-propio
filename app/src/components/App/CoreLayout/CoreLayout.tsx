@@ -9,6 +9,7 @@ import Button from 'components/Button/Button'
 import Header from 'components/Header/Header'
 import Navigation from 'components/Navigation/Navigation'
 import Modal from 'components/Modal/Modal'
+import PitchFeedbackPrompt from 'components/PitchFeedbackPrompt/PitchFeedbackPrompt'
 import SongInfo from 'components/SongInfo/SongInfo'
 import Routes from '../Routes/Routes'
 import { clearErrorMessage, setFooterHeight, setHeaderHeight } from 'store/modules/ui'
@@ -39,6 +40,11 @@ const CoreLayout = () => {
       <Routes />
 
       {!isPlayerRoute && <Navigation ref={navRef} />}
+
+      {/* Everywhere the singer might be — library, queue, photos, account —
+          but never on the Player: that screen belongs to the whole room, and
+          what someone sings in belongs to them. */}
+      {!isPlayerRoute && <PitchFeedbackPrompt />}
 
       <SongInfo />
 

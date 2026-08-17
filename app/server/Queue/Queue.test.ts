@@ -14,6 +14,7 @@ import Library from '../Library/Library.js'
 // call time. No need to re-import them per test.
 
 let tmpDir: string
+let pathId: number
 let roomId: number
 let userId: number
 let songId: number
@@ -24,7 +25,7 @@ describe('Queue (integration, real SQLite)', () => {
     tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'ke-queue-test-'))
     db.open({ file: path.join(tmpDir, 'database.sqlite3'), ro: false })
 
-    const pathId = Prefs.addPath(tmpDir)
+    pathId = Prefs.addPath(tmpDir)
     const match = Library.matchSong({ artist: 'Test Artist', artistNorm: 'test artist', title: 'Test Song', titleNorm: 'test song' })
     songId = match.songId
 
@@ -100,6 +101,65 @@ describe('Queue (integration, real SQLite)', () => {
     const queueId = Queue.add({ roomId, songId, userId, pitchSemitones: 0 })
     const state = Queue.get(roomId)
     expect('sourceFingerprint' in state.entities[queueId]).toBe(false)
+  })
+
+  // Everything the "how was that pitch?" question gets filed against comes from
+  // here, so a wrong media row means a pitch remembered against a recording the
+  // singer never heard (see docs/PERSONAL_PITCH.md §3.5).
+  describe('Queue.getPerformance', () => {
+    it('returns the singer, song, pitch and version of one queue entry', () => {
+      const queueId = Queue.add({ roomId, songId, userId, pitchSemitones: -3, mediaId })
+
+      expect(Queue.getPerformance(queueId)).toEqual({
+        queueId,
+        roomId,
+        songId,
+        userId,
+        pitchSemitones: -3,
+        mediaId,
+      })
+    })
+
+    it('resolves the preferred version when the singer picked none', () => {
+      const otherMediaId = Media.add({
+        songId,
+        pathId,
+        relPath: 'test-alternate.mp4',
+        duration: 180,
+        dateAdded: Math.floor(Date.now() / 1000),
+      })
+      Media.setPreferred(otherMediaId, true)
+
+      const queueId = Queue.add({ roomId, songId, userId, pitchSemitones: 2 })
+
+      expect(Queue.getPerformance(queueId).mediaId).toBe(otherMediaId)
+      // and it agrees with what the Player was actually handed
+      expect(Queue.get(roomId).entities[queueId].mediaId).toBe(otherMediaId)
+    })
+
+    it('keeps the version the singer picked, even when another is preferred', () => {
+      const otherMediaId = Media.add({
+        songId,
+        pathId,
+        relPath: 'test-alternate.mp4',
+        duration: 180,
+        dateAdded: Math.floor(Date.now() / 1000),
+      })
+      Media.setPreferred(otherMediaId, true)
+
+      const queueId = Queue.add({ roomId, songId, userId, pitchSemitones: 2, mediaId })
+
+      expect(Queue.getPerformance(queueId).mediaId).toBe(mediaId)
+      expect(Queue.get(roomId).entities[queueId].mediaId).toBe(mediaId)
+    })
+
+    it('returns undefined for a queueId that is gone', () => {
+      const queueId = Queue.add({ roomId, songId, userId })
+      Queue.remove(queueId)
+
+      expect(Queue.getPerformance(queueId)).toBeUndefined()
+      expect(Queue.getPerformance(999999)).toBeUndefined()
+    })
   })
 
   it('mediaId sanity: the media row used across this suite resolves back to the same song', () => {

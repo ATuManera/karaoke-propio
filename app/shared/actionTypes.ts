@@ -47,6 +47,8 @@ export const PLAYER_REQ_REPLAY = 'server/PLAYER_REQ_REPLAY'
 export const PLAYER_REQ_VOLUME = 'server/PLAYER_REQ_VOLUME'
 export const PLAYER_EMIT_STATUS = 'server/PLAYER_EMIT_STATUS'
 export const PLAYER_EMIT_LEAVE = 'server/PLAYER_EMIT_LEAVE'
+/** a song reached its own end (not a skip, not an error) */
+export const PLAYER_EMIT_ENDED = 'server/PLAYER_EMIT_ENDED'
 
 // Player events
 export const PLAYER_STATUS = 'status/PLAYER_STATUS'
@@ -80,6 +82,11 @@ export const ROOM_PREFS_PUSH_REQUEST = 'server/ROOM_PREFS_PUSH_REQUEST'
 export const SET_SONG_PITCH_PREF = 'server/SET_SONG_PITCH_PREF'
 export const CLEAR_SONG_PITCH_PREF = 'server/CLEAR_SONG_PITCH_PREF'
 export const PITCH_PREFS_PUSH = 'user/PITCH_PREFS_PUSH'
+
+// Pitch feedback ("how was that pitch?", asked after singing)
+export const PITCH_FEEDBACK_PUSH = 'user/PITCH_FEEDBACK_PUSH'
+export const PITCH_FEEDBACK_RESPOND = 'server/PITCH_FEEDBACK_RESPOND'
+export const PITCH_FEEDBACK_RESOLVED = 'user/PITCH_FEEDBACK_RESOLVED'
 
 // Stars
 export const STAR_SONG = 'server/STAR_SONG'

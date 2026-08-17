@@ -1,5 +1,6 @@
 import Queue from '../Queue/Queue.js'
 import Rooms from '../Rooms/Rooms.js'
+import { createPitchFeedback } from '../Pitch/socket.js'
 
 import {
   PLAYER_CMD_NEXT,
@@ -18,6 +19,7 @@ import {
   PLAYER_REQ_VOLUME,
   PLAYER_EMIT_STATUS,
   PLAYER_EMIT_LEAVE,
+  PLAYER_EMIT_ENDED,
   PLAYER_STATUS,
   PLAYER_LEAVE,
 } from '../../shared/actionTypes.js'
@@ -104,6 +106,22 @@ const ACTION_HANDLERS = {
       type: PLAYER_STATUS,
       payload,
     })
+  },
+  /**
+   * A song played all the way to its own end.
+   *
+   * Only the media element's `ended` event reaches here: skipping, removing,
+   * erroring out or reloading the Player all take other paths, and none of them
+   * mean anyone finished singing. That distinction is the entire basis for
+   * asking "how was that pitch?" — a question about a song nobody actually got
+   * through is noise (see docs/PERSONAL_PITCH.md §3.2.1).
+   */
+  [PLAYER_EMIT_ENDED]: (sock, { payload }) => {
+    const { queueId } = payload ?? {}
+
+    if (!Number.isInteger(queueId)) return
+
+    createPitchFeedback(sock, queueId)
   },
   [PLAYER_EMIT_LEAVE]: (sock) => {
     sock._lastPlayerStatus = null
