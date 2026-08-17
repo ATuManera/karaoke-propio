@@ -22,6 +22,25 @@ export interface Song {
  */
 export type PitchStatus = 'ready' | 'preparing' | 'error'
 
+/**
+ * Where a saved pitch came from (see migration 012). 'inferred' is observed
+ * (the song was queued at that pitch); the other two were decided by the
+ * singer and outrank it.
+ */
+export type PitchPrefSource = 'assistant' | 'manual' | 'inferred'
+
+/** One singer's pitch for one song. */
+export interface SongPitchPref {
+  pitchSemitones: number
+  source: PitchPrefSource
+  /** the recording it was determined against; null when no longer known */
+  mediaId: number | null
+  dateUpdated: number
+}
+
+/** A singer's saved pitches, keyed by songId. */
+export type SongPitchPrefs = Record<number, SongPitchPref>
+
 export interface QueueItem {
   queueId: number
   songId: number

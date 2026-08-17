@@ -76,6 +76,11 @@ export const ROOM_FILTER_STATUS = 'rooms/TOGGLE_SHOW_ALL'
 export const ROOM_PREFS_PUSH = 'rooms/ROOM_PREFS_PUSH'
 export const ROOM_PREFS_PUSH_REQUEST = 'server/ROOM_PREFS_PUSH_REQUEST'
 
+// Pitch preferences (the pitch a given user sings a given song best in)
+export const SET_SONG_PITCH_PREF = 'server/SET_SONG_PITCH_PREF'
+export const CLEAR_SONG_PITCH_PREF = 'server/CLEAR_SONG_PITCH_PREF'
+export const PITCH_PREFS_PUSH = 'user/PITCH_PREFS_PUSH'
+
 // Stars
 export const STAR_SONG = 'server/STAR_SONG'
 export const UNSTAR_SONG = 'server/UNSTAR_SONG'

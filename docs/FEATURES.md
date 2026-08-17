@@ -29,6 +29,29 @@ Pitch is a property of each queue entry, not of the room. Transposition starts
 when the song is queued, not when it plays, so the singer waits at add time
 rather than in front of everyone.
 
+## Per-singer pitch memory
+
+The pitch each person sings a given song best in, remembered so they don't have
+to. Stored per `(userId, songId)`: the comfortable key is a property of a voice,
+not of a song, so the same song is legitimately -4 for one singer and +2 for
+another and there is no "the" pitch to store.
+
+Shown as a badge on the library row, because that is where the song is chosen —
+in a modal it would arrive too late to inform the choice.
+
+Three sources, ranked, mirroring how `songCategories` separates `auto` from
+`manual`: `assistant` and `manual` are decisions, `inferred` is merely observed
+(the song was queued at that pitch). An `inferred` write can never overwrite a
+decision. The rule lives in the `ON CONFLICT ... WHERE` of a single statement
+rather than in a read-then-write, since one singer can be adding songs from two
+devices at once.
+
+Not broadcast, unlike stars: a star count is public by design, but the key
+someone can comfortably reach is information about their body.
+
+Full design, including the assistant that helps find the number in the first
+place: `docs/PERSONAL_PITCH.md`.
+
 ## Categories
 
 Genre, decade, voice and language, derived from MusicBrainz.

@@ -14,6 +14,7 @@ import starCounts from 'routes/Library/modules/starCounts'
 import status from './modules/status'
 import ui from './modules/ui'
 import user from './modules/user'
+import userPitchPrefs from './modules/userPitchPrefs'
 import userStars from './modules/userStars'
 
 export interface LazyLoadedSlices {} // eslint-disable-line @typescript-eslint/no-empty-object-type
@@ -32,6 +33,7 @@ const combinedReducer = combineSlices({
   status,
   ui,
   user,
+  userPitchPrefs: optimistic(userPitchPrefs),
   userStars: optimistic(userStars),
 }).withLazyLoadedSlices<LazyLoadedSlices>()
 

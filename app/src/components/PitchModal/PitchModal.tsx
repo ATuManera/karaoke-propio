@@ -1,8 +1,10 @@
 import React, { useState } from 'react'
 import Modal from 'components/Modal/Modal'
 import Button from 'components/Button/Button'
+import InputCheckbox from 'components/InputCheckbox/InputCheckbox'
 import Slider from 'components/Slider/Slider'
 import { formatPitch, PITCH_DEFAULT, PITCH_MAX, PITCH_MIN, PITCH_STEP } from 'shared/pitch'
+import type { SongPitchPref } from 'shared/types'
 import styles from './PitchModal.css'
 
 interface PitchModalProps {
@@ -10,7 +12,14 @@ interface PitchModalProps {
   songTitle: string
   /** the pitch to preselect, e.g. when re-adding an already-cast pitch */
   initialPitch?: number
-  onConfirm(pitchSemitones: number): void
+  /**
+   * What this singer previously saved for this song, if anything. Preselects
+   * the slider and explains where the number came from. Absent for songs that
+   * aren't in the library yet (see AcquisitionModal), which have no songId to
+   * hang a preference on.
+   */
+  savedPref?: SongPitchPref | null
+  onConfirm(pitchSemitones: number, remember?: boolean): void
   onClose(): void
 }
 
@@ -18,12 +27,22 @@ interface PitchModalProps {
  * Pitch is chosen per queue request, not per room: this modal is shown once,
  * at the moment a song is added to the queue (see prompt_de_implementacion.md
  * #27). Closing/canceling never adds the song — only Confirm does.
+ *
+ * It is also where a singer records the pitch that suits their voice for this
+ * song, which is a different thing from the pitch of this one performance:
+ * the same song is -4 for one person and +2 for another (see migration 012).
  */
-const PitchModal = ({ title, songTitle, initialPitch = PITCH_DEFAULT, onConfirm, onClose }: PitchModalProps) => {
-  const [pitch, setPitch] = useState(initialPitch)
+const PitchModal = ({ title, songTitle, initialPitch, savedPref, onConfirm, onClose }: PitchModalProps) => {
+  const [pitch, setPitch] = useState(initialPitch ?? savedPref?.pitchSemitones ?? PITCH_DEFAULT)
+  // Pre-checked only when there is already a deliberate saved pitch: changing
+  // the slider then means correcting it, and silently leaving the old value
+  // behind would be the surprising outcome. With nothing saved, or with only
+  // an observed 'inferred' value, saving stays an opt-in.
+  const [remember, setRemember] = useState(savedPref?.source === 'manual' || savedPref?.source === 'assistant')
 
-  const handleConfirm = () => onConfirm(pitch)
+  const handleConfirm = () => onConfirm(pitch, remember)
   const handlePitchChange = (value: number | number[]) => setPitch(value as number)
+  const handleRememberChange = (e: React.ChangeEvent<HTMLInputElement>) => setRemember(e.target.checked)
 
   return (
     <Modal
@@ -56,7 +75,27 @@ const PitchModal = ({ title, songTitle, initialPitch = PITCH_DEFAULT, onConfirm,
             className={styles.slider}
             aria-labelledby='label-pitch-semitones'
           />
+
+          {savedPref && (
+            <p className={styles.savedHint}>
+              {savedPref.source === 'inferred'
+                ? `You last sang this at ${formatPitch(savedPref.pitchSemitones)}`
+                : `Your pitch for this song: ${formatPitch(savedPref.pitchSemitones)}`}
+            </p>
+          )}
         </div>
+
+        {/* Undefined means there is no song to hang a preference on yet (see
+            AcquisitionModal); null means there is one and nothing is saved. */}
+        {savedPref !== undefined && (
+          <InputCheckbox
+            checked={remember}
+            onChange={handleRememberChange}
+            label={remember || !savedPref || savedPref.source === 'inferred'
+              ? 'Remember this pitch for me'
+              : 'Forget my pitch for this song'}
+          />
+        )}
       </div>
     </Modal>
   )

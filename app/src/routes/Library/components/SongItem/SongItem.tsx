@@ -8,6 +8,8 @@ import Buttons from 'components/Buttons/Buttons'
 import Icon from 'components/Icon/Icon'
 import ToggleAnimation from 'components/ToggleAnimation/ToggleAnimation'
 import { formatDuration } from 'lib/dateTime'
+import { formatPitch } from 'shared/pitch'
+import type { SongPitchPref } from 'shared/types'
 import styles from './SongItem.css'
 
 let ignoreMouseup = false
@@ -27,6 +29,8 @@ interface SongItemProps {
   numStars: number
   numMedia: number
   filterKeywords: string[]
+  /** this viewer's own saved pitch for the song; null when they have none */
+  pitchPref?: SongPitchPref | null
 }
 
 const SongItem = ({
@@ -44,6 +48,7 @@ const SongItem = ({
   numStars,
   numMedia,
   filterKeywords,
+  pitchPref,
 }: SongItemProps) => {
   const [isExpanded, setExpanded] = useState(false)
 
@@ -82,6 +87,20 @@ const SongItem = ({
       <ToggleAnimation toggle={isUpcoming} className={styles.animateGlow}>
         <div className={styles.duration}>
           {formatDuration(duration)}
+          {/* The reminder has to be here, on the row, because this is where
+              the song is chosen — in a modal it would arrive too late to
+              inform the choice. Dimmed when merely observed rather than
+              decided, so a guess never looks like an answer. */}
+          {pitchPref && (
+            <span
+              className={clsx(styles.pitchBadge, pitchPref.source === 'inferred' && styles.pitchInferred)}
+              title={pitchPref.source === 'inferred'
+                ? `You last sang this at ${formatPitch(pitchPref.pitchSemitones)}`
+                : `Your pitch for this song: ${formatPitch(pitchPref.pitchSemitones)}`}
+            >
+              {formatPitch(pitchPref.pitchSemitones)}
+            </span>
+          )}
         </div>
         <div onClick={handleClick} className={styles.primary}>
           <div className={styles.title}>

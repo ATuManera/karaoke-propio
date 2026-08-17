@@ -24,8 +24,14 @@ export const queueSong = createAction(QUEUE_ADD, (
   pitchSemitones: number = PITCH_DEFAULT,
   // which recording to play, when the song has more than one (see VersionModal)
   mediaId?: number,
+  /**
+   * Pass false when the singer just asked to forget their pitch for this song
+   * (see SongList). The server otherwise records every non-zero pitch as an
+   * observation, which would immediately undo the forgetting.
+   */
+  rememberPitch: boolean = true,
 ) => ({
-  payload: { songId, pitchSemitones, mediaId: mediaId ?? null },
+  payload: { songId, pitchSemitones, mediaId: mediaId ?? null, rememberPitch },
   meta: { isOptimistic: true },
 }))
 

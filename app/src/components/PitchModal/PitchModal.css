@@ -39,3 +39,10 @@
 .slider {
   margin: 0 1.25rem;
 }
+
+.savedHint {
+  margin: 0;
+  color: var(--color-gray-6);
+  font-size: var(--font-size-s);
+  text-align: center;
+}

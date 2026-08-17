@@ -6,6 +6,7 @@ import PitchModal from 'components/PitchModal/PitchModal'
 import VersionModal from 'components/VersionModal/VersionModal'
 import { queueSong } from 'routes/Queue/modules/queue'
 import { showSongInfo } from 'store/modules/songInfo'
+import { setSongPitchPref, clearSongPitchPref } from 'store/modules/userPitchPrefs'
 import { toggleSongStarred } from 'store/modules/userStars'
 import getSongsStatus from '../../selectors/getSongsStatus'
 
@@ -20,6 +21,7 @@ const SongList = (props: SongListProps) => {
   const artists = useAppSelector(state => state.artists.entities)
   const songs = useAppSelector(state => state.songs.entities)
   const starredSongs = useAppSelector(state => ensureState(state.userStars).starredSongs)
+  const pitchPrefs = useAppSelector(state => ensureState(state.userPitchPrefs))
   const starredSongCounts = useAppSelector(state => state.starCounts.songs)
   const isAdmin = useAppSelector(state => state.user.isAdmin)
   const { played, upcoming, current } = useAppSelector(getSongsStatus)
@@ -50,8 +52,22 @@ const SongList = (props: SongListProps) => {
   const handleSongInfo = (songId: number) => dispatch(showSongInfo(songId))
   const handleSongStar = (songId: number) => dispatch(toggleSongStarred(songId))
 
-  const handlePitchConfirm = (pitchSemitones: number) => {
-    dispatch(queueSong(pitchModalSongId, pitchSemitones, chosenMediaId ?? undefined))
+  const handlePitchConfirm = (pitchSemitones: number, remember?: boolean) => {
+    const pref = pitchPrefs[pitchModalSongId]
+    // the checkbox starts checked only for a pitch this singer decided on, so
+    // unchecking it is the one gesture that means "forget it"
+    const wasRemembered = !!pref && pref.source !== 'inferred'
+
+    // saved before queueing, so the deliberate 'manual' write lands first and
+    // the automatic 'inferred' one the queue makes cannot get there instead
+    const isForgetting = !remember && wasRemembered
+
+    if (remember) dispatch(setSongPitchPref(pitchModalSongId, pitchSemitones, chosenMediaId))
+    else if (isForgetting) dispatch(clearSongPitchPref(pitchModalSongId))
+
+    // when forgetting, this performance is not recorded either, so the badge
+    // disappears outright instead of coming back dimmed
+    dispatch(queueSong(pitchModalSongId, pitchSemitones, chosenMediaId ?? undefined, !isForgetting))
     setPitchModalSongId(null)
     setChosenMediaId(null)
   }
@@ -70,6 +86,7 @@ const SongList = (props: SongListProps) => {
           isStarred={starredSongs.includes(songId)}
           isAdmin={isAdmin}
           key={songId}
+          pitchPref={pitchPrefs[songId] ?? null}
           numStars={starredSongCounts[songId] || 0}
           onSongQueue={handleSongQueue}
           onSongStarClick={handleSongStar}
@@ -90,6 +107,7 @@ const SongList = (props: SongListProps) => {
         <PitchModal
           title='Choose pitch'
           songTitle={songs[pitchModalSongId].title}
+          savedPref={pitchPrefs[pitchModalSongId] ?? null}
           onConfirm={handlePitchConfirm}
           onClose={handlePitchClose}
         />

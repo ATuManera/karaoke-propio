@@ -1,5 +1,7 @@
 import Media from '../Media/Media.js'
 import PitchManager from '../Pitch/PitchManager.js'
+import PitchPrefs from '../Pitch/PitchPrefs.js'
+import { pushPitchPrefs } from '../Pitch/socket.js'
 import Queue from './Queue.js'
 import Rooms from '../Rooms/Rooms.js'
 import { isValidPitch, PITCH_DEFAULT } from '../../shared/pitch.js'
@@ -10,7 +12,7 @@ import { QUEUE_ADD, QUEUE_MOVE, QUEUE_REMOVE, QUEUE_PUSH } from '../../shared/ac
 // ------------------------------------
 const ACTION_HANDLERS = {
   [QUEUE_ADD]: async (sock, { payload }, acknowledge) => {
-    const { songId, pitchSemitones = PITCH_DEFAULT, mediaId = null } = payload
+    const { songId, pitchSemitones = PITCH_DEFAULT, mediaId = null, rememberPitch = true } = payload
 
     if (!Number.isInteger(songId)) {
       return acknowledge({
@@ -82,6 +84,31 @@ const ACTION_HANDLERS = {
           // surface as pitchStatus='error' on the queue item instead
           sock.server.log?.error?.(err)
         }
+      }
+    }
+
+    // Remember the pitch for next time, without being asked to. Only non-zero:
+    // 0 is the default nobody chose, and recording it would put a meaningless
+    // "0" reminder on every song anyone ever queued.
+    //
+    // Written as 'inferred', so it can never overwrite a pitch this singer
+    // actually decided on (see PitchPrefs.set). Skipped entirely when the
+    // singer just asked to be forgotten: recording the very performance they
+    // opted out of would make the request look ignored.
+    if (pitchSemitones !== 0 && rememberPitch !== false) {
+      try {
+        if (PitchPrefs.set({
+          userId: sock.user.userId,
+          songId,
+          pitchSemitones,
+          source: 'inferred',
+          mediaId,
+        })) {
+          pushPitchPrefs(sock, sock.user.userId)
+        }
+      } catch (err) {
+        // a remembered pitch is a convenience; never fail an add over it
+        sock.server.log?.error?.(err)
       }
     }
 

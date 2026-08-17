@@ -1,0 +1,82 @@
+.content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-s);
+}
+
+.empty,
+.hint {
+  margin: 0;
+  color: var(--color-gray-6);
+  font-size: var(--font-size-s);
+}
+
+/* stacked rather than side-by-side: a phone cannot fit a title, a stepper, a
+   button and a link on one line without truncating the title, which is the
+   one part that has to stay readable */
+.row {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  padding-bottom: var(--space-s);
+  border-bottom: 1px solid hsl(var(--hue-blue), 20%, 18%);
+}
+
+.row:last-child {
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+
+.song {
+  min-width: 0; /* lets the ellipsis below actually kick in */
+}
+
+.title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--color-gray-9);
+}
+
+.artist {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--color-gray-7);
+  font-size: var(--font-size-s);
+}
+
+.inferredNote {
+  color: var(--color-gray-6);
+  font-size: var(--font-size-s);
+  font-style: italic;
+}
+
+.controls {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+.nudge {
+  padding: 0 0.7em;
+  font-weight: var(--font-weight-bold);
+}
+
+.pitch {
+  min-width: 2.5em;
+  text-align: center;
+  font-weight: var(--font-weight-bold);
+  font-variant-numeric: tabular-nums;
+}
+
+.queue {
+  margin-left: var(--space-xs);
+}
+
+.forget {
+  margin-left: auto;
+  color: var(--color-gray-6);
+  font-size: var(--font-size-s);
+  cursor: pointer;
+}

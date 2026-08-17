@@ -4,6 +4,8 @@ import parseCookie from './lib/parseCookie.js'
 import AcquisitionSocket from './Acquisition/socket.js'
 import Library from './Library/Library.js'
 import LibrarySocket from './Library/socket.js'
+import PitchPrefs from './Pitch/PitchPrefs.js'
+import PitchSocket from './Pitch/socket.js'
 import PlayerSocket from './Player/socket.js'
 import Prefs from './Prefs/Prefs.js'
 import PrefsSocket from './Prefs/socket.js'
@@ -20,6 +22,7 @@ import {
   QUEUE_PUSH,
   STARS_PUSH,
   STAR_COUNTS_PUSH,
+  PITCH_PREFS_PUSH,
   PLAYER_STATUS,
   PLAYER_LEAVE,
   PREFS_PUSH,
@@ -31,6 +34,7 @@ const log = getLogger('server')
 const handlers = {
   ...AcquisitionSocket,
   ...LibrarySocket,
+  ...PitchSocket,
   ...QueueSocket,
   ...PlayerSocket,
   ...PrefsSocket,
@@ -166,6 +170,14 @@ export default function (io, jwtKey) {
     io.to(sock.id).emit('action', {
       type: STARS_PUSH,
       payload: Library.getUserStars(sock.user.userId),
+    })
+
+    // push this user's saved pitches. Sent whole and unconditionally: it is a
+    // few hundred integers at most, and unlike the library it is per-user, so
+    // there is no shared version to compare against.
+    io.to(sock.id).emit('action', {
+      type: PITCH_PREFS_PUSH,
+      payload: PitchPrefs.get(sock.user.userId),
     })
 
     // push star counts (only if client's is outdated)

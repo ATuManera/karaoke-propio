@@ -6,6 +6,7 @@ import { formatDuration } from 'lib/dateTime'
 import { closeSongInfo, setPreferredSong, retagSong, deleteMediaVersion } from 'store/modules/songInfo'
 import SongCategories from './SongCategories'
 import SongMusicInfo from './SongMusicInfo'
+import SongPitchPref from './SongPitchPref'
 import styles from './SongInfo.css'
 
 interface EditFieldsProps {
@@ -168,6 +169,8 @@ const SongInfo = () => {
         {songId !== null && <SongCategories songId={songId} />}
 
         {songId !== null && <SongMusicInfo key={songId} songId={songId} />}
+
+        {songId !== null && <SongPitchPref songId={songId} />}
 
         <p>
           <span className={styles.label}>Song ID: </span>
