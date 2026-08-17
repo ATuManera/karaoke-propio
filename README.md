@@ -47,6 +47,12 @@ does well — library, queue, player, phone remote — and adds what a real part
 - ~4 GB RAM (pitch shifting is CPU-bound)
 - Optional: a domain and an existing `nginx-proxy` + `acme-companion` for public access
 
+### Media content and copyright
+
+This repository does not include, distribute, host, or provide copyrighted songs, recordings, videos, lyrics, CD+G files, or karaoke tracks. Karaoke Propio is software only.
+
+The project promotes respect for copyright and lawful use of media. It does not promote, facilitate, or authorize piracy. Users are solely responsible for obtaining, using, and managing media content for which they have the necessary rights, licences, permissions, or other lawful basis, and for complying with applicable copyright laws, platform terms, and local regulations.
+
 ### Installation
 
 ```bash
@@ -117,6 +123,12 @@ fiesta real necesita.
 - Docker y Docker Compose
 - ~4 GB de RAM (el cambio de tono usa CPU intensivamente)
 - Opcional: un dominio y un `nginx-proxy` + `acme-companion` ya instalados, para acceso público
+
+### Contenido multimedia y derechos de autor
+
+Este repositorio no incluye, distribuye, aloja ni proporciona canciones, grabaciones, videos, letras, archivos CD+G ni pistas de karaoke protegidas por derechos de autor. Karaoke Propio es únicamente software.
+
+El proyecto promueve el respeto de los derechos de autor y el uso legal de contenido multimedia. No promueve, facilita ni autoriza la piratería. Los usuarios son exclusivamente responsables de obtener, usar y administrar contenido multimedia para el cual cuenten con los derechos, licencias, permisos u otra base legal necesaria, así como de cumplir con las leyes de derecho de autor aplicables, términos de plataformas y normativa local.
 
 ### Instalación
 
