@@ -55,6 +55,9 @@ const BRACKETED_RE = /[([{][^)\]}]*[)\]}]/g
 const FEATURING_RE = /\s+\b(feat|ft|featuring)\b\.?\s.*$/i
 
 // combining marks, left behind by the NFD decomposition above
+// matches nothing, so a replace() can be turned off without branching
+const NOTHING_RE = /(?!)/
+
 const DIACRITICS_RE = /[̀-ͯ]/g
 
 // removed rather than turned into a space, unlike every other mark: a filename
@@ -69,15 +72,28 @@ const APOSTROPHE_RE = /['’‘`´]/g
 // TypeScript target rules out.
 const PUNCTUATION_RE = /[\s!-/:-@[-`{-~¡¿“”„«»–—…·•]+/g
 
+// stripArticles only knows the English ones, because that is all MetaParser
+// shifts on the way in ("Show Must Go On, The"). A Spanish library never gets
+// that treatment, so the two sides disagree the moment one of them writes the
+// article and the other does not: "El reloj" on disk, "Reloj" in the playlist.
+// Dropped from both sides here, where losing it costs nothing.
+const LEADING_ARTICLE_RE = /^(el|la|los|las|lo|un|una|unos|unas)\s+/i
+
 /**
  * The comparable form of a name or title: no brackets, no featured artists, no
  * accents, no punctuation, no leading/trailing article. Deliberately lossy —
  * it exists to be compared, never to be shown.
+ *
+ * `keepFeatured` is for the containment pass and nothing else. Dropping the
+ * guests is right when the text is a name ("Jessie J ft. B.o.B" is filed under
+ * Jessie J), and wrong when it is a whole entry title, because everything after
+ * the "ft." goes with them — including the song. "Karaoke Jessie J ft. B.o.B
+ * Price Tag" would be left as "jessie j", with the title thrown away.
  */
-export function normalizeForMatch (text: string): string {
+export function normalizeForMatch (text: string, keepFeatured = false): string {
   const bare = (text ?? '')
     .replace(BRACKETED_RE, ' ')
-    .replace(FEATURING_RE, '')
+    .replace(keepFeatured ? NOTHING_RE : FEATURING_RE, '')
     .normalize('NFD')
     .replace(DIACRITICS_RE, '')
     .toLowerCase()
@@ -86,10 +102,13 @@ export function normalizeForMatch (text: string): string {
 
   // articles first: the library stores "Beatles, The", and the comma that marks
   // it would be gone by the time punctuation is stripped
-  return stripArticles(bare)
+  const words = stripArticles(bare)
     .replace(APOSTROPHE_RE, '')
     .replace(PUNCTUATION_RE, ' ')
     .trim()
+
+  // never all the way to nothing: a song really called "La" is still a song
+  return words.replace(LEADING_ARTICLE_RE, '') || words
 }
 
 export interface PlaylistTrackMeta {
@@ -134,10 +153,12 @@ export interface LibraryMatchIndex {
   byTitle: Map<string, number[]>
   /** songId -> normalized artist */
   artistOf: Map<number, string>
+  /** every song in normalized form, for the containment pass */
+  songs: MatchableSong[]
 }
 
 export function buildLibraryMatchIndex (songs: Iterable<MatchableSong>): LibraryMatchIndex {
-  const index: LibraryMatchIndex = { byTitle: new Map(), artistOf: new Map() }
+  const index: LibraryMatchIndex = { byTitle: new Map(), artistOf: new Map(), songs: [] }
 
   for (const song of songs) {
     const title = normalizeForMatch(song.title)
@@ -147,10 +168,17 @@ export function buildLibraryMatchIndex (songs: Iterable<MatchableSong>): Library
     if (songIds) songIds.push(song.songId)
     else index.byTitle.set(title, [song.songId])
 
-    index.artistOf.set(song.songId, normalizeForMatch(song.artist))
+    const artist = normalizeForMatch(song.artist)
+    index.artistOf.set(song.songId, artist)
+    index.songs.push({ songId: song.songId, title, artist })
   }
 
   return index
+}
+
+/** whole words only, so "reloj" does not match inside "relojero" */
+function contains (haystack: string, needle: string): boolean {
+  return !!needle && ` ${haystack} `.includes(` ${needle} `)
 }
 
 function lookup (meta: PlaylistTrackMeta, index: LibraryMatchIndex): number | null {
@@ -174,6 +202,40 @@ function lookup (meta: PlaylistTrackMeta, index: LibraryMatchIndex): number | nu
 }
 
 /**
+ * Last resort: the artist and the title are both in there somewhere, with
+ * nothing to separate them.
+ *
+ * "Karaoke Luis Miguel La Barca", "Hasta que me olvides-Luis miguel" — a
+ * karaoke channel runs the performer's name into the song's with no separator
+ * any split can find, so neither half is ever going to be read correctly. But
+ * a library that holds "Luis Miguel" and "La Barca" can still recognise both
+ * of them sitting inside that string.
+ *
+ * Requiring BOTH to appear is what makes this safe enough to run at all; the
+ * longest title wins, so "Tú y yo" beats "Tú", and a tie is left unmatched.
+ */
+function lookupContained (meta: PlaylistTrackMeta, index: LibraryMatchIndex): number | null {
+  const text = normalizeForMatch(`${meta.artist} ${meta.title}`, true)
+  if (!text) return null
+
+  let best: { songId: number, length: number } | null = null
+  let isTied = false
+
+  for (const song of index.songs) {
+    if (!contains(text, song.title) || !contains(text, song.artist)) continue
+
+    if (!best || song.title.length > best.length) {
+      best = { songId: song.songId, length: song.title.length }
+      isTied = false
+    } else if (song.title.length === best.length && song.songId !== best.songId) {
+      isTied = true
+    }
+  }
+
+  return best && !isTied ? best.songId : null
+}
+
+/**
  * The library song this playlist entry is, or null.
  *
  * Tries the swapped reading too, because "Here Comes The Sun - The Beatles" is
@@ -182,5 +244,7 @@ function lookup (meta: PlaylistTrackMeta, index: LibraryMatchIndex): number | nu
  * it is only ever used to recognise a song that is already here.
  */
 export function matchInLibrary (meta: PlaylistTrackMeta, index: LibraryMatchIndex): number | null {
-  return lookup(meta, index) ?? lookup({ artist: meta.title, title: meta.artist }, index)
+  return lookup(meta, index)
+    ?? lookup({ artist: meta.title, title: meta.artist }, index)
+    ?? lookupContained(meta, index)
 }

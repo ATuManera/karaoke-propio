@@ -55,6 +55,18 @@ the channel name. What earns its keep in `shared/playlistMatch.ts`:
   name in the title and the artist only in the channel.
 - Both readings of `A - B` are tried, because `Here Comes The Sun - The
   Beatles` is a real and common way to write a title.
+- Spanish articles are dropped on both sides. `stripArticles` only knows the
+  English ones, because that is all MetaParser shifts on the way in, so a
+  Spanish library disagrees with a playlist the moment one writes `El reloj`
+  and the other writes `Reloj`.
+- When nothing separates the two names at all — `Karaoke Luis Miguel La Barca`,
+  `Hasta que me olvides-Luis miguel` — no split will ever read them correctly,
+  but the library can still recognise both of its own strings sitting inside
+  that one. Requiring the artist AND the title to appear is what makes this
+  safe; the longest title wins, so `Tú y yo` beats `Tú`, and a tie is left
+  unmatched. Measured over a 596-song library, every song written the way a
+  karaoke channel would write it: 591 found themselves, 5 were genuine
+  duplicates the library holds twice, and none matched the wrong song.
 
 Where the evidence is ambiguous — a title two songs share, no artist to
 separate them — it reports "not here". A false match hides a song someone

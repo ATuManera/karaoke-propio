@@ -129,3 +129,48 @@ describe('matchInLibrary', () => {
     expect(matchInLibrary({ artist: 'Soda Stereo', title: 'De Música Ligera' }, index)).toBeNull()
   })
 })
+
+// Everything below came from a real import that reported three songs missing
+// which were sitting in the library the whole time.
+describe('matchInLibrary, when the artist runs into the title', () => {
+  const library: MatchableSong[] = [
+    { songId: 1, title: 'El reloj', artist: 'Luis Miguel' },
+    { songId: 2, title: 'La Barca', artist: 'Luis Miguel' },
+    { songId: 3, title: 'Hasta que me olvides', artist: 'Luis Miguel' },
+    { songId: 4, title: 'Tú y yo', artist: 'Luis Miguel' },
+    { songId: 5, title: 'Tú', artist: 'Luis Miguel' },
+    { songId: 6, title: 'Price Tag', artist: 'Jessie J ft. B.o.B' },
+  ]
+  const index = buildLibraryMatchIndex(library)
+  const match = (title: string, uploader = 'karaoke Gratis') =>
+    matchInLibrary(guessTrackMeta({ title, uploader }), index)
+
+  // a karaoke channel writes both names as one run of words, and no split can
+  // tell where one ends and the other begins — but the library knows both
+  it('finds the song sitting inside the whole string', () => {
+    expect(match('Karaoke Luis Miguel La Barca')).toBe(2)
+    expect(match('Hasta que me olvides-Luis miguel karaoke')).toBe(3)
+  })
+
+  // the library writes the article, the playlist does not
+  it('does not mind a missing Spanish article', () => {
+    expect(normalizeForMatch('El reloj')).toBe(normalizeForMatch('Reloj'))
+    expect(match('Karaoke Luis Miguel Reloj')).toBe(1)
+  })
+
+  it('takes the longest title that fits, not the first', () => {
+    expect(match('Karaoke Luis Miguel Tú y yo')).toBe(4)
+    expect(match('Karaoke Luis Miguel Tú')).toBe(5)
+  })
+
+  // dropping the guests is right for a name and wrong for a whole title: the
+  // song comes after the "ft." and would go with them
+  it('keeps looking past a featured artist', () => {
+    expect(match('Karaoke Jessie J ft. B.o.B Price Tag')).toBe(6)
+  })
+
+  it('needs the artist too, not just a title that happens to be in there', () => {
+    expect(match('Karaoke Los Panchos La Barca')).toBeNull()
+    expect(match('Una tarde en la barca del abuelo', 'Cuentos')).toBeNull()
+  })
+})
