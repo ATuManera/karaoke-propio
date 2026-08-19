@@ -58,14 +58,31 @@ The project promotes respect for copyright and lawful use of media. It does not 
 
 ### Installation
 
-```bash
-git clone <this-repo> karaoke && cd karaoke
-cp .env.example .env      # adjust PUID/PGID, TZ, optional domain
-docker compose up -d --build
-```
+1. **Clone the repository**
 
-The app answers on `http://<host>:8080`. Every setting is documented in
-[`.env.example`](.env.example).
+   ```bash
+   git clone https://github.com/ATuManera/karaoke-propio.git karaoke
+   cd karaoke
+   ```
+
+2. **Set your environment**
+
+   ```bash
+   cp .env.example .env
+   ```
+
+   Adjust `PUID`/`PGID`, `TZ` and, for public access, your domain. Every setting
+   is documented in [`.env.example`](.env.example).
+
+3. **Start it**
+
+   ```bash
+   docker compose up -d --build
+   ```
+
+   The four images build on first run, which takes a few minutes.
+
+4. **Open `http://<host>:8080`** and create the first account — it becomes the admin.
 
 ### Architecture
 
@@ -94,10 +111,36 @@ This project would not exist without the work of others:
 
 Full details, licences and obligations: [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md).
 
+### Contributing
+
+Bug reports and pull requests are welcome.
+
+1. Fork the repository and branch from `main`.
+2. From `app/`, run `npm test`, `npm run lint` and `npm run typecheck` before
+   pushing. New behaviour needs tests; they live beside the `shared/` and
+   `server/` code, as there is no browser test setup.
+3. Open a pull request saying what changed and why.
+
+Two conventions worth knowing:
+
+- **Commit messages explain the reasoning**, not only the change. Work done with
+  AI assistance carries an `Assisted by AI: <model>` trailer.
+- **Fixes to Karaoke Eternal itself** — the vendored code under `app/` — are better
+  sent upstream to [bhj/KaraokeEternal](https://github.com/bhj/KaraokeEternal), so
+  everyone gets them and not only this fork.
+
+The reasoning behind each feature, and the constraints found while building it,
+are in [`docs/FEATURES.md`](docs/FEATURES.md).
+
 ### Licence
 
 Apache License 2.0 — see [`LICENSE`](LICENSE). Third-party components keep their own
 licences; see [`NOTICE`](NOTICE).
+
+### Support the project
+
+If Karaoke Propio made a party better, a ⭐ on the repository helps other people
+find it.
 
 ---
 
@@ -112,7 +155,7 @@ fiesta real necesita.
 | Función | Descripción |
 |---|---|
 | **Adquisición de canciones** | Buscar en YouTube o UltraStar/USDB desde la app y descargar directo a la biblioteca, con vista previa antes de decidir. |
-| **Importar una playlist** | Pegá el link de una playlist pública de YouTube y ves de un vistazo cuáles de sus canciones ya están en la biblioteca. Las que faltan se consiguen de a una, como siempre — no se descarga nada en lote. |
+| **Importar una playlist** | Pegar el link de una playlist pública de YouTube y ver de un vistazo cuáles de sus canciones ya están en la biblioteca. Las que faltan se consiguen de a una, como siempre — no se descarga nada en lote. |
 | **Tono por solicitud** | Cada cantante elige su tonalidad al encolar. La transposición empieza de inmediato en segundo plano, sin espera al momento de cantar. |
 | **Tono personal** | El tono en que cada cantante canta mejor una canción, recordado por persona — la misma canción es -4 para una voz y +2 para otra. Se ve en la fila de la biblioteca, y las canciones guardadas forman un repertorio que se encola con un toque. |
 | **Asistente de tono** | Al terminar una canción, se le pregunta a quien la cantó, en su propio celular, cómo le quedó el tono — muy alta, perfecta, un poco baja — y su tono personal se corrige solo. Sin necesidad de entender semitonos, y sin que nadie más vea la pregunta. |
@@ -138,14 +181,31 @@ El proyecto promueve el respeto de los derechos de autor y el uso legal de conte
 
 ### Instalación
 
-```bash
-git clone <este-repo> karaoke && cd karaoke
-cp .env.example .env      # ajustar PUID/PGID, TZ, dominio opcional
-docker compose up -d --build
-```
+1. **Clonar el repositorio**
 
-La app responde en `http://<host>:8080`. Cada variable está documentada en
-[`.env.example`](.env.example).
+   ```bash
+   git clone https://github.com/ATuManera/karaoke-propio.git karaoke
+   cd karaoke
+   ```
+
+2. **Configurar el entorno**
+
+   ```bash
+   cp .env.example .env
+   ```
+
+   Ajustar `PUID`/`PGID`, `TZ` y, para acceso público, el dominio. Cada variable
+   está documentada en [`.env.example`](.env.example).
+
+3. **Levantar la aplicación**
+
+   ```bash
+   docker compose up -d --build
+   ```
+
+   Las cuatro imágenes se construyen la primera vez, lo que toma unos minutos.
+
+4. **Abrir `http://<host>:8080`** y crear la primera cuenta — queda como administradora.
 
 ### Arquitectura
 
@@ -175,10 +235,36 @@ Este proyecto no existiría sin el trabajo de otros:
 
 Detalle completo, licencias y obligaciones: [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md).
 
+### Contribuciones
+
+Los reportes de errores y los pull requests son bienvenidos.
+
+1. Hacer un fork del repositorio y crear una rama a partir de `main`.
+2. Desde `app/`, correr `npm test`, `npm run lint` y `npm run typecheck` antes de
+   publicar. Todo comportamiento nuevo necesita tests; van junto al código de
+   `shared/` y `server/`, ya que no hay entorno de pruebas de navegador.
+3. Abrir un pull request que diga qué cambia y por qué.
+
+Dos convenciones que conviene conocer:
+
+- **Los mensajes de commit explican el porqué**, no solo el qué. El trabajo hecho
+  con asistencia de IA lleva la línea `Assisted by AI: <modelo>`.
+- **Las correcciones a Karaoke Eternal en sí** — el código incorporado en `app/` —
+  conviene enviarlas río arriba a [bhj/KaraokeEternal](https://github.com/bhj/KaraokeEternal),
+  para que las aproveche todo el mundo y no solo este fork.
+
+El razonamiento detrás de cada función, y las restricciones encontradas al
+construirla, están en [`docs/FEATURES.md`](docs/FEATURES.md).
+
 ### Licencia
 
 Apache License 2.0 — ver [`LICENSE`](LICENSE). Los componentes de terceros conservan sus
 propias licencias; ver [`NOTICE`](NOTICE).
+
+### Apoyar el proyecto
+
+Si Karaoke Propio sirvió para mejorar una fiesta, una ⭐ en el repositorio
+ayuda a que otras personas lo encuentren.
 
 ---
 
