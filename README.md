@@ -4,7 +4,7 @@
 [![Based on](https://img.shields.io/badge/based%20on-Karaoke%20Eternal-blue.svg)](https://github.com/bhj/KaraokeEternal)
 [![Docker](https://img.shields.io/badge/docker-compose-blue.svg)](docker-compose.yml)
 [![Platform](https://img.shields.io/badge/platform-Linux%20%7C%20Docker-lightgrey.svg)]()
-[![Version](https://img.shields.io/badge/version-1.1.0-blue.svg)]()
+[![Version](https://img.shields.io/badge/version-1.2.0-blue.svg)]()
 
 > **Built on [Karaoke Eternal](https://github.com/bhj/KaraokeEternal)** — © RadRoot LLC, ISC License.
 > Karaoke Propio is an independent project that vendors and extends it; it is **not** an official
@@ -18,7 +18,7 @@
 
 **AI Assistance / Asistencia de IA:** Developed with the support of GPT 5.6 Sol, Claude Opus 5, Claude Opus 4.8, and Claude Sonnet 5.
 
-**Version / Versión:** 1.1.0
+**Version / Versión:** 1.2.0
 
 ---
 
