@@ -39,7 +39,9 @@ const LibraryHeader = () => {
         <input
           type='search'
           className={styles.searchInput}
-          placeholder='search'
+          // the only place a playlist import is announced: pasting a link is
+          // the whole gesture, and it was invisible while this said 'search'
+          placeholder='search or paste a playlist'
           value={value}
           onChange={handleChange}
           ref={searchInput}
