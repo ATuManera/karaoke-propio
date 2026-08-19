@@ -269,6 +269,37 @@ async function handlePlaylist (req, res, query) {
 const PREVIEW_FORMAT = 'worst[ext=mp4][protocol=https][vcodec!=none][acodec!=none]' +
   '/worst[protocol=https][vcodec!=none][acodec!=none]'
 
+// Which client hands out a *playable* progressive URL is a different question
+// from which hands one out at all, and the preview never asked it — downloads
+// have pinned a client since August, previews took whatever yt-dlp chose.
+// Measured 2026-08-19 on this server, same videos, only this flag differing:
+//
+//   android     206, including on a video the default client refused
+//   default     403 intermittently — resolves a URL, then declines to serve it
+//   tv          no progressive format offered at all
+//   web_safari  no progressive format offered at all
+//
+// So: the same client the download trusts, first.
+const PREVIEW_CLIENTS = ['android', 'default']
+
+/**
+ * Resolving a URL is not the same as being served by it: googlevideo signs URLs
+ * it then rejects with 403. One byte settles it here, where another client can
+ * still be tried, rather than in the browser as a preview that never starts.
+ */
+async function isStreamPlayable (streamUrl) {
+  try {
+    const res = await fetch(streamUrl, {
+      headers: { range: 'bytes=0-0' },
+      signal: AbortSignal.timeout(8000),
+    })
+    await res.arrayBuffer().catch(() => {}) // release the socket
+    return { ok: res.ok, detail: `HTTP ${res.status}` }
+  } catch (err) {
+    return { ok: false, detail: err.message }
+  }
+}
+
 async function handlePreviewStreamUrl (req, res, query) {
   const url = query.get('url')
 
@@ -276,26 +307,48 @@ async function handlePreviewStreamUrl (req, res, query) {
     return sendJson(res, 422, { error: 'url must be a youtube.com/youtu.be URL' })
   }
 
-  // a direct media URL, not YouTube's embed player: this is what lets a
-  // preview play videos whose uploader disabled third-party embedding — the
-  // IFrame Player API respects that flag, a raw stream URL played in our
-  // own <video> element does not go through YouTube's player at all
-  const { stdout } = await execFileP('yt-dlp', [
-    '-g', '-f', PREVIEW_FORMAT,
-    '--no-warnings',
-    ...JS_RUNTIME_ARGS,
-    url,
-  ], { timeout: 15 * 1000, maxBuffer: 1024 * 1024 })
+  let lastError = 'no client offered a playable stream'
 
-  const streamUrl = stdout.trim().split('\n')[0]
-  if (!streamUrl) {
-    return sendJson(res, 500, { error: 'yt-dlp returned no playable stream for this video' })
-  }
-  if (streamUrl.includes('.m3u8') || streamUrl.includes('/manifest/')) {
-    return sendJson(res, 500, { error: 'no progressive (non-manifest) stream available for this video' })
+  for (const client of PREVIEW_CLIENTS) {
+    let streamUrl
+
+    // a direct media URL, not YouTube's embed player: this is what lets a
+    // preview play videos whose uploader disabled third-party embedding — the
+    // IFrame Player API respects that flag, a raw stream URL played in our
+    // own <video> element does not go through YouTube's player at all
+    try {
+      const { stdout } = await execFileP('yt-dlp', [
+        '-g', '-f', PREVIEW_FORMAT,
+        '--no-warnings',
+        ...JS_RUNTIME_ARGS,
+        ...clientArgs(client),
+        url,
+      ], { timeout: 15 * 1000, maxBuffer: 1024 * 1024 })
+
+      streamUrl = stdout.trim().split('\n')[0]
+    } catch (err) {
+      lastError = `${client}: ${err.message.trim().slice(-160)}`
+      continue
+    }
+
+    if (!streamUrl) {
+      lastError = `${client}: no playable stream for this video`
+      continue
+    }
+
+    if (streamUrl.includes('.m3u8') || streamUrl.includes('/manifest/')) {
+      lastError = `${client}: no progressive (non-manifest) stream available`
+      continue
+    }
+
+    const probe = await isStreamPlayable(streamUrl)
+    if (probe.ok) return sendJson(res, 200, { streamUrl })
+
+    console.warn(`preview via client "${client}" resolved but would not serve (${probe.detail})`)
+    lastError = `${client}: stream returned ${probe.detail}`
   }
 
-  return sendJson(res, 200, { streamUrl })
+  return sendJson(res, 502, { error: lastError })
 }
 
 async function handleViewCount (req, res, query) {

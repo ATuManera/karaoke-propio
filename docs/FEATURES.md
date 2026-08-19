@@ -22,6 +22,14 @@ before anything is downloaded.
 - Previews cannot use the YouTube IFrame player: many karaoke uploads disable
   embedding, which that player honours. A direct progressive stream URL is
   proxied instead, so playback never goes through YouTube's player.
+- The preview needs the client pinned for the same reason the download does,
+  and did not get it until previews started failing months later. Measured
+  2026-08-19: `android` served every video tried, the default client signed a
+  URL for one and then answered 403 to it, and `tv`/`web_safari` offer no
+  progressive format at all. Resolving is checked against one byte of the
+  stream before the URL is handed back — a signature that will not be honoured
+  is worth discovering while another client can still be tried, not in the
+  browser as a preview that never starts.
 
 ## Playlist import
 
