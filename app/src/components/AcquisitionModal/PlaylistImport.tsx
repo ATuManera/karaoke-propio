@@ -5,16 +5,19 @@ import { formatDuration } from 'lib/dateTime'
 import {
   buildLibraryMatchIndex,
   guessTrackMeta,
+  isKaraokeUpload,
   matchInLibrary,
   type PlaylistTrackMeta,
 } from 'shared/playlistMatch'
-import type { PlaylistImport as Playlist } from 'shared/types'
+import type { PlaylistImport as Playlist, PlaylistImportEntry } from 'shared/types'
 import styles from './PlaylistImport.css'
 
 interface PlaylistImportProps {
   playlist: Playlist
   /** go looking for a karaoke version of a song the library doesn't have */
   onFind(meta: PlaylistTrackMeta, entryTitle: string): void
+  /** the entry is already a karaoke track: offer that very video */
+  onGet(entry: PlaylistImportEntry, meta: PlaylistTrackMeta): void
   /** show a song the library already has, by the name the library knows it by */
   onOpen(libraryTitle: string): void
 }
@@ -28,12 +31,17 @@ interface PlaylistImportProps {
  * keeps the list honest: a song still downloading moves from one half of this
  * list to the other by itself, the moment LIBRARY_PUSH arrives.
  *
- * Nothing downloads from here. A missing song opens the same search, preview
- * and pitch flow as any other acquisition, one song at a time — importing
- * forty songs somebody liked in 2011 would fill the library with versions
- * nobody chose.
+ * What a missing song does when tapped depends on what it is. An entry that is
+ * already a karaoke track is the version its owner chose, so it offers that
+ * exact video; an entry that is the original recording cannot be sung to, so it
+ * opens a search for a karaoke version of it. Getting that backwards is what
+ * made a karaoke playlist produce a screen of unrelated results.
+ *
+ * Either way nothing downloads from here: both roads lead to the same preview
+ * and pitch flow as any other acquisition, one song at a time. Importing forty
+ * songs unattended would fill the library with versions nobody chose.
  */
-const PlaylistImport = ({ playlist, onFind, onOpen }: PlaylistImportProps) => {
+const PlaylistImport = ({ playlist, onFind, onGet, onOpen }: PlaylistImportProps) => {
   const songs = useAppSelector(state => state.songs)
   const artists = useAppSelector(state => state.artists)
 
@@ -53,6 +61,9 @@ const PlaylistImport = ({ playlist, onFind, onOpen }: PlaylistImportProps) => {
       entry,
       meta,
       songId,
+      // a karaoke playlist is a list of versions someone already chose; an
+      // ordinary one is a list of songs still needing a version found
+      isKaraoke: isKaraokeUpload(entry),
       // what the playlist calls this song, tidied up where it can be
       label: meta.artist ? `${meta.artist} — ${meta.title}` : (meta.title || entry.title),
       libraryTitle: songId === null ? '' : songs.entities[songId].title,
@@ -64,7 +75,9 @@ const PlaylistImport = ({ playlist, onFind, onOpen }: PlaylistImportProps) => {
 
   const missing = rows.filter(row => row.songId === null)
   const found = rows.filter(row => row.songId !== null)
-  const isTruncated = playlist.total !== null && playlist.total > playlist.entries.length
+  // against what the listing read, not what survived it: one deleted video in
+  // a playlist of eight is not the same news as a playlist cut off at 100
+  const isTruncated = playlist.total !== null && playlist.total > playlist.read
 
   return (
     <div className={styles.container}>
@@ -83,7 +96,7 @@ const PlaylistImport = ({ playlist, onFind, onOpen }: PlaylistImportProps) => {
         {/* said out loud rather than left to look like the whole playlist */}
         {isTruncated && (
           <div className={styles.counts}>
-            {`Showing the first ${playlist.entries.length} of ${playlist.total} songs.`}
+            {`Showing the first ${playlist.read} of ${playlist.total} songs.`}
           </div>
         )}
       </div>
@@ -97,13 +110,17 @@ const PlaylistImport = ({ playlist, onFind, onOpen }: PlaylistImportProps) => {
           <h2 className={styles.heading}>
             {`Not here yet (${missing.length})`}
           </h2>
+          <p className={styles.hint}>
+            Tap one to add it — you get to watch it first, and pick your pitch.
+          </p>
           <ul className={styles.rows}>
-            {missing.map(({ entry, meta, label }) => (
+            {missing.map(({ entry, meta, label, isKaraoke }) => (
               <li key={entry.id}>
                 <button
                   type='button'
                   className={styles.row}
-                  onClick={() => onFind(meta, entry.title)}
+                  onClick={() => isKaraoke ? onGet(entry, meta) : onFind(meta, entry.title)}
+                  aria-label={isKaraoke ? `Add ${label}` : `Find a karaoke version of ${label}`}
                 >
                   {entry.thumbnail && <img src={entry.thumbnail} alt='' className={styles.thumbnail} />}
                   <div className={styles.info}>
@@ -113,7 +130,10 @@ const PlaylistImport = ({ playlist, onFind, onOpen }: PlaylistImportProps) => {
                   {typeof entry.durationSeconds === 'number' && (
                     <div className={styles.duration}>{formatDuration(entry.durationSeconds)}</div>
                   )}
-                  <Icon icon='MAGNIFIER' size={20} className={styles.action} />
+                  {/* the entry itself when it is already a karaoke track, a
+                      search when it is the original recording — offering the
+                      wrong one of those is what made this list look useless */}
+                  <Icon icon={isKaraoke ? 'DOWNLOAD' : 'MAGNIFIER'} size={20} className={styles.action} />
                 </button>
               </li>
             ))}

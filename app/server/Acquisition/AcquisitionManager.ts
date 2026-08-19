@@ -100,10 +100,10 @@ class AcquisitionManager {
       throw new Error(`YouTube keeps Liked songs and Watch later private, so nothing can read them from here. Copy them into a playlist and set it to public or unlisted.`)
     }
 
-    const { title, total, entries } = await this.worker.fetchPlaylist(playlistUrl(playlistId))
-    log.info('read playlist %s: %d of %s entries', playlistId, entries.length, total ?? '?')
+    const { title, total, read, entries } = await this.worker.fetchPlaylist(playlistUrl(playlistId))
+    log.info('read playlist %s: %d usable of %d read, %s in total', playlistId, entries.length, read, total ?? '?')
 
-    return { playlistId, title, total, entries }
+    return { playlistId, title, total, read, entries }
   }
 
   /**

@@ -172,6 +172,8 @@ export interface PlaylistImport {
   entries: PlaylistImportEntry[]
   /** how many songs the playlist really holds, when YouTube says (null on a mix) */
   total: number | null
+  /** how many the listing returned before unplayable entries were dropped */
+  read: number
 }
 
 export interface AcquisitionRequest {

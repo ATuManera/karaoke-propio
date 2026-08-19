@@ -26,6 +26,25 @@ import { stripArticles } from './articles.js'
 // of anybody's name
 const CHANNEL_SUFFIX_RE = /\s*[-–—]?\s*\b(topic|vevo|official|oficial|music)\b\s*$/i
 
+// A karaoke publisher, in the title or the channel name. The acquisition worker
+// carries its own copy of this idea (it runs standalone, outside this build) —
+// the two are meant to agree, and both are kept deliberately broad, because
+// mistaking a karaoke upload for an original song is the expensive direction.
+const KARAOKE_RE = /karaok|instrumental|playback|pista|sing[\s-]?along|backing\s?track|minus\s?one/i
+
+/**
+ * Whether this playlist entry is already a karaoke track rather than the
+ * original recording.
+ *
+ * It decides what the entry is *for*. A karaoke playlist is a list of versions
+ * someone already chose and wants; an ordinary music playlist is a list of
+ * songs that still need a karaoke version found for them. Offering the wrong
+ * one of those two is what makes the list look nonsensical.
+ */
+export function isKaraokeUpload (entry: { title?: string | null, uploader?: string | null }): boolean {
+  return KARAOKE_RE.test(`${entry.title ?? ''} ${entry.uploader ?? ''}`)
+}
+
 // "(Official Video)", "[Remastered 2011]", "(Live at Wembley)" — for matching,
 // everything in brackets is noise, which is a stronger rule than the one
 // cleanSongText applies (that one has to preserve enough to name a file by)
@@ -87,6 +106,11 @@ export interface PlaylistTrackMeta {
 export function guessTrackMeta (entry: { title: string, uploader?: string | null }): PlaylistTrackMeta {
   const guess = guessArtistTitle(entry.title ?? '')
   if (guess.artist) return guess
+
+  // "karaoke Vinotinto", "Movida Musical Karaoke" — a karaoke channel is a
+  // publisher, and filing a song under one would put Marc Anthony's catalogue
+  // under whoever happened to upload it
+  if (KARAOKE_RE.test(entry.uploader ?? '')) return { artist: '', title: guess.title }
 
   let channel = cleanSongText(entry.uploader ?? '')
   let previous: string

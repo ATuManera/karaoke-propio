@@ -30,6 +30,12 @@
   }
 }
 
+.hint {
+  margin: 0 0 var(--space-s);
+  font-size: var(--font-size-xs);
+  color: var(--color-gray-6);
+}
+
 .rows {
   list-style: none;
   margin: 0;

@@ -23,6 +23,21 @@ const NOISE_RE = /\s*[([{][^)\]}]*(karaoke|instrumental|playback|pista|lyrics?|l
 // trailing "| Karaoke Latino", "_ Karaoke Versión _ ..." style channel tails
 const TRAILING_TAG_RE = /\s*[|_/]+\s*[^|_/]*(karaoke|instrumental|lyrics?|letra|playback)[^|_/]*$/gi
 
+// Karaoke channels label their uploads in running words, with no bracket or
+// separator for the rules above to find: "De vuelta pa la vuelta karaoke tono
+// bajo VINOTINTO MUSIC", "Marc Anthony - Vivir Mi Vida - KARAOKE Tono Bajo".
+// In a karaoke library nothing after the word "karaoke" is part of a song's
+// name, so the tail goes from the first such word to the end.
+const RUNNING_TAIL_RE = /\s+[-–—]?\s*\b(karaoke|instrumental|playback|pista|sing[\s-]?along|backing\s?track|minus\s?one)\b.*$/i
+
+// what those tails leave behind once the keyword itself is gone: "… Nueva
+// Version", "… TONO BAJO" (the key it was transposed to, not the song)
+const TRAILING_LABEL_RE = /\s+[-–—]?\s*\b((nueva\s+)?versi[oó]n|version|tonos?\s+\w+|pista)\s*$/i
+
+// "Karaoke Alejandro Sanz feat Marc Antony Deja que te bese" — the publisher's
+// word first, the song after it
+const LEADING_TAG_RE = /^\s*(karaoke|instrumental|playback|pista)\s+/i
+
 export function cleanSongText (text: string): string {
   let out = text
   let prev: string
@@ -30,7 +45,12 @@ export function cleanSongText (text: string): string {
   // repeat: titles often carry several tails ("... _ Karaoke Versión _ Karaoke Latino")
   do {
     prev = out
-    out = out.replace(NOISE_RE, '').replace(TRAILING_TAG_RE, '')
+    out = out
+      .replace(NOISE_RE, '')
+      .replace(TRAILING_TAG_RE, '')
+      .replace(RUNNING_TAIL_RE, '')
+      .replace(TRAILING_LABEL_RE, '')
+      .replace(LEADING_TAG_RE, '')
   } while (out !== prev)
 
   return out.replace(/\s{2,}/g, ' ').replace(/[\s\-–—_|]+$/, '').trim()

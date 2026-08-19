@@ -236,11 +236,17 @@ async function handlePlaylist (req, res, query) {
       title: parsed.title ?? '',
       // present on a real playlist, null on an auto-generated mix
       total: Number.isFinite(parsed.playlist_count) ? parsed.playlist_count : null,
+      // how many the listing itself returned, before the unusable ones were
+      // dropped. Without it a playlist holding one deleted video looks like it
+      // was cut short by the cap, which is a different and worse thing to say.
+      read: entries.length,
       entries: entries
         .filter(e => e && e.id && !LIVE_STATUSES.has(e.live_status))
         // a playlist keeps its place for videos that have since been taken
-        // down; "[Deleted video]" is not a song anyone can be helped to find
-        .filter(e => !/^\[(deleted|private|unavailable) video\]$/i.test((e.title ?? '').trim()))
+        // down; "[Deleted video]" is not a song anyone can be helped to find,
+        // and some come back with no title at all, which rendered as a blank row
+        .filter(e => typeof e.title === 'string' && e.title.trim())
+        .filter(e => !/^\[(deleted|private|unavailable) video\]$/i.test(e.title.trim()))
         .map(e => ({
           id: e.id,
           title: e.title,

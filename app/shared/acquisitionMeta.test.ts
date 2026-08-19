@@ -16,6 +16,22 @@ describe('cleanSongText', () => {
     expect(cleanSongText('Marc Anthony _ Karaoke Versión _ Karaoke Latino')).toBe('Marc Anthony')
   })
 
+  // every one of these is a real title from a karaoke playlist a user pasted:
+  // the publisher's words run into the song's, with no bracket or separator for
+  // the rules above to find
+  it('drops running-word karaoke labels', () => {
+    expect(cleanSongText('De vuelta pa la vuelta karaoke tono bajo VINOTINTO MUSIC')).toBe('De vuelta pa la vuelta')
+    expect(cleanSongText('TU AMOR ME HACE BIEN TONO BAJO KARAOKE FULL SONIDO')).toBe('TU AMOR ME HACE BIEN')
+    expect(cleanSongText('Marc Anthony Flor Palida Nueva Version Karaoke')).toBe('Marc Anthony Flor Palida')
+    expect(cleanSongText('Marc Anthony - Vivir Mi Vida  - KARAOKE Tono Bajo')).toBe('Marc Anthony - Vivir Mi Vida')
+  })
+
+  it('drops the publisher word when it comes first', () => {
+    expect(cleanSongText('Karaoke Alejandro Sanz feat Marc Antony Deja que te bese'))
+      .toBe('Alejandro Sanz feat Marc Antony Deja que te bese')
+    expect(cleanSongText('KARAOKE MALA - MARC ANTHONY')).toBe('MALA - MARC ANTHONY')
+  })
+
   it('leaves a clean title untouched', () => {
     expect(cleanSongText('Cuando pase el temblor')).toBe('Cuando pase el temblor')
     expect(cleanSongText('Here Comes The Sun')).toBe('Here Comes The Sun')

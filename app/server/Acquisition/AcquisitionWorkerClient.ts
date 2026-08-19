@@ -60,7 +60,7 @@ export default class AcquisitionWorkerClient {
    * there and applies by default. The real total comes back either way, so a
    * truncated listing can still say how much it left out.
    */
-  async fetchPlaylist (url: string): Promise<{ title: string, total: number | null, entries: PlaylistImportEntry[] }> {
+  async fetchPlaylist (url: string): Promise<{ title: string, total: number | null, read: number, entries: PlaylistImportEntry[] }> {
     let res: Response
     try {
       const reqUrl = new URL('/playlist', this.baseUrl)
@@ -77,11 +77,14 @@ export default class AcquisitionWorkerClient {
       throw new AcquisitionWorkerError(body.error || `playlist failed (${res.status})`)
     }
 
-    const json: { playlist?: { title?: string, total?: number | null, entries?: PlaylistImportEntry[] } } = await res.json()
+    const json: { playlist?: { title?: string, total?: number | null, read?: number, entries?: PlaylistImportEntry[] } } = await res.json()
+    const entries = json.playlist?.entries ?? []
+
     return {
       title: json.playlist?.title ?? '',
       total: json.playlist?.total ?? null,
-      entries: json.playlist?.entries ?? [],
+      read: json.playlist?.read ?? entries.length,
+      entries,
     }
   }
 

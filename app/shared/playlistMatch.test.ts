@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   buildLibraryMatchIndex,
   guessTrackMeta,
+  isKaraokeUpload,
   matchInLibrary,
   normalizeForMatch,
   type MatchableSong,
@@ -57,9 +58,34 @@ describe('guessTrackMeta', () => {
     expect(guessTrackMeta({ title: 'Vivir Mi Vida', uploader: 'Marc Anthony VEVO' }).artist).toBe('Marc Anthony')
   })
 
+  // a karaoke channel published the upload; it did not perform the song, and
+  // filing Marc Anthony's catalogue under "karaoke Vinotinto" helps nobody
+  it('never takes a karaoke channel for the artist', () => {
+    expect(guessTrackMeta({ title: 'De vuelta pa la vuelta karaoke tono bajo VINOTINTO MUSIC', uploader: 'karaoke Vinotinto' }))
+      .toEqual({ artist: '', title: 'De vuelta pa la vuelta' })
+    expect(guessTrackMeta({ title: 'TU AMOR ME HACE BIEN TONO BAJO KARAOKE FULL SONIDO', uploader: 'Movida Musical Karaoke' }).artist)
+      .toBe('')
+  })
+
   it('leaves the artist empty when nothing names one', () => {
     expect(guessTrackMeta({ title: 'Unchained Melody', uploader: null }))
       .toEqual({ artist: '', title: 'Unchained Melody' })
+  })
+})
+
+describe('isKaraokeUpload', () => {
+  // it decides what the entry is for: the version someone already chose, or a
+  // song that still needs a karaoke version found for it
+  it('recognises a karaoke upload by its title or its channel', () => {
+    expect(isKaraokeUpload({ title: 'Marc Anthony - Vivir Mi Vida - KARAOKE Tono Bajo' })).toBe(true)
+    expect(isKaraokeUpload({ title: 'Por Que Les Mientes', uploader: 'karaoke Vinotinto' })).toBe(true)
+    expect(isKaraokeUpload({ title: 'Vivir Mi Vida (Instrumental)' })).toBe(true)
+  })
+
+  it('leaves an ordinary music video alone', () => {
+    expect(isKaraokeUpload({ title: 'Queen – Bohemian Rhapsody (Official Video)', uploader: 'Queen Official' })).toBe(false)
+    expect(isKaraokeUpload({ title: 'Vivir Mi Vida', uploader: 'Marc Anthony - Topic' })).toBe(false)
+    expect(isKaraokeUpload({ title: null, uploader: null })).toBe(false)
   })
 })
 

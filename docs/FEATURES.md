@@ -61,10 +61,31 @@ separate them — it reports "not here". A false match hides a song someone
 wanted; a false miss downloads a second copy of what is already on disk, and
 that one is worse.
 
-Nothing downloads from the import. A missing song opens the same search,
-preview and pitch flow as any other acquisition, one at a time: forty songs
-someone liked in 2011, fetched unattended, would fill the library with versions
-nobody chose. Which is also why this is not the tool that inspired the question
+What a missing song does when tapped depends on what it is, and getting this
+backwards was the first thing a real user hit. A playlist can be either kind:
+
+- **Already karaoke** ("De vuelta pa la vuelta karaoke tono bajo VINOTINTO
+  MUSIC"). The entry is the version its owner already chose, so tapping offers
+  that exact video. Searching for a different karaoke version of a karaoke video
+  is how the import produced a screen of unrelated results.
+- **The original recording** ("Queen – Bohemian Rhapsody"). It cannot be sung
+  to, so tapping searches for a karaoke version of it.
+
+The same `KARAOKE_RE` idea the worker uses to filter search results decides
+which, on the title and the channel name together.
+
+Karaoke channels also write their titles in running words, with no bracket or
+separator for `cleanSongText` to find — the publisher's name, the key it was
+transposed to, and the word "karaoke" all run into the song's own name. In a
+karaoke library nothing after that word belongs to a song, so the tail is cut
+from there to the end. The guess is still only a guess: it lands in the
+artist/title fields of the preview, which is where a human fixes it before
+anything is filed.
+
+Nothing downloads from the import either way. Both roads end at the same
+preview and pitch questions as any other acquisition, one song at a time: forty
+songs someone liked in 2011, fetched unattended, would fill the library with
+versions nobody chose. Which is also why this is not the tool that inspired the question
 ([yt_playlists_from_karaoke_services](https://github.com/Deastrom/yt_playlists_from_karaoke_services)
 matches liked songs against catalogs you cannot change; here the catalog is the
 thing you can change).

@@ -14,7 +14,7 @@ import { formatDuration } from 'lib/dateTime'
 import { guessArtistTitle } from 'shared/acquisitionMeta'
 import { parsePlaylistId } from 'shared/youtubePlaylist'
 import type { PlaylistTrackMeta } from 'shared/playlistMatch'
-import type { AcquisitionSearchResult, AcquisitionSource } from 'shared/types'
+import type { AcquisitionSearchResult, AcquisitionSource, PlaylistImportEntry } from 'shared/types'
 import styles from './AcquisitionModal.css'
 
 interface AcquisitionModalProps {
@@ -69,6 +69,10 @@ const AcquisitionModal = ({ initialQuery, initialView = 'search', onClose }: Acq
   // unasked just makes the user wade through unusable results
   const [karaokeOnly, setKaraokeOnly] = useState(true)
   const [previewingResult, setPreviewingResult] = useState<AcquisitionSearchResult | null>(null)
+  // where the preview came from: it decides whether backing out returns to a
+  // list of search results or to the playlist, and what the acquisition records
+  // as the query that found it
+  const [previewOrigin, setPreviewOrigin] = useState<{ from: 'search' | 'playlist', query: string }>({ from: 'search', query: '' })
   // pre-filled from the YouTube title, but always the user's to correct: the
   // "Artist - Title" order is a convention uploaders break constantly, and a
   // wrong guess files the song under a bogus artist
@@ -129,6 +133,27 @@ const AcquisitionModal = ({ initialQuery, initialView = 'search', onClose }: Acq
     setPlaylistView(false)
   }
 
+  // an entry that is already a karaoke track: the version its owner chose, so
+  // offer that very video rather than searching for a different one. Same
+  // preview and same pitch question as any other acquisition — the guessed
+  // artist and title arrive in the fields, which is where a karaoke channel's
+  // running-words title gets corrected before anything is filed under it
+  const handleGet = (entry: PlaylistImportEntry, track: PlaylistTrackMeta) => {
+    const label = (track.artist ? `${track.artist} ${track.title}` : track.title).trim() || entry.title
+
+    setSource('youtube')
+    setPreviewingResult({
+      id: entry.id,
+      title: entry.title,
+      uploader: entry.uploader,
+      thumbnail: entry.thumbnail,
+      durationSeconds: entry.durationSeconds,
+    })
+    setMeta({ artist: track.artist, title: track.title })
+    setPreviewOrigin({ from: 'playlist', query: label })
+    dispatch(previewAcquisition('youtube', entry.id))
+  }
+
   // one it already has: the library row is where queueing, pitch and versions
   // live, so go there rather than growing a second way to do all three
   const handleOpenSong = (libraryTitle: string) => {
@@ -150,6 +175,7 @@ const AcquisitionModal = ({ initialQuery, initialView = 'search', onClose }: Acq
 
   const handlePick = (result: AcquisitionSearchResult) => {
     setPreviewingResult(result)
+    setPreviewOrigin({ from: 'search', query })
     // USDB already carries authoritative artist/title; only YouTube needs a guess
     setMeta(result.artist
       ? { artist: result.artist, title: result.title }
@@ -175,7 +201,7 @@ const AcquisitionModal = ({ initialQuery, initialView = 'search', onClose }: Acq
   const handlePitchConfirm = (pitchSemitones: number) => {
     if (!pickedResult) return
     dispatch(acquireResult(
-      source, pickedResult.id, pickedResult.title, pitchSemitones, query,
+      source, pickedResult.id, pickedResult.title, pitchSemitones, previewOrigin.query || query,
       meta.artist.trim() || undefined,
       meta.title.trim() || undefined,
       pickedResult.viewCount ?? null,
@@ -208,7 +234,9 @@ const AcquisitionModal = ({ initialQuery, initialView = 'search', onClose }: Acq
         buttons={previewingResult
           ? (
               <>
-                <Button onClick={handlePreviewBack}>Choose another</Button>
+                <Button onClick={handlePreviewBack}>
+                  {previewOrigin.from === 'playlist' ? 'Back to playlist' : 'Choose another'}
+                </Button>
                 <Button
                   variant='primary'
                   onClick={handlePreviewAdd}
@@ -350,6 +378,7 @@ const AcquisitionModal = ({ initialQuery, initialView = 'search', onClose }: Acq
                           <PlaylistImport
                             playlist={playlist}
                             onFind={handleFind}
+                            onGet={handleGet}
                             onOpen={handleOpenSong}
                           />
                         )}
