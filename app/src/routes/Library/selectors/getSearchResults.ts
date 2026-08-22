@@ -15,7 +15,10 @@ const getStarredSongs = (state: RootState) => ensureState(state.userStars).starr
 const getSelectedCategories = (state: RootState) => state.categories.selected
 const getSongCategories = (state: RootState) => state.categories.songCategories
 const getSort = (state: RootState) => state.library.sort
-const getPendingReview = (state: RootState) => state.songReview.pending
+const getPendingReviewIds = createSelector(
+  [(state: RootState) => state.songReview.pending],
+  pending => new Set(pending.map(row => row.songId)),
+)
 const getFilterPendingReview = (state: RootState) => state.songReview.isFiltering
 
 const getArtistSearcher = createSelector(
@@ -72,13 +75,13 @@ const getArtistsByView = createSelector(
 // return more of what they were trying to filter out.
 const getSongsByView = createSelector(
   [getSongsByKeyword, getFilterStarred, getStarredSongs, getSelectedCategories, getSongCategories,
-    getFilterPendingReview, getPendingReview],
+    getFilterPendingReview, getPendingReviewIds],
   (songsWithKeyword, filterStarred, starredSongs, selected, songCategories, filterPending, pending) =>
     songsWithKeyword.filter((songId) => {
       if (filterStarred && !starredSongs.includes(songId)) return false
       // songs a bulk import brought in that nobody has checked yet — an admin
       // worklist, narrowing the library the same way starred does
-      if (filterPending && !pending.some(row => row.songId === songId)) return false
+      if (filterPending && !pending.has(songId)) return false
       if (!selected.length) return true
 
       const own = songCategories[songId]

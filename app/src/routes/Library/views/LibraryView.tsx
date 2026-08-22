@@ -12,13 +12,19 @@ const LibraryView = () => {
   const { isLoading, filterStr, filterStarred } = useAppSelector(state => state.library)
   const songsResult = useAppSelector(state => state.songs.result)
   const selectedCategories = useAppSelector(state => state.categories.selected)
+  const isFilteringPendingReview = useAppSelector(state => state.songReview.isFiltering)
   const ui = useAppSelector(state => state.ui)
 
-  // Category chips are a filter like any other, so they must switch to the
-  // filtered results view. Without this they only narrowed the search view and
-  // appeared to do nothing at all while browsing by artist, which is the
-  // default screen.
-  const isSearching = !!filterStr.trim().length || filterStarred || selectedCategories.length > 0
+  // EVERY filter has to be listed here, not just the ones typed into the
+  // search box: this is what decides whether the screen shows the filtered
+  // results at all. A filter missing from this line still changes state and
+  // still narrows the results view — it just leaves the browse-by-artist
+  // screen, which is the default, rendering as if nothing happened. That has
+  // now cost the category chips and the review flag one bug each.
+  const isSearching = !!filterStr.trim().length
+    || filterStarred
+    || selectedCategories.length > 0
+    || isFilteringPendingReview
   const [initialHeaderHeight] = useState(ui.headerHeight)
   const [finalHeaderHeight, setFinalHeaderHeight] = useState(null)
 
