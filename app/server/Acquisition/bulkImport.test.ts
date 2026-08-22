@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest'
-import AcquisitionManager from './AcquisitionManager.js'
+import AcquisitionManager, { asFilenamePart } from './AcquisitionManager.js'
+import MetaParser from '../Scanner/MetaParser/MetaParser.js'
+import { stripSourceIdSuffix, withSourceIdSuffix } from '../lib/util.js'
 import { buildLibraryMatchIndex } from '../../shared/playlistMatch.js'
 import type { PlaylistImport, PlaylistImportEntry } from '../../shared/types.js'
 
@@ -76,5 +78,42 @@ describe('AcquisitionManager.planBulk', () => {
     expect(item.isAmbiguous).toBe(true)
     expect(item.artist).toBe('')
     expect(item.title).toBe('TU AMOR ME HACE BIEN')
+  })
+})
+
+// The filename is the whole game: it is what a library rescan re-derives the
+// artist from, so anything that survives the download has to survive being
+// written down and read back too.
+describe('what a bulk-imported song is filed as', () => {
+  const roundTrip = (artist: string, title: string) => {
+    const base = `${asFilenamePart(artist)} - ${asFilenamePart(title)}`
+    return MetaParser(undefined)({
+      dir: '/library',
+      dirSep: '/',
+      name: stripSourceIdSuffix(withSourceIdSuffix(base, 'lgG-Uz9_8ic')),
+      meta: {},
+    })
+  }
+
+  // the library writes "Beatles, The", and filing a second "Beatles The"
+  // beside it is the duplication this feature exists to avoid
+  it('reads back the name the library gave it, comma and all', () => {
+    expect(roundTrip('Beatles, The', 'Something')).toMatchObject({ artist: 'Beatles, The', title: 'Something' })
+    expect(roundTrip('Guns N\' Roses', 'Knockin\' on Heaven\'s Door'))
+      .toMatchObject({ artist: 'Guns N\' Roses', title: 'Knockin\' on Heaven\'s Door' })
+  })
+
+  // a dash inside a title is a second delimiter, and MetaParser's longest-match
+  // rule picked it: "Queen - Bohemian Rhapsody - Live Aid" came back as artist
+  // "Queen-Bohemian Rhapsody"
+  it('keeps a dash inside the title from being read as the separator', () => {
+    expect(roundTrip('Queen', 'Bohemian Rhapsody - Live Aid'))
+      .toMatchObject({ artist: 'Queen', title: 'Bohemian Rhapsody – Live Aid' })
+  })
+
+  // a filename with no " - " in it cannot be parsed at all — MetaParser throws
+  it('gives a nameless song something parseable to be filed under', () => {
+    expect(roundTrip('Unknown Artist', 'De vuelta pa la vuelta'))
+      .toMatchObject({ artist: 'Unknown Artist', title: 'De vuelta pa la vuelta' })
   })
 })

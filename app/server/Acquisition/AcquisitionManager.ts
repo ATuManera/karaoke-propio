@@ -36,6 +36,19 @@ const YOUTUBE_ID_RE = /^[\w-]{11}$/
 // songs across every karaoke publisher on YouTube.
 const UNKNOWN_ARTIST = 'Unknown Artist'
 
+/**
+ * One half of an "Artist - Title" filename, written so it can be read back.
+ *
+ * A dash inside either half gives MetaParser a second delimiter to choose
+ * between, and its longest-match rule picks the wrong one: "Queen - Bohemian
+ * Rhapsody - Live Aid" comes back as artist "Queen-Bohemian Rhapsody". An en
+ * dash is not a delimiter at all, so the outer one stays the only one — and it
+ * is what the title should have been written with anyway.
+ */
+export function asFilenamePart (text: string): string {
+  return sanitizePathSegment(text.replace(/\s+-\s+/g, ' – '))
+}
+
 interface StartParams {
   /** popularity of the chosen source, kept so the library can be ordered by it */
   viewCount?: number | null
@@ -320,6 +333,7 @@ class AcquisitionManager {
       if (item.state !== 'waiting') continue
 
       if (job.isStopping) {
+        item.state = 'stopped'
         item.detail = 'stopped before this one'
         continue
       }
@@ -463,8 +477,8 @@ class AcquisitionManager {
       // keeps a later rescan idempotent instead of silently re-deriving
       // something different.
       const baseName = artist && songTitle
-        ? `${sanitizePathSegment(artist)} - ${sanitizePathSegment(songTitle)}`
-        : sanitizePathSegment(fallbackTitle)
+        ? `${asFilenamePart(artist)} - ${asFilenamePart(songTitle)}`
+        : asFilenamePart(fallbackTitle)
       const destRelPath = `${withSourceIdSuffix(baseName, videoId)}.mp4`
       const finalPath = await publishAtomically(stagedFile, pathId, destRelPath)
 

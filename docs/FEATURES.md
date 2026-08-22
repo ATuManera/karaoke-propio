@@ -215,6 +215,12 @@ Details that each cost a real failure:
   is right for a "- Topic" upload and wrong for every karaoke publisher there
   is: "Marc Anthony Flor Palida Nueva Version Karaoke" was filed under
   "Alejandro Paredes", the channel that posted it.
+- A dash inside either half is written as an en dash. A hyphen would be a
+  second delimiter, and MetaParser's longest-match rule picks the wrong one:
+  "Queen - Bohemian Rhapsody - Live Aid" came back as artist "Queen-Bohemian
+  Rhapsody". Verified by round-tripping the filename back through MetaParser,
+  which is also where "Beatles, The" was confirmed to survive intact — filing
+  a second "Beatles The" beside it is exactly the duplication this avoids.
 - With nothing at all to go on, the artist is `Unknown Artist`. A filename with
   no " - " in it cannot be parsed at all — MetaParser throws — so something has
   to go there, and a placeholder that is obviously a placeholder beats a

@@ -206,7 +206,8 @@ export interface BulkAcquisitionItem {
   /** what it will be filed as, or was */
   artist: string
   title: string
-  state: 'waiting' | 'downloading' | 'done' | 'skipped' | 'error'
+  /** `skipped` means the library already had it; `stopped` means an admin said when */
+  state: 'waiting' | 'downloading' | 'done' | 'skipped' | 'stopped' | 'error'
   /** nothing in the library corroborated the artist/title reading */
   isAmbiguous: boolean
   /** why it was skipped or what went wrong */

@@ -97,6 +97,8 @@ const PlaylistImport = ({ playlist, onFind, onGet, onOpen }: PlaylistImportProps
 
   const isThisPlaylist = bulk?.playlistId === playlist.playlistId
   const isThisPlaylistRunning = isThisPlaylist && !!bulk?.isRunning
+  // everything that was going to be downloaded, including what a stop cut
+  // short — so the denominator does not shrink under the admin who stopped it
   const bulkTotal = isThisPlaylist ? bulk.items.filter(item => item.state !== 'skipped').length : 0
   const bulkDone = isThisPlaylist ? bulk.items.filter(item => item.state === 'done').length : 0
   const bulkFailed = isThisPlaylist ? bulk.items.filter(item => item.state === 'error').length : 0
@@ -160,9 +162,12 @@ const PlaylistImport = ({ playlist, onFind, onGet, onOpen }: PlaylistImportProps
         </div>
       )}
 
-      {bulkError && <p className={styles.bulkError}>{bulkError}</p>}
+      {isAdmin && bulkError && <p className={styles.bulkError}>{bulkError}</p>}
 
-      {isThisPlaylist && bulk && (
+      {/* pushed to the whole room, because that is where acquisition state
+          goes — but a singer with this playlist open has no use for a progress
+          bar and no way to act on the Stop button under it */}
+      {isAdmin && isThisPlaylist && bulk && (
         <div className={styles.bulk}>
           <div className={styles.bulkCounts}>
             {bulk.isRunning
