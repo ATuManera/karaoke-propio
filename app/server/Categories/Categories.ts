@@ -1,7 +1,7 @@
 import { db } from '../lib/Database.js'
 import getLogger from '../lib/Log.js'
 import Library from '../Library/Library.js'
-import MusicBrainzClient, { TransientLookupError } from './MusicBrainzClient.js'
+import { musicBrainz, TransientLookupError } from './MusicBrainzClient.js'
 import { toCategories, type Category, type CategoryType } from './categoryMap.js'
 
 const log = getLogger('Categories')
@@ -19,7 +19,7 @@ function normalize (name: string): string {
 }
 
 class Categories {
-  private static mb = new MusicBrainzClient()
+  private static mb = musicBrainz
 
   /** All categories that have at least one song, with counts, for the filter UI. */
   static get (): { result: number[], entities: Record<number, CategoryRow> } {

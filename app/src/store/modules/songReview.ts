@@ -34,23 +34,46 @@ export const markSongReviewed = createAsyncThunk(
   },
 )
 
+/**
+ * Read the names of everything still awaiting review again, and fix what is
+ * the wrong way round. Minutes long and rate limited upstream, so it answers
+ * 202 and reports itself through the library pushes that follow.
+ */
+export const recheckPendingNames = createAsyncThunk(
+  'songReview/RECHECK',
+  async () => await api.request('POST', 'review/recheck'),
+)
+
 /** show only the songs still waiting to be checked */
 export const toggleFilterPendingReview = createAction('songReview/TOGGLE_FILTER')
 
 interface SongReviewState {
   pending: PendingSong[]
   isFiltering: boolean
+  isRechecking: boolean
 }
 
 const initialState: SongReviewState = {
   pending: [],
   isFiltering: false,
+  isRechecking: false,
 }
 
 const songReviewReducer = createReducer(initialState, (builder) => {
   builder
     .addCase(toggleFilterPendingReview, (state) => {
       state.isFiltering = !state.isFiltering
+    })
+    .addCase(recheckPendingNames.pending, (state) => {
+      state.isRechecking = true
+    })
+    // the request only starts the job; it finishing means the job is running,
+    // not that it is done
+    .addCase(recheckPendingNames.fulfilled, (state) => {
+      state.isRechecking = false
+    })
+    .addCase(recheckPendingNames.rejected, (state) => {
+      state.isRechecking = false
     })
     .addCase(fetchPendingReview.fulfilled, (state, { payload }) => {
       state.pending = payload.pending

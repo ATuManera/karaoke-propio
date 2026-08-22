@@ -1,7 +1,9 @@
 import KoaRouter from '@koa/router'
+import getLogger from '../lib/Log.js'
 import Media from '../Media/Media.js'
 import Library from './Library.js'
 import SongReview from './SongReview.js'
+import { recheckPending } from './recheckPending.js'
 import { retagSong } from '../Media/retagSong.js'
 import Categories from '../Categories/Categories.js'
 import { getSongNotes, getSongMediaPath } from '../Media/songNotes.js'
@@ -13,6 +15,7 @@ import PitchWorkerClient from '../Pitch/PitchWorkerClient.js'
 const keyCache = new Map<number, unknown>()
 let pitchWorker: PitchWorkerClient | null = null
 import { LIBRARY_PUSH } from '../../shared/actionTypes.js'
+const log = getLogger('LibraryRouter')
 const router = new KoaRouter({ prefix: '/api' })
 
 // lists underlying media for a given song
@@ -113,6 +116,24 @@ router.get('/review', (ctx) => {
   if (!ctx.user.isAdmin) ctx.throw(401)
 
   ctx.body = { pending: SongReview.getPending() }
+})
+
+/**
+ * Read the names of everything still awaiting review again, and fix what is
+ * the wrong way round — see recheckPending.ts for why that happens at all.
+ *
+ * Fire-and-forget, like the category scan and for the same reason: MusicBrainz
+ * permits about one request a second and this needs two per song, so a library
+ * full of them takes minutes and must not be held open by an HTTP request.
+ */
+router.post('/review/recheck', (ctx) => {
+  if (!ctx.user.isAdmin) ctx.throw(401)
+
+  recheckPending(ctx.io)
+    .catch((err: Error) => log.error('recheck failed: %s', err.message))
+
+  ctx.status = 202
+  ctx.body = { started: true }
 })
 
 // "I have looked at this one." Deliberately not inferred from an edit: an

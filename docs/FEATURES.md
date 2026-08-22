@@ -232,6 +232,69 @@ correctly and confidently, 4 marked as uncorroborated (three name nobody the
 library knows, one is a title typed as gibberish), and none attributed to the
 wrong artist.
 
+### When the library knows nobody
+
+The library is the right first witness — free, instant, always right about the
+artists it already holds. It is also useless on the first real import into a
+new library, and that is not a corner case: a library of Spanish-language music
+handed a classic rock playlist recognised almost nobody, fell back to assuming
+"Artist - Title", and filed a third of them backwards, because KaraFun and
+channels like it write the song first. 62 of 79 came out flagged.
+
+MusicBrainz knows all of them, and asked both ways round it does not hedge.
+Measured live 2026-08-22 over the reversed titles from that import:
+
+| asked | answer |
+| --- | --- |
+| `artistname:"All Right Now" AND recording:"Free"` | nothing |
+| `artistname:"Free" AND recording:"All Right Now"` | 100 · Free — All Right Now |
+| `artistname:"Mountain" AND recording:"Mississippi Queen"` | 100 · Mountain — Mississippi Queen |
+| `artistname:"Mississippi Queen" AND recording:"Mountain"` | nothing |
+
+Ten of ten, always 100 against nothing. There is no threshold to tune because
+there is no middle ground to tune it in — so `corroborate()` simply asks both
+ways and takes the side that answers, treating "both" and "neither" alike as no
+opinion.
+
+It is the second question and not the first because it costs a second per
+lookup and an internet connection: it runs only for the readings the library
+could not settle. A `TransientLookupError` leaves the reading exactly as
+uncertain as it was, the same rule the category scan learned on 2026-08-14 —
+one unlucky 503 must never be recorded as an answer.
+
+`artistname` rather than `artist` gets the performer's own name back as
+MusicBrainz spells it, which is how "Doors" becomes "The Doors" and then
+"Doors, The" on the way in. The library's spelling wins over MusicBrainz's
+where it has one; the uploader's is never kept. The *title*, though, stays as
+the uploader wrote it — MusicBrainz's is canonical rather than familiar, and
+nobody goes looking for "Fire & Rain" having heard "Fire and Rain".
+
+Everything the client and the worker share stays in `shared/playlistMatch.ts`
+and stays synchronous; this lives on the server, where the network is.
+
+### Re-reading what is already downloaded
+
+The first import into a library happens before the library knows anybody, so
+its songs are the ones most likely to be wrong — and by the time a second
+import would benefit from them, they are already filed. `recheckPending()`
+closes that loop: it re-reads every song still awaiting review, asks
+MusicBrainz about the ones the library still cannot settle, and corrects them
+through `retagSong`, which renames the files so the fix survives a rescan.
+Nothing is downloaded again.
+
+It is offered where the songs are — under the review filter — and is
+fire-and-forget behind a 202, like the category scan and for the same reason:
+two lookups a song at roughly a second each means minutes, which is not
+something to hold an HTTP request open for. A `LIBRARY_PUSH` after each
+correction makes the list visibly move rather than sit still and then jump.
+
+A corrected song stays pending. Being fixed automatically is not the same as
+having been looked at, and the flag exists so that a person looks.
+
+Songs under `Unknown Artist` are skipped: there is no second name to swap with,
+so there is no question to ask, and they are exactly the ones only a person can
+answer.
+
 ### Review
 
 Every song a bulk import creates is held in `songsPendingReview` until an admin

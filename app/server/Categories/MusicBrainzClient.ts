@@ -113,6 +113,38 @@ export class MusicBrainzClient {
   }
 
   /**
+   * Is there really a recording of "<title>" by "<artist>"?
+   *
+   * Used to settle which side of a YouTube title is the artist, where the
+   * question has a sharp answer: measured over the reversed titles from a real
+   * import, the right way round scored 100 and the wrong way round returned
+   * nothing at all, ten times out of ten. There is no threshold to tune here
+   * because there is no middle ground to tune it in.
+   *
+   * `artistname` rather than `artist`: it matches the performer's own name and
+   * reports it as MusicBrainz spells it, which is how "Doors" comes back as
+   * "The Doors".
+   */
+  async findRecording (artist: string, title: string): Promise<{ artist: string, title: string, score: number } | null> {
+    const clean = (s: string) => s.replace(/["\\]/g, ' ').trim()
+    if (!clean(artist) || !clean(title)) return null
+
+    const query = `artistname:"${clean(artist)}" AND recording:"${clean(title)}"`
+    const data = await this.get<{
+      recordings?: { 'score'?: number, 'title'?: string, 'artist-credit'?: { name: string }[] }[]
+    }>(`/recording?query=${encodeURIComponent(query)}&fmt=json&limit=1`)
+
+    const hit = data?.recordings?.[0]
+    if (!hit || (hit.score ?? 0) < 90) return null
+
+    return {
+      artist: hit['artist-credit']?.map(credit => credit.name).join(', ') ?? artist,
+      title: hit.title ?? title,
+      score: hit.score ?? 0,
+    }
+  }
+
+  /**
    * Everything known about one song, pooling recording-level tags (genre of
    * this particular song) with artist-level ones (Marc Anthony -> salsa), since
    * neither alone covers much: recordings frequently carry no tags at all.
@@ -150,4 +182,15 @@ export class MusicBrainzClient {
   }
 }
 
+/**
+ * The one client everything shares.
+ *
+ * The throttle that keeps MusicBrainz from blocking this address lives on the
+ * instance, so a second instance is a second unthrottled caller. A bulk import
+ * asking which way round a title is, while categorization runs in the
+ * background for the songs it already fetched, is exactly that situation.
+ */
+const musicBrainz = new MusicBrainzClient()
+
+export { musicBrainz }
 export default MusicBrainzClient

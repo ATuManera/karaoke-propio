@@ -19,6 +19,8 @@ import { parseUltraStarHeaders, ultraStarToLrc } from './UltraStarToLrc.js'
 import { isPrivatePlaylistId, parsePlaylistId, playlistUrl } from '../../shared/youtubePlaylist.js'
 import { buildLibraryMatchIndex, isKaraokeUpload, matchInLibrary, resolveTrackMeta } from '../../shared/playlistMatch.js'
 import SongReview from '../Library/SongReview.js'
+import { musicBrainz } from '../Categories/MusicBrainzClient.js'
+import { corroborate } from './corroborate.js'
 import { ACQUISITION_BULK_PUSH, ACQUISITION_PUSH, LIBRARY_PUSH, LIBRARY_PUSH_SONG, QUEUE_PUSH } from '../../shared/actionTypes.js'
 import type { AcquisitionRequest, AcquisitionSource, AcquisitionState, BulkAcquisition, BulkAcquisitionItem, PlaylistImport, PlaylistImportEntry } from '../../shared/types.js'
 
@@ -338,9 +340,22 @@ class AcquisitionManager {
         continue
       }
 
+      const index = this.matchIndex()
+
+      // Asked only for the readings the library could not settle, and asked
+      // before the duplicate check rather than after: a title read backwards
+      // is also a title that fails to recognise the song it already is.
+      const meta = await corroborate(item, index, musicBrainz)
+      if (meta.artist !== item.artist || meta.title !== item.title) {
+        log.info('MusicBrainz reads "%s - %s" as "%s - %s"', item.artist, item.title, meta.artist, meta.title)
+        item.artist = meta.artist
+        item.title = meta.title
+        item.isAmbiguous = meta.isAmbiguous
+      }
+
       // re-checked here rather than trusted from the plan: the library has
       // been changing while this ran, not least because of this very job
-      const songId = matchInLibrary(item, this.matchIndex())
+      const songId = matchInLibrary(item, index)
       if (songId !== null) {
         item.state = 'skipped'
         item.detail = 'already in the library'

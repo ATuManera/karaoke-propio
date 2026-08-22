@@ -11,6 +11,7 @@ import TextOverlay from 'components/TextOverlay/TextOverlay'
 import Button from 'components/Button/Button'
 import AcquisitionModal from 'components/AcquisitionModal/AcquisitionModal'
 import { parsePlaylistId } from 'shared/youtubePlaylist'
+import { recheckPendingNames } from 'store/modules/songReview'
 import ArtistItem from '../ArtistItem/ArtistItem'
 import SongList from '../SongList/SongList'
 import type { ListImperativeAPI, RowComponentProps } from 'react-window'
@@ -130,6 +131,18 @@ const SearchResults = ({ ui }: SearchResultsProps) => {
   const { artistsResult, songsResult } = useAppSelector(getSearchResults)
 
   const playlist = useAppSelector(state => state.acquisition.playlist)
+  const { pending, isFiltering: isFilteringPendingReview, isRechecking } = useAppSelector(state => state.songReview)
+
+  const handleRecheck = () => {
+    // minutes long, rate limited upstream, and it renames files — so it is
+    // asked for once and explicitly, the same way the category scan is
+    const message = `Read the names of these ${pending.length} songs again?\n\n`
+      + `Anything MusicBrainz recognises the other way round gets its artist and `
+      + `title swapped, and its files renamed. Takes a couple of seconds per song `
+      + `and continues in the background. They all stay flagged for you either way.`
+
+    if (window.confirm(message)) dispatch(recheckPendingNames())
+  }
 
   const listRef = useRef<ListImperativeAPI | null>(null)
   const filterKeywords = filterStr.trim() ? filterStr.trim().toLowerCase().split(' ') : []
@@ -252,6 +265,23 @@ const SearchResults = ({ ui }: SearchResultsProps) => {
             onClick={() => setAcquisitionView('search')}
           >
             Not what you wanted? Search YouTube
+          </Button>
+        </div>
+      )}
+
+      {/* The first import into a library happens before the library knows
+          anybody, so the artist/title reading has nothing to check itself
+          against and comes out backwards often enough to matter. This is the
+          way to fix them all without re-downloading anything. */}
+      {isFilteringPendingReview && pending.length > 0 && (
+        <div ref={moreBarRef} className={styles.moreBar} style={{ bottom: ui.footerHeight }}>
+          <Button
+            className={styles.moreButton}
+            variant='primary'
+            disabled={isRechecking}
+            onClick={handleRecheck}
+          >
+            {isRechecking ? 'Starting…' : `Re-read these ${pending.length} names`}
           </Button>
         </div>
       )}
