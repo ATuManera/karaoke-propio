@@ -8,7 +8,12 @@ const BASE = 'https://musicbrainz.org/ws/2'
 // MusicBrainz requires an identifying User-Agent and throttles to ~1 request
 // per second; ignoring either gets an IP blocked, so both are enforced here
 // rather than left to callers.
-const USER_AGENT = 'KaraokePropio/1.0 ( https://github.com/vicwomg/pikaraoke )'
+//
+// It has to identify THIS application. It named PiKaraoke's repository until
+// 2026-08-22, which is both wrong attribution and a string other installations
+// send too — and MusicBrainz throttles by client as well as by address, so
+// sharing one costs throughput that belongs to somebody else.
+const USER_AGENT = 'KaraokePropio/1.2 ( https://github.com/ATuManera/karaoke-propio )'
 const MIN_INTERVAL_MS = 1100
 const RATE_LIMIT_BACKOFF_MS = 4000
 

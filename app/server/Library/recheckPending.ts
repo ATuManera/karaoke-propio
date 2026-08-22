@@ -33,7 +33,9 @@ export interface RecheckResult {
  * corrected through `retagSong`, which renames the files — a database-only fix
  * would revert on the next scan.
  *
- * A corrected song stays pending. Being fixed automatically is not the same as
+ * A corrected song stays pending, and staying takes work: renaming gives a
+ * song a new songId, so the review row has to be carried across by hand or the
+ * foreign key quietly deletes it. Being fixed automatically is not the same as
  * having been looked at, and the whole point of the flag is that a person
  * looks.
  */
@@ -65,7 +67,19 @@ export async function recheckPending (io: SocketIOServer): Promise<RecheckResult
       const meta = await corroborate({ artist, title: song.title, isAmbiguous: true }, index, musicBrainz)
       if (meta.artist === artist && meta.title === song.title) continue
 
-      await retagSong(row.songId, meta.artist, meta.title)
+      const retagged = await retagSong(row.songId, meta.artist, meta.title)
+
+      // Renaming a song gives it a new songId — Library.matchSong files the
+      // corrected name as its own row and retagSong deletes the old one, which
+      // takes the review row with it through the foreign key. Left alone, every
+      // song this fixed would quietly leave the worklist, which is the opposite
+      // of the point: it was corrected by a lookup, not looked at by a person.
+      SongReview.markPending(retagged.songId, {
+        sourceTitle: row.sourceTitle,
+        playlistId: row.playlistId,
+        isAmbiguous: false,
+      })
+
       result.corrected++
       log.info('corrected %s: "%s - %s" -> "%s - %s"', row.songId, artist, song.title, meta.artist, meta.title)
 

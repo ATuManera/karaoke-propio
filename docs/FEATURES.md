@@ -298,13 +298,24 @@ through `retagSong`, which renames the files so the fix survives a rescan.
 Nothing is downloaded again.
 
 It is offered where the songs are — under the review filter — and is
-fire-and-forget behind a 202, like the category scan and for the same reason:
-two lookups a song at roughly a second each means minutes, which is not
-something to hold an HTTP request open for. A `LIBRARY_PUSH` after each
+fire-and-forget behind a 202, like the category scan and for the same reason.
+"Roughly a second each" is optimistic: measured against the live service on
+2026-08-22, ten requests took 52 seconds and thirteen of them were answered
+with a 503 first, so two lookups cost about ten seconds of wall clock. The real
+run over 79 songs took 13m22s. That is not something to hold an HTTP request
+open for, and it is why the job reports itself through the library instead. A `LIBRARY_PUSH` after each
 correction makes the list visibly move rather than sit still and then jump.
 
-A corrected song stays pending. Being fixed automatically is not the same as
-having been looked at, and the flag exists so that a person looks.
+A corrected song stays pending, and staying takes work. Renaming gives a song a
+new `songId` — `Library.matchSong` files the corrected name as its own row and
+`retagSong` retires the old one, which takes the review row with it through the
+foreign key. On the first real run every song the re-read fixed quietly left the
+worklist, which is the exact opposite of the intent: corrected by a lookup is
+not the same as looked at by a person. The row is now written again against the
+new id.
+
+(A *manual* edit still drops the flag, and that is deliberate: an admin who
+retyped a name has, by definition, looked at it.)
 
 Songs under `Unknown Artist` are skipped: there is no second name to swap with,
 so there is no question to ask, and they are exactly the ones only a person can
