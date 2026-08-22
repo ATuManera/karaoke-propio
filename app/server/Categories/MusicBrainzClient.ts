@@ -131,16 +131,37 @@ export class MusicBrainzClient {
 
     const query = `artistname:"${clean(artist)}" AND recording:"${clean(title)}"`
     const data = await this.get<{
-      recordings?: { 'score'?: number, 'title'?: string, 'artist-credit'?: { name: string }[] }[]
-    }>(`/recording?query=${encodeURIComponent(query)}&fmt=json&limit=1`)
+      recordings?: {
+        'score'?: number
+        'title'?: string
+        'artist-credit'?: { name: string, artist?: { name?: string } }[]
+      }[]
+    }>(`/recording?query=${encodeURIComponent(query)}&fmt=json&limit=5`)
 
-    const hit = data?.recordings?.[0]
-    if (!hit || (hit.score ?? 0) < 90) return null
+    // Several rather than one, and the most common credit rather than the top
+    // hit: a song has dozens of recordings — album, live, remaster,
+    // compilations — that all score 100, and MusicBrainz returns equal scores
+    // in no particular order. Taking the first meant the same artist came back
+    // as "Simon & Garfunkel" one run and "Simon and Garfunkel" the next, which
+    // is two artists in a library.
+    //
+    // This narrows the wobble rather than removing it: five distinct credits
+    // tie, and the fallback is the arbitrary top hit again. What actually
+    // converges is the caller preferring a spelling the library already holds,
+    // which the first correction establishes for all the songs after it — and
+    // that only works because normalizeForMatch drops the joining word, so
+    // "Simon & Garfunkel" and "Simon and Garfunkel" look up the same key.
+    const hits = (data?.recordings ?? []).filter(rec => (rec.score ?? 0) >= 90)
+    if (!hits.length) return null
+
+    const names = hits.map(rec =>
+      rec['artist-credit']?.map(credit => credit.artist?.name ?? credit.name).join(', ') ?? artist)
+    const count = (name: string) => names.filter(other => other === name).length
 
     return {
-      artist: hit['artist-credit']?.map(credit => credit.name).join(', ') ?? artist,
-      title: hit.title ?? title,
-      score: hit.score ?? 0,
+      artist: names.reduce((best, name) => count(name) > count(best) ? name : best, names[0]),
+      title: hits[0].title ?? title,
+      score: hits[0].score ?? 0,
     }
   }
 

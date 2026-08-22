@@ -54,6 +54,17 @@ describe('corroborate', () => {
       .toBe('Derek and the Dominos')
   })
 
+  // MusicBrainz returns equal-scoring recordings in no particular order, so
+  // the same artist came back spelled two ways on two runs — which is two
+  // artists in a library. The library's own spelling settles it either way.
+  it('does not mind which way MusicBrainz spelled the ampersand', async () => {
+    const withIndia = buildLibraryMatchIndex([{ songId: 2, title: 'Vivir Mi Vida', artist: 'Marc Anthony & La India' }])
+    const mb = oracle({ 'Marc Anthony and La India|Nadie Como Ella': 'Marc Anthony and La India' })
+
+    expect((await corroborate(ambiguous('Nadie Como Ella', 'Marc Anthony and La India'), withIndia, mb)).artist)
+      .toBe('Marc Anthony & La India')
+  })
+
   it('does not ask about a reading the library already settled', async () => {
     let asked = false
     const mb = {

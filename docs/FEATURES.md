@@ -85,6 +85,10 @@ the library holds an artist and title parsed from a file. yt-dlp's structured
 `--flat-playlist` (verified 2026-08-17), so the material is the title string and
 the channel name. What earns its keep in `shared/playlistMatch.ts`:
 
+- The word joining two performers is dropped, not standardised. `Simon &
+  Garfunkel`, `Simon and Garfunkel` and `Simon Garfunkel` all reach the library
+  the same way — from a YouTube title, a MusicBrainz credit and a filename that
+  lost the ampersand — and only dropping it satisfies all three.
 - Articles. The library stores `Beatles, The`; a playlist says `The Beatles`.
   Without `stripArticles` on both sides, an ordinary English-language playlist
   reads as almost entirely missing.
@@ -261,6 +265,17 @@ lookup and an internet connection: it runs only for the readings the library
 could not settle. A `TransientLookupError` leaves the reading exactly as
 uncertain as it was, the same rule the category scan learned on 2026-08-14 —
 one unlucky 503 must never be recorded as an answer.
+
+MusicBrainz returns equal-scoring recordings in no particular order, and a
+song has dozens of them — album, live, remaster, compilations — so the top hit
+alone gave the same artist two different spellings on two runs, which is two
+artists in a library. Five results and the most common credit narrows that;
+what actually converges is the caller preferring a spelling the library already
+holds, established by the first correction and reused by every song after it.
+That in turn only works because `normalizeForMatch` drops the joining word
+entirely rather than standardising it: "Simon & Garfunkel", "Simon and
+Garfunkel" and "Simon Garfunkel" are three forms in circulation, not two, and
+the third is what a filename becomes.
 
 `artistname` rather than `artist` gets the performer's own name back as
 MusicBrainz spells it, which is how "Doors" becomes "The Doors" and then

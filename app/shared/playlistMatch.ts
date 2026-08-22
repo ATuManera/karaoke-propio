@@ -72,6 +72,19 @@ const APOSTROPHE_RE = /['’‘`´]/g
 // TypeScript target rules out.
 const PUNCTUATION_RE = /[\s!-/:-@[-`{-~¡¿“”„«»–—…·•]+/g
 
+// The word joining two performers, dropped rather than standardised on one
+// spelling. There are three forms in circulation, not two — "Simon &
+// Garfunkel", "Simon and Garfunkel", and "Simon Garfunkel", the last because a
+// filename loses the ampersand constantly — and they arrive from a YouTube
+// title, a MusicBrainz credit and a folder on disk respectively. Rewriting & to
+// "and" would agree with the second and stop agreeing with the third: the
+// library holds "Marc Anthony & La India" today, and a playlist writing "Marc
+// Anthony La India" has to keep finding it. Dropping the connector satisfies
+// all three, at the cost of "Me and You" keying the same as "Me You" — the same
+// trade the apostrophe and article rules above already make, and one that still
+// needs the artist to agree before it decides anything.
+const JOINING_WORD_RE = /\b(and|y)\b/g
+
 // stripArticles only knows the English ones, because that is all MetaParser
 // shifts on the way in ("Show Must Go On, The"). A Spanish library never gets
 // that treatment, so the two sides disagree the moment one of them writes the
@@ -107,8 +120,12 @@ export function normalizeForMatch (text: string, keepFeatured = false): string {
     .replace(PUNCTUATION_RE, ' ')
     .trim()
 
+  // after punctuation, so the ampersand has already become a space and only
+  // the spelled-out connector is left to remove
+  const joined = words.replace(JOINING_WORD_RE, ' ').replace(/\s{2,}/g, ' ').trim() || words
+
   // never all the way to nothing: a song really called "La" is still a song
-  return words.replace(LEADING_ARTICLE_RE, '') || words
+  return joined.replace(LEADING_ARTICLE_RE, '') || joined
 }
 
 export interface PlaylistTrackMeta {

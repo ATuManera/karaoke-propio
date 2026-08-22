@@ -19,6 +19,24 @@ describe('normalizeForMatch', () => {
     expect(normalizeForMatch('Corazón Partío')).toBe('corazon partio')
   })
 
+  // three spellings in circulation, not two: a YouTube title, a MusicBrainz
+  // credit and a filename that lost the ampersand on the way to disk
+  it('reads "&", "and" and nothing at all as the same joining word', () => {
+    const forms = ['Simon & Garfunkel', 'Simon and Garfunkel', 'Simon Garfunkel']
+    expect(new Set(forms.map(name => normalizeForMatch(name))).size).toBe(1)
+
+    // the library holds this one; a playlist writing it either other way has
+    // to keep finding it
+    expect(normalizeForMatch('Marc Anthony & La India')).toBe(normalizeForMatch('Marc Anthony La India'))
+    expect(normalizeForMatch('Marc Anthony & La India')).toBe(normalizeForMatch('Marc Anthony y La India'))
+  })
+
+  // dropping the connector must not be allowed to empty a name out
+  it('leaves a song that is only a connector alone', () => {
+    expect(normalizeForMatch('Y')).toBe('y')
+    expect(normalizeForMatch('And')).toBe('and')
+  })
+
   it('ignores anything in brackets', () => {
     expect(normalizeForMatch('Bohemian Rhapsody (Official Video Remastered)')).toBe('bohemian rhapsody')
     expect(normalizeForMatch('Africa [Live at Wembley]')).toBe('africa')
