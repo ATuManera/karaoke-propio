@@ -31,6 +31,37 @@ before anything is downloaded.
   is worth discovering while another client can still be tried, not in the
   browser as a preview that never starts.
 
+## Library search
+
+Names are matched with the leading article stripped from both sides, because
+MetaParser moves it to the end on the way in: without that, typing an artist the
+way it is written on the record ("The Eagles") finds nothing and the whole
+catalogue looks missing.
+
+Songs are indexed twice — by title, and by `<artist> <title>`. One index per
+field is right for "beatles" and right for "something", and wrong for "beatles
+something", which is how someone looks for a song they half remember: it matches
+neither key, and the library reports a song missing while it sits on disk.
+
+The second index cannot simply run all the time. Searching an artist's name is
+supposed to produce their artist row and no song rows (the "empty section is
+noise" rule in `SearchResults`), and "beatles" against it returns all 49 of
+them, repeating what is already inside the row above. So it only runs when the
+query says more than a name does: at least two words, and not — end to end —
+somebody's name. That last test turns off fast-fuzzy's `useSellers`, which is
+what normally lets a query match inside a longer key; without it both strings
+have to account for each other, so "luis miguel" still reads as a name and "luis
+miguel la barca" does not. Comparing word counts instead was tried first and got
+it backwards for anyone credited alongside others: "enrique iglesias hero" is
+three words and "Enrique Iglesias & Descemer Bueno & Gente De Zona" is more, so
+the query looked like a name and Hero stayed hidden.
+
+Measured over the real 695-song library, every song searched the way a person
+types it: 688 found, 687 of them ranked first, median one result. Whatever the
+title index returned before is still returned, in the same order — 695 of 695
+title-only searches unchanged — with cross-field matches appended. About 4.5 ms
+per keystroke.
+
 ## Playlist import
 
 A link to a public YouTube playlist, answered against the library: which of

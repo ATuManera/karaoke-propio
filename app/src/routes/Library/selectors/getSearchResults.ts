@@ -3,6 +3,7 @@ import { createSelector } from '@reduxjs/toolkit'
 import { Searcher } from 'fast-fuzzy'
 import { RootState } from 'store/store'
 import { stripArticles } from 'shared/articles'
+import { createSongSearchers, searchSongs } from './songSearch'
 
 const getArtists = (state: RootState) => state.artists
 const getSongs = (state: RootState) => state.songs
@@ -23,12 +24,15 @@ const getArtistSearcher = createSelector(
   }),
 )
 
-const getSongSearcher = createSelector(
-  [getSongs],
-  songs => new Searcher(songs.result as unknown as object[], {
-    keySelector: ((songId: number) => stripArticles(songs.entities[songId].title)) as unknown as (s: object) => string,
-    threshold: 0.8,
-  }),
+// indexed by title and by "<artist> <title>" both, so a song can be found by
+// the two things people remember about it at once — see songSearch.ts
+const getSongSearchers = createSelector(
+  [getSongs, getArtists],
+  (songs, artists) => createSongSearchers(songs.result.map(songId => ({
+    songId,
+    title: songs.entities[songId].title,
+    artist: artists.entities[songs.entities[songId].artistId]?.name ?? '',
+  }))),
 )
 
 // #1: keyword filters
@@ -43,13 +47,13 @@ const getArtistsByKeyword = createSelector(
   })
 
 const getSongsByKeyword = createSelector(
-  [getSongs, getFilterStrForSearch, getSongSearcher],
-  (songs, str, searcher) => {
+  [getSongs, getArtists, getFilterStrForSearch, getSongSearchers, getArtistsByKeyword],
+  (songs, artists, str, searchers, artistsWithKeyword) => {
     if (!str) return songs.result
 
-    return searcher.search(str, {
-      returnMatchData: true,
-    }).map(match => match.item as unknown as number)
+    // the artists this same query matched: what tells "beatles" (a name, whose
+    // songs belong under the artist row) from "beatles something" (a song)
+    return searchSongs(str, searchers, artistsWithKeyword.map(artistId => artists.entities[artistId].name))
   })
 
 // #2: starred/hidden filters
