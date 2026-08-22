@@ -148,3 +148,25 @@
 .goldenNote { background-color: hsl(45, 60%, 30%) !important; }
 .noteName { font-size: var(--font-size-xs); font-weight: bold; }
 .noteText { font-size: var(--font-size-xs); color: var(--color-gray-6); }
+
+/* a bulk-imported song nobody has checked yet */
+.pendingReview {
+  margin: 12px 0;
+  padding: 12px;
+  border-radius: 6px;
+  border-left: 3px solid var(--yellow, #d9a520);
+  background: var(--bg-raised, rgba(255, 255, 255, 0.06));
+}
+
+.pendingHeading {
+  margin: 0 0 6px;
+  font-weight: 600;
+}
+
+/* the YouTube title the guess came from, verbatim */
+.pendingSource {
+  margin: 0 0 10px;
+  font-size: 0.9em;
+  opacity: 0.75;
+  word-break: break-word;
+}

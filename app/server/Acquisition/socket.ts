@@ -1,7 +1,7 @@
 import AcquisitionManager from './AcquisitionManager.js'
 import Rooms from '../Rooms/Rooms.js'
 import { isValidPitch } from '../../shared/pitch.js'
-import { ACQUISITION_SEARCH, ACQUISITION_PLAYLIST, ACQUISITION_PREVIEW, ACQUISITION_ADD } from '../../shared/actionTypes.js'
+import { ACQUISITION_SEARCH, ACQUISITION_PLAYLIST, ACQUISITION_BULK, ACQUISITION_PREVIEW, ACQUISITION_ADD } from '../../shared/actionTypes.js'
 
 const MAX_QUERY_LENGTH = 200
 // a share link with every tracking parameter YouTube attaches is still well
@@ -67,6 +67,50 @@ const ACTION_HANDLERS = {
       acknowledge({ type: ACQUISITION_PLAYLIST + '_SUCCESS', payload: { playlist } })
     } catch (err) {
       acknowledge({ type: ACQUISITION_PLAYLIST + '_ERROR', error: err.message })
+    }
+  },
+
+  /**
+   * Download everything in a playlist that isn't here yet — admin only.
+   *
+   * The gate is not about who may spend bandwidth. It is about who may write
+   * to the library: a bulk import files songs under guessed names with nobody
+   * confirming them one by one, and the person who has to clean that up is the
+   * same person who can already retag and delete songs.
+   */
+  [ACQUISITION_BULK]: async (sock, { payload }, acknowledge) => {
+    if (!sock.user.isAdmin) {
+      return acknowledge({ type: ACQUISITION_BULK + '_ERROR', error: 'Only an admin can import a whole playlist.' })
+    }
+
+    const { url, stop } = payload ?? {}
+
+    if (stop === true) {
+      return acknowledge({ type: ACQUISITION_BULK + '_SUCCESS', payload: { bulk: AcquisitionManager.stopBulk() } })
+    }
+
+    if (typeof url !== 'string' || !url.trim() || url.length > MAX_URL_LENGTH) {
+      return acknowledge({ type: ACQUISITION_BULK + '_ERROR', error: 'Invalid playlist link' })
+    }
+
+    try {
+      await Rooms.validate(sock.user.roomId, null, { validatePassword: false })
+    } catch (err) {
+      return acknowledge({ type: ACQUISITION_BULK + '_ERROR', error: err.message })
+    }
+
+    try {
+      // Read again here rather than taking the listing the client is looking
+      // at: what gets downloaded is decided from what YouTube says now, not
+      // from a payload a browser could have edited.
+      const playlist = await AcquisitionManager.fetchPlaylist(url.trim())
+      const bulk = AcquisitionManager.startBulk({ roomId: sock.user.roomId, playlist })
+
+      // acknowledged AND pushed: the ack answers the tap, the pushes that
+      // follow report a job that outlives the request by many minutes
+      acknowledge({ type: ACQUISITION_BULK + '_SUCCESS', payload: { bulk } })
+    } catch (err) {
+      acknowledge({ type: ACQUISITION_BULK + '_ERROR', error: err.message })
     }
   },
 

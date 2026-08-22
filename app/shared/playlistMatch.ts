@@ -155,10 +155,17 @@ export interface LibraryMatchIndex {
   artistOf: Map<number, string>
   /** every song in normalized form, for the containment pass */
   songs: MatchableSong[]
+  /**
+   * normalized artist -> the name the library actually writes ("beatles" ->
+   * "Beatles, The"). Two jobs: recognising a name inside a title that has no
+   * separator, and filing a new song under the spelling its artist already has
+   * here instead of starting a near-duplicate beside it.
+   */
+  artistNames: Map<string, string>
 }
 
 export function buildLibraryMatchIndex (songs: Iterable<MatchableSong>): LibraryMatchIndex {
-  const index: LibraryMatchIndex = { byTitle: new Map(), artistOf: new Map(), songs: [] }
+  const index: LibraryMatchIndex = { byTitle: new Map(), artistOf: new Map(), songs: [], artistNames: new Map() }
 
   for (const song of songs) {
     const title = normalizeForMatch(song.title)
@@ -171,6 +178,14 @@ export function buildLibraryMatchIndex (songs: Iterable<MatchableSong>): Library
     const artist = normalizeForMatch(song.artist)
     index.artistOf.set(song.songId, artist)
     index.songs.push({ songId: song.songId, title, artist })
+    // first spelling wins, so the answer does not depend on song order. Both
+    // normalizations are keyed: a name is looked up here from inside a longer
+    // title too, where dropping everything after a "feat" would be wrong.
+    if (artist && song.artist) {
+      if (!index.artistNames.has(artist)) index.artistNames.set(artist, song.artist)
+      const asWritten = normalizeForMatch(song.artist, true)
+      if (asWritten && !index.artistNames.has(asWritten)) index.artistNames.set(asWritten, song.artist)
+    }
   }
 
   return index
@@ -247,4 +262,160 @@ export function matchInLibrary (meta: PlaylistTrackMeta, index: LibraryMatchInde
   return lookup(meta, index)
     ?? lookup({ artist: meta.title, title: meta.artist }, index)
     ?? lookupContained(meta, index)
+}
+
+/**
+ * How a bulk import decides what a video is, with no human in the loop.
+ *
+ * The one-at-a-time flow can afford `guessTrackMeta`, because whatever it gets
+ * wrong the singer fixes in the preview before anything is downloaded. A bulk
+ * download has no such moment, and the guess is not a cosmetic detail: it
+ * becomes the filename, and the filename is what a library rescan re-derives
+ * the artist from. A backwards guess files "El Reloj" as an artist forever.
+ *
+ * So the library itself is used as the witness. It already knows how to spell
+ * several hundred artists, and a title that names one of them is no longer a
+ * coin flip — which side is the artist stops being a convention to assume and
+ * becomes something to look up. What it cannot corroborate it says so about,
+ * rather than filing quietly.
+ */
+export interface ResolvedTrackMeta extends PlaylistTrackMeta {
+  /**
+   * Nothing in the library corroborated this reading. Not a failure — most
+   * first-time artists land here — but the reason every bulk-imported song is
+   * held for review, and the ones to look at first.
+   */
+  isAmbiguous: boolean
+}
+
+/** an artist name in a title, at most this many words long */
+const MAX_ARTIST_WORDS = 6
+
+// "feat"/"ft"/"y"/"&" between two performers. What follows one of these is
+// never the song, so a title left starting with it has not been read correctly.
+const CONNECTOR_RE = /^(feat|ft|featuring|con|and|y|x|vs)\.?$/i
+
+interface Token {
+  text: string
+  /** the whitespace or hyphen that separated it from the token before it */
+  before: string
+}
+
+/**
+ * Words, splitting on hyphens as well as spaces, remembering which was which.
+ *
+ * The hyphen matters: "Hasta que me olvides-Luis miguel" carries the artist
+ * with no space to find it by, and is a real title from a real playlist.
+ * Remembering the separator is what lets "Blink-182" survive being taken apart
+ * and put back together.
+ */
+function tokenize (text: string): Token[] {
+  const tokens: Token[] = []
+  const separator = /[\s-]+/g
+  let last = 0
+  let before = ''
+
+  for (let match = separator.exec(text); match; match = separator.exec(text)) {
+    if (match.index > last) tokens.push({ text: text.slice(last, match.index), before })
+    before = match[0]
+    last = separator.lastIndex
+  }
+
+  if (last < text.length) tokens.push({ text: text.slice(last), before })
+  return tokens
+}
+
+function detokenize (tokens: Token[]): string {
+  return tokens
+    .map((token, i) => (i === 0 ? '' : token.before) + token.text)
+    .join('')
+    .replace(/^[\s\-–—_|]+|[\s\-–—_|]+$/g, '')
+    .trim()
+}
+
+/**
+ * Pull a name the library already knows out of a run of words, and return what
+ * is left over as the title.
+ *
+ * The longest name wins: a library holding both "Luis" and "Luis Miguel" must
+ * not read "Karaoke Luis Miguel La Barca" as Luis singing "Miguel La Barca".
+ */
+function takeKnownArtist (tokens: Token[], index: LibraryMatchIndex): { artist: string, rest: Token[] } | null {
+  let best: { artist: string, from: number, to: number } | null = null
+
+  for (let from = 0; from < tokens.length; from++) {
+    for (let to = Math.min(from + MAX_ARTIST_WORDS, tokens.length); to > from; to--) {
+      if (best && to - from <= best.to - best.from) break
+
+      // keepFeatured, or a window reaching past a "feat" would normalize down
+      // to the name before it and swallow the song along with the guest:
+      // "Alejandro Sanz feat Marc Anthony Deja" reads as "alejandro sanz"
+      const name = index.artistNames.get(normalizeForMatch(detokenize(tokens.slice(from, to)), true))
+      if (name) {
+        best = { artist: name, from, to }
+        break
+      }
+    }
+  }
+
+  if (!best) return null
+  return { artist: best.artist, rest: [...tokens.slice(0, best.from), ...tokens.slice(best.to)] }
+}
+
+/**
+ * The artist and title to file a playlist entry under, and whether the library
+ * had anything to say about it.
+ */
+export function resolveTrackMeta (entry: { title: string, uploader?: string | null }, index: LibraryMatchIndex): ResolvedTrackMeta {
+  const known = (name: string) => index.artistNames.get(normalizeForMatch(name))
+  const cleaned = cleanSongText(entry.title ?? '')
+
+  // Deliberately guessArtistTitle and not guessTrackMeta: that one falls back
+  // to the channel name, which is right for a "- Topic" upload and wrong for
+  // every karaoke publisher there is. "Marc Anthony Flor Palida Nueva Version
+  // Karaoke" was filed under "Alejandro Paredes", the channel that posted it.
+  const split = guessArtistTitle(entry.title ?? '')
+
+  if (split.artist) {
+    const asWritten = known(split.artist)
+    const reversed = known(split.title)
+
+    // "El Reloj - Luis Miguel", "MALA - MARC ANTHONY": half the uploaders out
+    // there write the song first, and only the library can tell which half
+    if (reversed && !asWritten) return { artist: reversed, title: split.artist, isAmbiguous: false }
+    if (asWritten && !reversed) return { artist: asWritten, title: split.title, isAmbiguous: false }
+
+    // both sides name somebody, or neither does: the conventional reading is
+    // still the better bet, it just has nothing behind it
+    return { ...split, isAmbiguous: true }
+  }
+
+  // No separator at all — "Karaoke Luis Miguel La Barca". Nothing can be split
+  // here, but a name sitting inside the run of words can still be recognised.
+  const found = takeKnownArtist(tokenize(cleaned), index)
+
+  if (found) {
+    let rest = found.rest
+
+    // "Alejandro Sanz feat Marc Anthony Deja que te bese" — with the first name
+    // taken out, a guest is left leading the title, and the guest is not it
+    if (rest.length && CONNECTOR_RE.test(rest[0].text)) {
+      const guest = takeKnownArtist(rest.slice(1), index)
+      rest = guest ? guest.rest : rest
+    }
+
+    const title = detokenize(rest)
+    // a title that is nothing but its artist's name has not been read, only
+    // taken apart
+    if (title) return { artist: found.artist, title, isAmbiguous: CONNECTOR_RE.test(rest[0]?.text ?? '') }
+  }
+
+  // Last resort, and a narrow one: a channel is only allowed to name the artist
+  // when it is somebody the library already knows and is not a karaoke
+  // publisher. "karaoke Vinotinto" is not an artist, and neither is
+  // "Andres Mendez music".
+  const channel = KARAOKE_RE.test(entry.uploader ?? '') ? undefined : known(entry.uploader ?? '')
+  if (channel && cleaned) return { artist: channel, title: cleaned, isAmbiguous: false }
+
+  return { artist: '', title: cleaned, isAmbiguous: true }
 }

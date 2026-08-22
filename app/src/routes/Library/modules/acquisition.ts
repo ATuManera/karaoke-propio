@@ -2,12 +2,14 @@ import { createAction, createReducer } from '@reduxjs/toolkit'
 import {
   ACQUISITION_SEARCH,
   ACQUISITION_PLAYLIST,
+  ACQUISITION_BULK,
+  ACQUISITION_BULK_PUSH,
   ACQUISITION_PREVIEW,
   ACQUISITION_ADD,
   ACQUISITION_PUSH,
   LOGOUT,
 } from 'shared/actionTypes'
-import type { AcquisitionRequest, AcquisitionSearchResult, AcquisitionSource, PlaylistImport } from 'shared/types'
+import type { AcquisitionRequest, AcquisitionSearchResult, AcquisitionSource, BulkAcquisition, PlaylistImport } from 'shared/types'
 
 // ------------------------------------
 // Actions
@@ -28,6 +30,24 @@ export const importPlaylist = createAction(ACQUISITION_PLAYLIST, (url: string) =
 }))
 
 export const clearPlaylist = createAction('acquisition/CLEAR_PLAYLIST')
+
+// Admin only, and refused server-side for anyone else: download every song in
+// the playlist the library doesn't already have. The link goes back rather
+// than the listing on screen — what gets downloaded is decided from what
+// YouTube says at that moment, not from a payload a browser could have edited.
+export const bulkImportPlaylist = createAction(ACQUISITION_BULK, (url: string) => ({
+  payload: { url },
+}))
+
+// stops after the song currently downloading; killing yt-dlp mid-file would
+// leave a partial behind
+export const stopBulkImport = createAction(ACQUISITION_BULK, () => ({
+  payload: { stop: true },
+}))
+
+// pushed as one action for the whole job: a bulk import is watched as a run,
+// not as forty separate acquisitions
+export const bulkPush = createAction<BulkAcquisition>(ACQUISITION_BULK_PUSH)
 
 // resolves a YouTube video id to embed as a preview BEFORE committing to a
 // download — the user confirms the version is good on their own screen
@@ -77,6 +97,11 @@ interface PlaylistSuccessAction {
   payload: { playlist: PlaylistImport }
 }
 
+interface BulkSuccessAction {
+  type: string
+  payload: { bulk: BulkAcquisition | null }
+}
+
 interface AckErrorAction {
   type: string
   error: string
@@ -103,6 +128,10 @@ interface AcquisitionState {
   /** the most recent in-flight/finished request this client knows about */
   activeRequest: AcquisitionRequest | null
   addError: string | null
+  /** the bulk import running or last finished, as the server reports it */
+  bulk: BulkAcquisition | null
+  isBulkStarting: boolean
+  bulkError: string | null
 }
 
 const initialState: AcquisitionState = {
@@ -121,6 +150,9 @@ const initialState: AcquisitionState = {
   previewVideoId: null,
   activeRequest: null,
   addError: null,
+  bulk: null,
+  isBulkStarting: false,
+  bulkError: null,
 }
 
 const isSearchSuccess = (action: { type: string }): action is SearchSuccessAction =>
@@ -137,6 +169,10 @@ const isPreviewError = (action: { type: string }): action is AckErrorAction =>
   action.type === `${ACQUISITION_PREVIEW}_ERROR`
 const isAddError = (action: { type: string }): action is AckErrorAction =>
   action.type === `${ACQUISITION_ADD}_ERROR`
+const isBulkSuccess = (action: { type: string }): action is BulkSuccessAction =>
+  action.type === `${ACQUISITION_BULK}_SUCCESS`
+const isBulkError = (action: { type: string }): action is AckErrorAction =>
+  action.type === `${ACQUISITION_BULK}_ERROR`
 
 const acquisitionReducer = createReducer(initialState, (builder) => {
   builder
@@ -170,6 +206,17 @@ const acquisitionReducer = createReducer(initialState, (builder) => {
     })
     .addCase(acquisitionPush, (state, { payload }) => {
       state.activeRequest = payload
+    })
+    .addCase(bulkPush, (state, { payload }) => {
+      state.bulk = payload
+      state.isBulkStarting = false
+    })
+    // one case for two creators: starting and stopping are the same action
+    // type over the wire, told apart by what they carry
+    .addCase(bulkImportPlaylist, (state, { payload }) => {
+      if ((payload as { stop?: boolean }).stop) return
+      state.isBulkStarting = true
+      state.bulkError = null
     })
     .addCase(logout, () => initialState)
     // ack actions the server sends back over the socket (see
@@ -207,6 +254,14 @@ const acquisitionReducer = createReducer(initialState, (builder) => {
     })
     .addMatcher(isAddError, (state, action) => {
       state.addError = action.error
+    })
+    .addMatcher(isBulkSuccess, (state, action) => {
+      state.isBulkStarting = false
+      state.bulk = action.payload.bulk
+    })
+    .addMatcher(isBulkError, (state, action) => {
+      state.isBulkStarting = false
+      state.bulkError = action.error
     })
 })
 

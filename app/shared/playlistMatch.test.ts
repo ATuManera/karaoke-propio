@@ -5,6 +5,7 @@ import {
   isKaraokeUpload,
   matchInLibrary,
   normalizeForMatch,
+  resolveTrackMeta,
   type MatchableSong,
 } from './playlistMatch.js'
 
@@ -172,5 +173,71 @@ describe('matchInLibrary, when the artist runs into the title', () => {
   it('needs the artist too, not just a title that happens to be in there', () => {
     expect(match('Karaoke Los Panchos La Barca')).toBeNull()
     expect(match('Una tarde en la barca del abuelo', 'Cuentos')).toBeNull()
+  })
+})
+
+// Every title below is real, from the two playlists that produced this
+// feature. A bulk import has no human to correct it, so what these resolve to
+// is what ends up in the filename — and the filename is what a rescan reads
+// the artist back out of.
+describe('resolveTrackMeta', () => {
+  const library: MatchableSong[] = [
+    { songId: 1, title: 'El reloj', artist: 'Luis Miguel' },
+    { songId: 2, title: 'La Barca', artist: 'Luis Miguel' },
+    { songId: 3, title: 'Hasta que me olvides', artist: 'Luis Miguel' },
+    { songId: 4, title: 'Flor Pálida', artist: 'Marc Anthony' },
+    { songId: 5, title: 'Vivir Mi Vida', artist: 'Marc Anthony' },
+    { songId: 6, title: 'Deja que te bese', artist: 'Alejandro Sanz' },
+    { songId: 7, title: 'Here Comes The Sun', artist: 'Beatles, The' },
+  ]
+  const index = buildLibraryMatchIndex(library)
+  const resolve = (title: string, uploader: string | null = null) => resolveTrackMeta({ title, uploader }, index)
+
+  it('reads the artist off whichever side of the dash it is on', () => {
+    expect(resolve('Luis Miguel - La Bikina (Versión Karaoke)'))
+      .toEqual({ artist: 'Luis Miguel', title: 'La Bikina', isAmbiguous: false })
+    expect(resolve('El Reloj - Luis Miguel (Karaoke)'))
+      .toEqual({ artist: 'Luis Miguel', title: 'El Reloj', isAmbiguous: false })
+    expect(resolve('KARAOKE MALA - MARC ANTHONY'))
+      .toEqual({ artist: 'Marc Anthony', title: 'MALA', isAmbiguous: false })
+  })
+
+  // the library's spelling, not the uploader's: filing a second "MARC ANTHONY"
+  // beside "Marc Anthony" is exactly the duplication this is meant to prevent
+  it('files under the name the library already uses', () => {
+    expect(resolve('Somos Novios - luis miguel | Karaoke Version | KaraFun').artist).toBe('Luis Miguel')
+    expect(resolve('Here Comes The Sun - The Beatles (Karaoke)').artist).toBe('Beatles, The')
+  })
+
+  it('finds a name that no separator marks off', () => {
+    expect(resolve('Karaoke Luis Miguel La Barca'))
+      .toEqual({ artist: 'Luis Miguel', title: 'La Barca', isAmbiguous: false })
+    expect(resolve('Marc Anthony Flor Palida Nueva Version Karaoke'))
+      .toEqual({ artist: 'Marc Anthony', title: 'Flor Palida', isAmbiguous: false })
+    // no space around the hyphen, so nothing splits on it
+    expect(resolve('Hasta que me olvides-Luis miguel karaoke'))
+      .toEqual({ artist: 'Luis Miguel', title: 'Hasta que me olvides', isAmbiguous: false })
+  })
+
+  it('does not hand the song to the guest artist', () => {
+    expect(resolve('Karaoke Alejandro Sanz feat Marc Anthony Deja que te bese'))
+      .toEqual({ artist: 'Alejandro Sanz', title: 'Deja que te bese', isAmbiguous: false })
+  })
+
+  // a karaoke channel is a publisher; filing Marc Anthony's catalogue under
+  // whoever uploaded it is how one artist's songs get scattered
+  it('never lets the channel name the artist', () => {
+    expect(resolve('TU AMOR ME HACE BIEN TONO BAJO KARAOKE FULL SONIDO', 'Andres Mendez music'))
+      .toEqual({ artist: '', title: 'TU AMOR ME HACE BIEN', isAmbiguous: true })
+    expect(resolve('De vuelta pa la vuelta karaoke tono bajo VINOTINTO MUSIC', 'karaoke Vinotinto'))
+      .toEqual({ artist: '', title: 'De vuelta pa la vuelta', isAmbiguous: true })
+  })
+
+  // the answer a first-time artist gets, and the reason every bulk import is
+  // held for review rather than trusted
+  it('says so when the library has nothing to corroborate the reading', () => {
+    expect(resolve('Aerosmith - I Don\'t Want To Miss A Thing (Karaoke Version)'))
+      .toEqual({ artist: 'Aerosmith', title: 'I Don\'t Want To Miss A Thing', isAmbiguous: true })
+    expect(resolve('Por Que Les Mientes Tito el Bambino Marc Anthony1 Las as Ro').isAmbiguous).toBe(true)
   })
 })

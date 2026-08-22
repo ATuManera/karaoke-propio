@@ -7,6 +7,7 @@ import { closeSongInfo, setPreferredSong, retagSong, deleteMediaVersion } from '
 import SongCategories from './SongCategories'
 import SongMusicInfo from './SongMusicInfo'
 import SongPitchPref from './SongPitchPref'
+import { markSongReviewed } from 'store/modules/songReview'
 import styles from './SongInfo.css'
 
 interface EditFieldsProps {
@@ -79,6 +80,38 @@ const EditFields = ({ songId, currentArtist, currentTitle }: EditFieldsProps) =>
       <p className={styles.editHint}>
         Renames the files too, so the change survives a library rescan.
       </p>
+    </div>
+  )
+}
+
+/**
+ * A song a bulk playlist import brought in, still waiting to be looked at.
+ *
+ * This is where the confirmation the bulk download skipped is finally made.
+ * The YouTube title it was guessed from is shown because it is the only way to
+ * judge the guess without going back to YouTube — and often the only place a
+ * misread word survives at all.
+ *
+ * Marking it reviewed is a separate act from editing it: an admin may well
+ * want a second look at something they just retyped.
+ */
+const PendingReview = ({ songId }: { songId: number }) => {
+  const dispatch = useAppDispatch()
+  const pending = useAppSelector(state => state.songReview.pending.find(row => row.songId === songId))
+
+  if (!pending) return null
+
+  return (
+    <div className={styles.pendingReview}>
+      <p className={styles.pendingHeading}>
+        {pending.isAmbiguous
+          ? 'Downloaded in bulk — nothing in the library confirmed this artist and title.'
+          : 'Downloaded in bulk — not checked yet.'}
+      </p>
+      <p className={styles.pendingSource} translate='no'>{pending.sourceTitle}</p>
+      <Button onClick={() => dispatch(markSongReviewed(songId))}>
+        Mark reviewed
+      </Button>
     </div>
   )
 }
@@ -165,6 +198,8 @@ const SongInfo = () => {
             currentTitle={currentTitle}
           />
         )}
+
+        {songId !== null && <PendingReview songId={songId} />}
 
         {songId !== null && <SongCategories songId={songId} />}
 

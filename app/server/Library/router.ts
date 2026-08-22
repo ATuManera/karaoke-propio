@@ -1,6 +1,7 @@
 import KoaRouter from '@koa/router'
 import Media from '../Media/Media.js'
 import Library from './Library.js'
+import SongReview from './SongReview.js'
 import { retagSong } from '../Media/retagSong.js'
 import Categories from '../Categories/Categories.js'
 import { getSongNotes, getSongMediaPath } from '../Media/songNotes.js'
@@ -97,6 +98,32 @@ router.delete('/song/:songId/categories/:categoryId', (ctx) => {
 
   Categories.removeFromSong(songId, categoryId)
   ctx.io.emit('action', { type: LIBRARY_PUSH, payload: Library.get() })
+  ctx.status = 200
+  ctx.body = {}
+})
+
+/**
+ * Songs a bulk playlist import brought in that nobody has looked at yet.
+ *
+ * Admin-only, and not part of LIBRARY_PUSH on purpose: this is a maintenance
+ * worklist for one person, not something every phone in the room should be
+ * carrying around a copy of.
+ */
+router.get('/review', (ctx) => {
+  if (!ctx.user.isAdmin) ctx.throw(401)
+
+  ctx.body = { pending: SongReview.getPending() }
+})
+
+// "I have looked at this one." Deliberately not inferred from an edit: an
+// admin may well want a second look at something they just retyped.
+router.delete('/review/:songId', (ctx) => {
+  if (!ctx.user.isAdmin) ctx.throw(401)
+
+  const songId = parseInt(ctx.params.songId, 10)
+  if (Number.isNaN(songId)) ctx.throw(422, 'Invalid songId')
+
+  SongReview.markReviewed(songId)
   ctx.status = 200
   ctx.body = {}
 })

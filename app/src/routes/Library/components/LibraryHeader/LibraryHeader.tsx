@@ -1,14 +1,26 @@
-import React, { useState, useRef } from 'react'
+import React, { useEffect, useState, useRef } from 'react'
 import clsx from 'clsx'
 import { useAppDispatch, useAppSelector } from 'store/hooks'
 import { setFilterStr, resetFilterStr, toggleFilterStarred } from '../../modules/library'
 import Button from 'components/Button/Button'
 import CategoryFilter from 'components/CategoryFilter/CategoryFilter'
+import { fetchPendingReview, toggleFilterPendingReview } from 'store/modules/songReview'
 import styles from './LibraryHeader.css'
 
 const LibraryHeader = () => {
   const dispatch = useAppDispatch()
-  const { filterStr, filterStarred } = useAppSelector(state => state.library)
+  const { filterStr, filterStarred, version } = useAppSelector(state => state.library)
+  const isAdmin = useAppSelector(state => state.user.isAdmin)
+  const { pending, isFiltering } = useAppSelector(state => state.songReview)
+
+  // A second version of a song already here arrives as LIBRARY_PUSH_SONG,
+  // which does not move the library version — so the run's own start and end
+  // are watched too, or the flag would wait for something unrelated to change.
+  const isBulkRunning = useAppSelector(state => !!state.acquisition.bulk?.isRunning)
+
+  useEffect(() => {
+    if (isAdmin) dispatch(fetchPendingReview())
+  }, [dispatch, isAdmin, version, isBulkRunning])
 
   const searchInput = useRef<HTMLInputElement>(null)
   const [value, setValue] = useState(filterStr)
@@ -58,6 +70,17 @@ const LibraryHeader = () => {
           icon='STAR_FULL'
           onClick={() => dispatch(toggleFilterStarred())}
         />
+        {/* Only while there is something to review, and only for the admin who
+            can act on it: a filter that always shows zero is a permanent
+            reminder of nothing. */}
+        {isAdmin && pending.length > 0 && (
+          <Button
+            className={clsx(styles.btnReview, isFiltering && styles.active)}
+            icon='FLAG'
+            onClick={() => dispatch(toggleFilterPendingReview())}
+            title={`${pending.length} bulk-imported song(s) to check`}
+          />
+        )}
       </div>
       <CategoryFilter />
     </>

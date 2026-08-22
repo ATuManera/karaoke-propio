@@ -196,6 +196,42 @@ export interface AcquisitionRequest {
   dateCreated: number
 }
 
+/**
+ * One song's outcome in a bulk import, as the admin watching it sees it.
+ * `skipped` is not a failure: it is the answer to "is this already here?".
+ */
+export interface BulkAcquisitionItem {
+  /** YouTube video id */
+  id: string
+  /** what it will be filed as, or was */
+  artist: string
+  title: string
+  state: 'waiting' | 'downloading' | 'done' | 'skipped' | 'error'
+  /** nothing in the library corroborated the artist/title reading */
+  isAmbiguous: boolean
+  /** why it was skipped or what went wrong */
+  detail?: string
+}
+
+/**
+ * A whole bulk import, pushed as one action rather than one per song: forty
+ * separate acquisition pushes would each overwrite the last in a state slot
+ * built to hold the one song somebody is watching.
+ */
+export interface BulkAcquisition {
+  jobId: string
+  playlistId: string
+  playlistTitle: string
+  items: BulkAcquisitionItem[]
+  /** false once every song has been attempted */
+  isRunning: boolean
+  /** an admin asked it to stop; the song in flight still finishes */
+  isStopping: boolean
+  /** set when the run itself could not start or was stopped */
+  error?: string
+  dateCreated: number
+}
+
 export type MediaType = 'cdg' | 'mp4' | ''
 
 export interface Media {

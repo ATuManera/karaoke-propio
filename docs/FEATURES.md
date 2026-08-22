@@ -144,6 +144,107 @@ thing you can change).
 Liked songs and Watch later are private to their owner's account and are
 refused by name, with what to do instead, rather than relaying a login error.
 
+## Bulk playlist import (admin)
+
+The same playlist, downloaded whole instead of one tap at a time. Only an
+admin sees the button, and only the server's copy of that rule decides
+anything.
+
+The gate is not about bandwidth. It is about who may write to the library:
+a bulk import files songs under guessed names with nobody confirming them, and
+the person who has to clean that up is the same person who can already retag
+and delete songs.
+
+**Only entries that are already karaoke tracks.** An original recording cannot
+be sung to, and picking a karaoke version of one unattended means taking
+whatever a search happened to return first — a cover, a different key, a
+ten-minute video. Those stay one tap each, as they were.
+
+**Nothing is queued.** `queueAndFinish` exists for a singer who asked for one
+song; forty songs into a room's queue is not what an admin filling a library
+meant, and the pitch questions that flow asks have no answer without a singer.
+The download step was split out of `runYouTube` so both paths share it and
+differ only in what they do afterwards.
+
+**One at a time.** The acquisition worker limits nothing — every download is an
+`execFile` of yt-dlp — so forty at once is forty ffmpeg jobs competing for the
+same disk and one address making forty simultaneous requests to YouTube. A
+failure never stops the run: a playlist with one deleted video in it is still
+worth the other thirty-nine. Stopping waits for the song in flight, because
+killing yt-dlp mid-file leaves a partial behind.
+
+Duplicates are checked twice: once when the plan is built, so the admin sees
+the count before committing, and again immediately before each download, since
+the library has been changing throughout the run — not least because of this
+very job.
+
+### Reading a karaoke title with no one to confirm it
+
+The one-at-a-time flow can afford a rough guess, because the singer corrects it
+in the preview before anything is downloaded. A bulk import has no such moment,
+and the guess is not cosmetic: it becomes the filename, and the filename is what
+a rescan re-derives the artist from. A backwards guess files "El Reloj" as an
+artist permanently.
+
+So `resolveTrackMeta` uses the library itself as the witness. It already knows
+how to spell several hundred artists, so which side of the dash is the artist
+stops being a convention to assume and becomes something to look up. From the
+playlists that produced this feature:
+
+| the uploader wrote | read as |
+| --- | --- |
+| `Luis Miguel - La Bikina (Versión Karaoke)` | Luis Miguel / La Bikina |
+| `El Reloj - Luis Miguel (Karaoke)` | Luis Miguel / El Reloj |
+| `KARAOKE MALA - MARC ANTHONY` | Marc Anthony / MALA |
+| `Karaoke Luis Miguel La Barca` | Luis Miguel / La Barca |
+| `Hasta que me olvides-Luis miguel karaoke` | Luis Miguel / Hasta que me olvides |
+| `Karaoke Alejandro Sanz feat Marc Anthony Deja que te bese` | Alejandro Sanz / Deja que te bese |
+
+Details that each cost a real failure:
+
+- The name is looked up, and the library's own spelling is what gets written.
+  Filing a second "MARC ANTHONY" beside "Marc Anthony" is the duplication this
+  was meant to prevent.
+- Words are split on hyphens as well as spaces, or `Hasta que me
+  olvides-Luis miguel` hides its artist behind a missing space. The separator
+  is remembered, so "Blink-182" survives being taken apart and put back.
+- A window reaching past a "feat" is normalized with `keepFeatured`, or
+  "Alejandro Sanz feat Marc Anthony Deja" folds down to "alejandro sanz" and
+  swallows the song along with the guest.
+- The channel never names the artist. `guessTrackMeta` falls back to it, which
+  is right for a "- Topic" upload and wrong for every karaoke publisher there
+  is: "Marc Anthony Flor Palida Nueva Version Karaoke" was filed under
+  "Alejandro Paredes", the channel that posted it.
+- With nothing at all to go on, the artist is `Unknown Artist`. A filename with
+  no " - " in it cannot be parsed at all — MetaParser throws — so something has
+  to go there, and a placeholder that is obviously a placeholder beats a
+  channel name that would scatter one performer across every karaoke publisher
+  on YouTube.
+
+Measured against both playlists that prompted this, 17 entries: 13 read
+correctly and confidently, 4 marked as uncorroborated (three name nobody the
+library knows, one is a title typed as gibberish), and none attributed to the
+wrong artist.
+
+### Review
+
+Every song a bulk import creates is held in `songsPendingReview` until an admin
+says otherwise — a row means pending, reviewing deletes it, and there is no
+`dateReviewed` because this is a worklist and not history. The table stores the
+YouTube title the guess came from, which is the only way to judge the guess
+without going back to YouTube.
+
+The flag beside the search box filters the library down to them, and appears
+only while there is something to check: a filter that always shows zero is a
+permanent reminder of nothing. Tapping a song opens Song Info, where the fields
+that correct an artist and title already existed — `retagSong` renames the
+files too, so the correction survives a rescan.
+
+Marking reviewed is a separate act from editing, because an admin may well want
+a second look at something they just retyped. A song that merges into an
+existing one while being corrected loses its pending row to the foreign key
+cascade, which is the right answer: fixed and merged away is reviewed.
+
 ## Per-request pitch
 
 Pitch is a property of each queue entry, not of the room. Transposition starts

@@ -17,8 +17,10 @@ import CdgWorkerClient from './CdgWorkerClient.js'
 import UsdbClient from './UsdbClient.js'
 import { parseUltraStarHeaders, ultraStarToLrc } from './UltraStarToLrc.js'
 import { isPrivatePlaylistId, parsePlaylistId, playlistUrl } from '../../shared/youtubePlaylist.js'
-import { ACQUISITION_PUSH, LIBRARY_PUSH, LIBRARY_PUSH_SONG, QUEUE_PUSH } from '../../shared/actionTypes.js'
-import type { AcquisitionRequest, AcquisitionSource, AcquisitionState, PlaylistImport } from '../../shared/types.js'
+import { buildLibraryMatchIndex, isKaraokeUpload, matchInLibrary, resolveTrackMeta } from '../../shared/playlistMatch.js'
+import SongReview from '../Library/SongReview.js'
+import { ACQUISITION_BULK_PUSH, ACQUISITION_PUSH, LIBRARY_PUSH, LIBRARY_PUSH_SONG, QUEUE_PUSH } from '../../shared/actionTypes.js'
+import type { AcquisitionRequest, AcquisitionSource, AcquisitionState, BulkAcquisition, BulkAcquisitionItem, PlaylistImport, PlaylistImportEntry } from '../../shared/types.js'
 
 const log = getLogger('AcquisitionManager')
 
@@ -26,6 +28,13 @@ const log = getLogger('AcquisitionManager')
 // reaches a URL string (defense in depth on top of the worker's own
 // youtube.com/youtu.be host allowlist)
 const YOUTUBE_ID_RE = /^[\w-]{11}$/
+
+// What a song is filed under when nothing names its artist. A filename with no
+// " - " in it cannot be parsed at all (MetaParser throws), so something has to
+// go there; a placeholder that is obviously a placeholder beats the channel
+// that uploaded it, which is not the artist and would scatter one performer's
+// songs across every karaoke publisher on YouTube.
+const UNKNOWN_ARTIST = 'Unknown Artist'
 
 interface StartParams {
   /** popularity of the chosen source, kept so the library can be ordered by it */
@@ -61,6 +70,14 @@ class AcquisitionManager {
   private static cdgWorker: CdgWorkerClient
   private static usdb: UsdbClient
   private static requests = new Map<string, AcquisitionRequest>()
+  /**
+   * The one bulk import at a time. One, because every song is a yt-dlp process
+   * and the worker limits nothing: forty at once is forty ffmpeg jobs
+   * competing for the same disk, and YouTube counting them all against the
+   * same address.
+   */
+  private static bulk: BulkAcquisition | null = null
+  private static bulkRoomId: number | null = null
 
   static init ({ io, workerUrl, cdgWorkerUrl, usdbCredentials }: {
     io: SocketIOServer
@@ -186,13 +203,230 @@ class AcquisitionManager {
     return requestId
   }
 
+  static getBulk (): BulkAcquisition | null {
+    return this.bulk
+  }
+
+  /** the library as something a playlist entry can be compared against */
+  private static matchIndex () {
+    const { songs, artists } = Library.get()
+
+    return buildLibraryMatchIndex(songs.result.map((songId: number) => ({
+      songId,
+      title: songs.entities[songId].title,
+      artist: artists.entities[songs.entities[songId].artistId]?.name ?? '',
+    })))
+  }
+
+  /**
+   * What a bulk import would do, decided before any of it happens.
+   *
+   * Pure on purpose: this is the part that can be wrong in a way nobody
+   * notices — a song downloaded twice, an original recording nobody can sing
+   * to, a name read backwards — and it is the part worth being able to test
+   * without a network, a disk, or a database.
+   */
+  static planBulk (playlist: PlaylistImport, index: ReturnType<typeof buildLibraryMatchIndex>): BulkAcquisitionItem[] {
+    const seen = new Set<string>()
+    const items: BulkAcquisitionItem[] = []
+
+    for (const entry of playlist.entries) {
+      // the client filters these out too; this is not a second opinion, it is
+      // the only one that counts
+      if (!YOUTUBE_ID_RE.test(entry.id) || !isKaraokeUpload(entry)) continue
+      if (seen.has(entry.id)) continue
+      seen.add(entry.id)
+
+      const meta = resolveTrackMeta(entry, index)
+      const songId = matchInLibrary(meta, index)
+
+      items.push({
+        id: entry.id,
+        artist: meta.artist,
+        title: meta.title,
+        isAmbiguous: meta.isAmbiguous,
+        // listed rather than silently dropped: "which of these did I already
+        // have" is half of what the admin wanted to know
+        state: songId === null ? 'waiting' : 'skipped',
+        detail: songId === null ? undefined : 'already in the library',
+      })
+    }
+
+    return items
+  }
+
+  /**
+   * Download everything in a playlist the library does not already have.
+   *
+   * Only entries that are already karaoke tracks: an original recording cannot
+   * be sung to, and picking a karaoke version of one unattended means picking
+   * whatever a search happened to return first. Those stay one tap each.
+   *
+   * Nothing here is queued. Forty songs into a room's queue is not what the
+   * admin filling a library meant, and the pitch questions the singer flow
+   * asks have no answer without a singer.
+   */
+  static startBulk ({ roomId, playlist }: { roomId: number, playlist: PlaylistImport }): BulkAcquisition {
+    if (this.bulk?.isRunning) {
+      throw new Error('A bulk import is already running. Wait for it to finish, or stop it.')
+    }
+
+    const items = AcquisitionManager.planBulk(playlist, this.matchIndex())
+    const entries = new Map(playlist.entries.map(entry => [entry.id, entry]))
+
+    const job: BulkAcquisition = {
+      jobId: crypto.randomUUID(),
+      playlistId: playlist.playlistId,
+      playlistTitle: playlist.title,
+      items,
+      isRunning: items.some(item => item.state === 'waiting'),
+      isStopping: false,
+      dateCreated: Math.floor(Date.now() / 1000),
+    }
+
+    this.bulk = job
+    this.bulkRoomId = roomId
+
+    if (job.isRunning) {
+      this.runBulk(job, entries).catch((err: Error) => {
+        job.error = err.message
+        job.isRunning = false
+        log.error('bulk import %s failed: %s', job.jobId, err.message)
+        this.pushBulk()
+      })
+    }
+
+    this.pushBulk()
+    return job
+  }
+
+  /** stop after the song currently downloading; killing yt-dlp mid-file would leave a partial */
+  static stopBulk (): BulkAcquisition | null {
+    if (this.bulk?.isRunning) {
+      this.bulk.isStopping = true
+      this.pushBulk()
+    }
+
+    return this.bulk
+  }
+
+  /**
+   * One song at a time, on purpose (see `bulk` above), and never stopping on a
+   * failure: a playlist with one deleted video in it is still worth the other
+   * thirty-nine.
+   */
+  private static async runBulk (job: BulkAcquisition, entries: Map<string, PlaylistImportEntry>): Promise<void> {
+    for (const item of job.items) {
+      if (item.state !== 'waiting') continue
+
+      if (job.isStopping) {
+        item.detail = 'stopped before this one'
+        continue
+      }
+
+      // re-checked here rather than trusted from the plan: the library has
+      // been changing while this ran, not least because of this very job
+      const songId = matchInLibrary(item, this.matchIndex())
+      if (songId !== null) {
+        item.state = 'skipped'
+        item.detail = 'already in the library'
+        this.pushBulk()
+        continue
+      }
+
+      item.state = 'downloading'
+      this.pushBulk()
+
+      try {
+        const entry = entries.get(item.id)
+        const reg = await this.fetchYouTubeSong({
+          videoId: item.id,
+          workId: `bulk-${job.jobId}-${item.id}`,
+          artist: item.artist || UNKNOWN_ARTIST,
+          songTitle: item.title,
+          fallbackTitle: entry?.title ?? item.title,
+        })
+
+        SongReview.markPending(reg.songId, {
+          sourceTitle: entry?.title ?? item.title,
+          playlistId: job.playlistId,
+          isAmbiguous: item.isAmbiguous,
+        })
+
+        this.notifyLibrary(reg)
+
+        if (reg.isNewSong) {
+          Categories.categorizeSong(reg.songId).catch((err: Error): undefined => {
+            log.warn('could not categorize bulk-imported song %s: %s', reg.songId, err.message)
+            return undefined
+          })
+        }
+
+        item.state = 'done'
+      } catch (err) {
+        item.state = 'error'
+        item.detail = (err as Error).message
+        log.error('bulk import %s: %s failed: %s', job.jobId, item.id, item.detail)
+      }
+
+      this.pushBulk()
+    }
+
+    job.isRunning = false
+    this.pushBulk()
+
+    const done = job.items.filter(i => i.state === 'done').length
+    log.info('bulk import %s finished: %d downloaded, %d skipped, %d failed',
+      job.jobId, done,
+      job.items.filter(i => i.state === 'skipped').length,
+      job.items.filter(i => i.state === 'error').length)
+  }
+
+  private static pushBulk (): void {
+    if (!this.bulk || this.bulkRoomId === null) return
+
+    this.io?.to(Rooms.prefix(this.bulkRoomId)).emit('action', {
+      type: ACQUISITION_BULK_PUSH,
+      payload: this.bulk,
+    })
+  }
+
   static get (requestId: string): AcquisitionRequest | undefined {
     return this.requests.get(requestId)
   }
 
   private static async runYouTube (request: AcquisitionRequest): Promise<void> {
-    const videoId = request.result.id
+    const reg = await this.fetchYouTubeSong({
+      videoId: request.result.id,
+      workId: request.requestId,
+      artist: request.artist,
+      songTitle: request.songTitle,
+      fallbackTitle: request.result.title,
+      onPublishing: () => this.setState(request, 'publishing'),
+      onRegistering: () => this.setState(request, 'registering'),
+    })
 
+    await this.queueAndFinish(request, reg)
+  }
+
+  /**
+   * Download one YouTube video and file it in the library, with no opinion
+   * about who wanted it or what happens next.
+   *
+   * Shared by the one-at-a-time flow and the bulk import, which differ only in
+   * what they do afterwards: one queues the song for the singer who asked,
+   * the other holds it for review.
+   */
+  private static async fetchYouTubeSong ({ videoId, workId, artist, songTitle, fallbackTitle, onPublishing, onRegistering }: {
+    videoId: string
+    /** anything unique; names the staging directory */
+    workId: string
+    artist?: string
+    songTitle?: string
+    fallbackTitle: string
+    onPublishing?: () => void
+    onRegistering?: () => void
+  }): Promise<RegisterResult> {
     if (!YOUTUBE_ID_RE.test(videoId)) {
       throw new Error('invalid YouTube video id')
     }
@@ -204,7 +438,7 @@ class AcquisitionManager {
     }
 
     const basePath = paths.entities[pathId].path
-    const stagingDir = path.join(basePath, '_staging', request.requestId)
+    const stagingDir = path.join(basePath, '_staging', workId)
     await fsPromises.mkdir(stagingDir, { recursive: true })
 
     const stagedFile = path.join(stagingDir, `${videoId}.mp4`)
@@ -221,24 +455,22 @@ class AcquisitionManager {
       await this.worker.download(url, stagedFile, tmpFile)
 
       // ---- publishing (atomic move into the real library path) ----
-      this.setState(request, 'publishing')
-      // Publish as "Artist - Title---videoId" when the user confirmed the
-      // metadata, so MetaParser derives exactly those (and normalizes
-      // articles: "The Beatles" -> "Beatles, The", matching the rest of the
-      // library). Deliberately NOT metadataOverride: parsing the canonical
-      // filename keeps a later rescan idempotent instead of silently
-      // re-deriving something different.
-      const baseName = request.artist && request.songTitle
-        ? `${sanitizePathSegment(request.artist)} - ${sanitizePathSegment(request.songTitle)}`
-        : sanitizePathSegment(request.result.title)
+      onPublishing?.()
+      // Publish as "Artist - Title---videoId" when the metadata is known, so
+      // MetaParser derives exactly those (and normalizes articles: "The
+      // Beatles" -> "Beatles, The", matching the rest of the library).
+      // Deliberately NOT metadataOverride: parsing the canonical filename
+      // keeps a later rescan idempotent instead of silently re-deriving
+      // something different.
+      const baseName = artist && songTitle
+        ? `${sanitizePathSegment(artist)} - ${sanitizePathSegment(songTitle)}`
+        : sanitizePathSegment(fallbackTitle)
       const destRelPath = `${withSourceIdSuffix(baseName, videoId)}.mp4`
       const finalPath = await publishAtomically(stagedFile, pathId, destRelPath)
 
       // ---- registering (point registration; no full library scan) ----
-      this.setState(request, 'registering')
-      const reg = await registerMedia(finalPath, pathId)
-
-      await this.queueAndFinish(request, reg)
+      onRegistering?.()
+      return await registerMedia(finalPath, pathId)
     } finally {
       await fsPromises.rm(stagingDir, { recursive: true, force: true }).catch(() => {})
     }

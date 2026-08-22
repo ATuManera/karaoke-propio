@@ -32,7 +32,8 @@ does well — library, queue, player, phone remote — and adds what a real part
 | Feature | Description |
 |---|---|
 | **Song acquisition** | Search YouTube or UltraStar/USDB from inside the app and download straight into the library, with a preview before committing. |
-| **Playlist import** | Paste a link to a public YouTube playlist and see at a glance which of its songs are already in the library. The rest are fetched one at a time, the usual way — nothing downloads in bulk. |
+| **Playlist import** | Paste a link to a public YouTube playlist and see at a glance which of its songs are already in the library. The rest are fetched one at a time, the usual way. |
+| **Bulk import** (admin) | Download every karaoke track in a playlist that isn't here yet, one at a time and nothing queued. Artist and title are read against the library rather than guessed, and every song is held under a flag until an admin has checked it. |
 | **Per-request pitch** | Each singer picks their own key when queueing. Transposition starts immediately in the background, so there is no wait at showtime. |
 | **Personal pitch memory** | The pitch each singer sings a song best in, remembered per person — the same song is -4 for one voice and +2 for another. Shown on the library row, and saved songs become a repertoire that queues in one tap. |
 | **Pitch assistant** | When a song finishes, its singer is asked on their own phone how the pitch felt — too high, just right, a little low — and their saved pitch is corrected accordingly. No semitones to understand, and nobody else sees the question. |
@@ -155,7 +156,8 @@ fiesta real necesita.
 | Función | Descripción |
 |---|---|
 | **Adquisición de canciones** | Buscar en YouTube o UltraStar/USDB desde la app y descargar directo a la biblioteca, con vista previa antes de decidir. |
-| **Importar una playlist** | Pegar el link de una playlist pública de YouTube y ver de un vistazo cuáles de sus canciones ya están en la biblioteca. Las que faltan se consiguen de a una, como siempre — no se descarga nada en lote. |
+| **Importar una playlist** | Pegar el link de una playlist pública de YouTube y ver de un vistazo cuáles de sus canciones ya están en la biblioteca. Las que faltan se consiguen de a una, como siempre. |
+| **Descarga masiva** (admin) | Descargar todas las pistas de karaoke de una playlist que aún no están, de a una y sin encolar nada. El artista y el título se leen contra la biblioteca en vez de adivinarse, y cada canción queda marcada hasta que un administrador la revise. |
 | **Tono por solicitud** | Cada cantante elige su tonalidad al encolar. La transposición empieza de inmediato en segundo plano, sin espera al momento de cantar. |
 | **Tono personal** | El tono en que cada cantante canta mejor una canción, recordado por persona — la misma canción es -4 para una voz y +2 para otra. Se ve en la fila de la biblioteca, y las canciones guardadas forman un repertorio que se encola con un toque. |
 | **Asistente de tono** | Al terminar una canción, se le pregunta a quien la cantó, en su propio celular, cómo le quedó el tono — muy alta, perfecta, un poco baja — y su tono personal se corrige solo. Sin necesidad de entender semitonos, y sin que nadie más vea la pregunta. |

@@ -15,6 +15,8 @@ const getStarredSongs = (state: RootState) => ensureState(state.userStars).starr
 const getSelectedCategories = (state: RootState) => state.categories.selected
 const getSongCategories = (state: RootState) => state.categories.songCategories
 const getSort = (state: RootState) => state.library.sort
+const getPendingReview = (state: RootState) => state.songReview.pending
+const getFilterPendingReview = (state: RootState) => state.songReview.isFiltering
 
 const getArtistSearcher = createSelector(
   [getArtists],
@@ -69,10 +71,14 @@ const getArtistsByView = createSelector(
 // is what someone hunting for a specific kind of song expects; an OR would just
 // return more of what they were trying to filter out.
 const getSongsByView = createSelector(
-  [getSongsByKeyword, getFilterStarred, getStarredSongs, getSelectedCategories, getSongCategories],
-  (songsWithKeyword, filterStarred, starredSongs, selected, songCategories) =>
+  [getSongsByKeyword, getFilterStarred, getStarredSongs, getSelectedCategories, getSongCategories,
+    getFilterPendingReview, getPendingReview],
+  (songsWithKeyword, filterStarred, starredSongs, selected, songCategories, filterPending, pending) =>
     songsWithKeyword.filter((songId) => {
       if (filterStarred && !starredSongs.includes(songId)) return false
+      // songs a bulk import brought in that nobody has checked yet — an admin
+      // worklist, narrowing the library the same way starred does
+      if (filterPending && !pending.some(row => row.songId === songId)) return false
       if (!selected.length) return true
 
       const own = songCategories[songId]
@@ -97,12 +103,12 @@ function byPopularity (ids: number[], viewCountOf: (id: number) => number | null
 }
 
 const getSearchResults = createSelector(
-  [getArtistsByView, getSongsByView, getSelectedCategories, getSongs, getArtists, getSort],
-  (artistsResult, songsResult, selected, songs, artists, sort) => ({
-    // with a category filter on, only show artists that still have a matching
-    // song — otherwise the artist list contradicts the song list below it
+  [getArtistsByView, getSongsByView, getSelectedCategories, getSongs, getArtists, getSort, getFilterPendingReview],
+  (artistsResult, songsResult, selected, songs, artists, sort, filterPending) => ({
+    // with a filter on that songs can fail, only show artists that still have
+    // a matching song — otherwise the artist list contradicts the list below it
     artistsResult: (() => {
-      const filtered = selected.length
+      const filtered = selected.length || filterPending
         ? artistsResult.filter(artistId =>
             songsResult.some(songId => songs.entities[songId]?.artistId === artistId))
         : artistsResult

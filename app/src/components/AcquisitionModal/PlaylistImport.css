@@ -105,3 +105,34 @@
   text-align: center;
   color: var(--color-gray-6);
 }
+
+.bulk {
+  margin: 12px 0 4px;
+  padding: 12px;
+  border-radius: 6px;
+  background: var(--bg-raised, rgba(255, 255, 255, 0.06));
+}
+
+.bulkButton {
+  width: 100%;
+}
+
+.bulkCounts {
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+/* the song being fetched right now: the one thing that proves it is moving */
+.bulkCurrent {
+  font-size: 0.9em;
+  opacity: 0.75;
+  margin-bottom: 8px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bulkError {
+  color: var(--red, #e5534b);
+  margin: 8px 0;
+}
