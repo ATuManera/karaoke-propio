@@ -31,6 +31,7 @@ const SignedOutView = () => {
   const [showAllRooms, setShowAllRooms] = useState(true)
   const [prevRooms, setPrevRooms] = useState<typeof rooms | null>(null)
   const [focusRequest, setFocusRequest] = useState(0)
+  const [isModeDefaulted, setIsModeDefaulted] = useState(false)
 
   // once per mount
   useEffect(() => {
@@ -206,6 +207,16 @@ const SignedOutView = () => {
   const allowNewGuest = hasInvite && getAllowed('guest')
   const allowNewStandard = hasInvite && getAllowed('standard')
   const allowNew = allowNewStandard || allowNewGuest
+
+  // Someone who scanned a QR or was read a code came to join a party, and
+  // almost never has an account here — so start them on the answer they were
+  // going to give. "Returning user" stays one tap away, first in the list.
+  //
+  // Applied once: after that the choice is theirs, including changing it back.
+  if (!isModeDefaulted && allowNew) {
+    setIsModeDefaulted(true)
+    setMode(allowNewGuest ? 'guest' : 'standard')
+  }
 
   useEffect(() => {
     firstFieldRef.current?.focus()
