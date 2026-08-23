@@ -356,7 +356,7 @@ const en = {
    * person: this screen follows whichever account is signed in on it.
    */
   player: {
-    windowTitle: 'Karaoke Eternal | Player',
+    windowTitle: 'Karaoke Propio | Player',
     play: 'Play',
     noMoreSongs: 'CAN HAZ MOAR SONGZ?',
     preparingPitch: 'PREPARING PITCH {{pitch}}...',
@@ -422,6 +422,12 @@ const en = {
     roomSomeoneHere: ' — someone here',
     roomFree: ' — free',
     firstRunIntro: 'Create your <b>admin</b> account to get started. All data is locally stored and never shared.',
+    /**
+     * The credit line at the foot of the sign-in screen. Below the form on
+     * purpose: it is an acknowledgement, not a step, and the screen above it
+     * is the one people came to use.
+     */
+    builtOn: 'Built on <a>Karaoke Eternal</a>',
     inviteCode: 'invite code',
     useInvite: 'Use invite',
     checking: 'Checking…',
@@ -563,7 +569,17 @@ const en = {
 
   about: {
     title: 'About',
-    changelogAndSponsors: 'Changelog & Sponsors',
+    /**
+     * The product name is not translated — only the words around it are.
+     * There is exactly one version on this panel, and it is this fork's:
+     * which upstream revision is vendored under app/ is not something the
+     * build verifies, so claiming a number for it would be a guess.
+     */
+    version: '{{name}} v{{version}}',
+    versionOnGitHub: '{{name}} {{version}} on GitHub',
+    builtOn: 'Built on Karaoke Eternal',
+    changelogAndSponsors: 'Karaoke Eternal changelog & sponsors',
+    upstreamChangelog: 'Changelog',
     licenses: 'Licenses',
     star: 'Star',
     sponsor: 'Sponsor',

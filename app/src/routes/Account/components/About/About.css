@@ -7,6 +7,30 @@
   cursor: pointer;
 }
 
+/* the installed version: the one line on this panel someone is asked to
+   read back, so it sits above the attribution rather than under it */
+.version {
+  margin-top: var(--space-m);
+  margin-bottom: 0;
+}
+
+.versionLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  /* a comfortable target on a phone without turning a line of text into a
+     button; the negative margin keeps it from pushing the paragraph around */
+  padding: 6px 4px;
+  margin: -6px 0;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  font-size: var(--font-size-s);
+}
+
+.versionIcon {
+  opacity: 0.7;
+}
+
 .sm {
   color: #aaa;
   font-size: 75%;
@@ -14,7 +38,19 @@
 }
 
 .pseudolink {
-  text-decoration: underline;
+  cursor: pointer;
+}
+
+/* everything above this rule is this project; everything below it is credit
+   for the work it is built on */
+.divider {
+  margin: var(--space-l) auto var(--space-m);
+  border: none;
+  border-top: 1px solid rgba(240, 246, 252, .1);
+}
+
+.links {
+  margin-top: var(--space-m);
 }
 
 .changelog {

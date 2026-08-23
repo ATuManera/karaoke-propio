@@ -25,7 +25,7 @@
     0 0 9em hsl(var(--hue-pink), 100%, 50%);
 }
 
-.eternal {
+.badge {
   font-size: 40%;
   text-transform: uppercase;
   display: block;
@@ -40,7 +40,7 @@
     0 0 .5em hsl(var(--hue-blue), 100%, 50%);
 }
 
-.eternalVisible {
+.badgeVisible {
   border-color: hsl(var(--hue-blue), 100%, 90%);
   box-shadow:
     0 0 .1em hsl(var(--hue-blue), 100%, 90%),

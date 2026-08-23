@@ -32,6 +32,27 @@ autor aplicables, términos de plataformas y normativa local.
 This product incorporates source code from Karaoke Eternal (ISC License),
 Copyright (c) RadRoot LLC, vendored and modified under ./app.
 
+"Karaoke Eternal" is the name of that upstream project. The ISC License covers
+its source code, which is retained here together with its copyright and license
+notices; it does not grant rights in the project's name. Karaoke Propio does not
+use that name as its own: the application identifies itself as Karaoke Propio
+throughout and reports its own version number, so that a user can tell which of
+the two they are running. This matters in practice as well as in principle — the
+two differ substantially in behaviour, and a build presenting itself as the other
+would misdirect bug reports, documentation lookups and changelog readings. Credit
+for the base is shown in the application's About panel and recorded above.
+
+/ "Karaoke Eternal" es el nombre de ese proyecto original. La licencia ISC cubre
+su código fuente, que aquí se conserva junto con sus avisos de copyright y de
+licencia; no otorga derechos sobre el nombre del proyecto. Karaoke Propio no usa
+ese nombre como propio: la aplicación se identifica como Karaoke Propio en toda
+su interfaz e informa su propio número de versión, para que quien la use pueda
+saber cuál de las dos está ejecutando. Esto importa en la práctica además de en
+el principio: ambas difieren de manera sustancial en su comportamiento, y una
+versión que se presentara como la otra desviaría reportes de fallos, consultas de
+documentación y lecturas del registro de cambios. El reconocimiento a la base se
+muestra en el panel Acerca de de la aplicación y queda registrado arriba.
+
 This product incorporates source code from CDGSharp (MIT License),
 Copyright (c) 2022 Johannes Egger, vendored unmodified under
 ./cdg-worker/CDGSharp.

@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import clsx from 'clsx'
+import { Trans } from 'react-i18next'
 import { useAppDispatch, useAppSelector } from 'store/hooks'
 import { fetchRooms } from 'store/modules/rooms'
 import { createAccount, login } from 'store/modules/user'
@@ -12,7 +13,9 @@ import SignIn from './SignIn/SignIn'
 import Button from 'components/Button/Button'
 import { ROOM_CODE_LENGTH, normalizeRoomCode } from 'shared/roomCode'
 import LanguagePicker from 'components/LanguagePicker/LanguagePicker'
-import { translate, useT } from 'lib/i18n'
+import Icon from 'components/Icon/Icon'
+import { KP_NAME, KP_REPO_URL, KP_VERSION } from 'shared/version'
+import { msg, translate, useT } from 'lib/i18n'
 import styles from './SignedOutView.css'
 
 const SignedOutView = () => {
@@ -229,6 +232,22 @@ const SignedOutView = () => {
     <div className={styles.container} style={{ maxWidth: Math.max(340, ui.contentWidth * 0.66) }}>
       <Logo className={styles.logo} />
 
+      {/* Which build this is, and where its code lives — beside the wordmark
+          because it is part of the identity, and the first thing anyone
+          reporting a problem is asked for. */}
+      <p className={styles.version}>
+        <a
+          className={styles.versionLink}
+          href={KP_REPO_URL}
+          target='_blank'
+          rel='noreferrer'
+          aria-label={t('about.versionOnGitHub', { name: KP_NAME, version: KP_VERSION })}
+        >
+          <span translate='no'>{t('about.version', { name: KP_NAME, version: KP_VERSION })}</span>
+          <Icon icon='GITHUB_REPO' size={13} className={styles.versionIcon} />
+        </a>
+      </p>
+
       {/* Before any account exists there is nowhere else to say it, and a
           guest arriving by QR on an English phone would otherwise have to
           sign in first to be understood. */}
@@ -325,6 +344,18 @@ const SignedOutView = () => {
           />
         )}
       </div>
+
+      {/* Credit for the base the app is built on. At the foot rather than
+          under the wordmark: it is an acknowledgement, and the screen above
+          it is the one people came here to use. */}
+      <p className={styles.builtOn}>
+        <Trans
+          i18nKey={msg('signedOut.builtOn')}
+          components={{
+            a: <a href='https://www.karaoke-eternal.com' target='_blank' rel='noreferrer' />,
+          }}
+        />
+      </p>
     </div>
   )
 }

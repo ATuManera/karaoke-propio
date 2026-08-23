@@ -326,7 +326,7 @@ const es: Messages = {
   },
 
   player: {
-    windowTitle: 'Karaoke Eternal | Reproductor',
+    windowTitle: 'Karaoke Propio | Reproductor',
     play: 'Reproducir',
     noMoreSongs: '¿NADIE CANTA MÁS?',
     preparingPitch: 'PREPARANDO TONO {{pitch}}...',
@@ -391,6 +391,7 @@ const es: Messages = {
     roomSomeoneHere: ' — hay alguien',
     roomFree: ' — libre',
     firstRunIntro: 'Crea tu cuenta de <b>administrador</b> para empezar. Todos los datos se guardan aquí y nunca se comparten.',
+    builtOn: 'Construido sobre <a>Karaoke Eternal</a>',
     inviteCode: 'código de invitación',
     useInvite: 'Usar la invitación',
     checking: 'Comprobando…',
@@ -532,7 +533,11 @@ const es: Messages = {
 
   about: {
     title: 'Acerca de',
-    changelogAndSponsors: 'Novedades y patrocinadores',
+    version: '{{name}} v{{version}}',
+    versionOnGitHub: '{{name}} {{version}} en GitHub',
+    builtOn: 'Construido sobre Karaoke Eternal',
+    changelogAndSponsors: 'Novedades y patrocinadores de Karaoke Eternal',
+    upstreamChangelog: 'Novedades',
     licenses: 'Licencias',
     star: 'Estrella',
     sponsor: 'Patrocinar',
