@@ -42,7 +42,8 @@ does well — library, queue, player, phone remote — and adds what a real part
 | **Categories** | Genre, decade, voice (male/female/duet/group) and language, looked up automatically from MusicBrainz and editable by hand. |
 | **Popularity sorting** | Order the library by how watched each source recording is. |
 | **Event photo album** | Guests upload photos from their phone; everyone in the room can view and download them. |
-| **Invite by QR code** | A random room code replaces the sequential room id, so an invite cannot be guessed. Guests scan and sing — no password to type. |
+| **Invite by QR code** | A random room code replaces the sequential room id, so an invite cannot be guessed. Guests scan and sing — no password to type, and the code can be read aloud to anyone who cannot scan. A room is joined by invitation: without one nobody new gets in, so its queue and its photo album stay between the people who were asked. |
+| **Choose your room** | Signing in never picks the room for you. Every open room says whether anyone is in it, so a singer joins the party already going or takes an empty one and starts their own — and hands out its invitation from their own screen, without walking to the television. |
 | **Public access** | Optional HTTPS exposure through an existing nginx-proxy + Let's Encrypt, configured with a single variable. |
 | **Notes & key** | Melody note by note for UltraStar songs, plus an estimated musical key for any track. |
 
@@ -167,7 +168,8 @@ fiesta real necesita.
 | **Categorías** | Género, década, voz (hombre/mujer/dúo/grupo) e idioma, obtenidos automáticamente de MusicBrainz y editables a mano. |
 | **Orden por popularidad** | Ordenar la biblioteca según qué tan vista es cada grabación de origen. |
 | **Álbum de fotos** | Los invitados suben fotos desde el celular; todos en la sala pueden verlas y descargarlas. |
-| **Invitación por QR** | Un código aleatorio reemplaza al id de sala secuencial, así una invitación no se puede adivinar. El invitado escanea y canta, sin escribir contraseña. |
+| **Invitación por QR** | Un código aleatorio reemplaza al id de sala secuencial, así una invitación no se puede adivinar. El invitado escanea y canta, sin escribir contraseña, y el código se puede dictar a quien no pueda escanear. A una sala se entra por invitación: sin ella no entra nadie nuevo, y su cola y su álbum de fotos quedan entre los invitados. |
+| **Elegir la sala** | Iniciar sesión ya no elige la sala por ti. Cada sala abierta dice si hay alguien adentro, así un cantante se suma a la fiesta que ya está o toma una vacía y arma la suya — y reparte su invitación desde su propia pantalla, sin caminar hasta el televisor. |
 | **Acceso público** | Exposición HTTPS opcional mediante un nginx-proxy + Let's Encrypt existente, con una sola variable. |
 | **Notas y tonalidad** | Melodía nota por nota en canciones UltraStar, y tonalidad estimada para cualquier pista. |
 

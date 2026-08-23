@@ -486,7 +486,28 @@ allowlist; anything unrecognised is dropped rather than guessed at.
 Manual edits are stored with `source = 'manual'` and survive re-scans, which
 only replace `auto` rows.
 
+## Choosing a room
+
+Signing in never picks the room. With one room open the screen used to select
+it silently, which is right when the singer is standing in that room and wrong
+when they are away from home and wanted an evening of their own — and either
+way it was never asked.
+
+Every open room is listed with whether anyone is in it (`isLive`, from the
+socket count) and nothing is preselected, so the choice can be made from
+outside the door: join the party already going, or take an empty room, sign in,
+and start it with the "no player in room" invitation that is already there.
+
+Only whether, never how many. The room list answers without authentication, and
+a headcount is the room's business. It is read once when the screen loads, so a
+party starting in the seconds after shows on the next load.
+
+Someone arriving on an invite skips all of this: their link names a room, which
+is the whole point of having been invited to it.
+
 ## Invite codes
+
+A room is joined by invitation, and the code is the whole of it.
 
 Invites carry a random 6-character code, never the numeric room id — that id is
 sequential, so one invite would advertise that other rooms exist. The alphabet
@@ -495,6 +516,37 @@ excludes `O/0` and `I/1/L` so a code survives being read aloud.
 The code never appears in the public room list (that endpoint answers without
 authentication). Lookups are rate limited: with ~1.07e9 combinations, guessing
 is only impractical if it is also slow.
+
+### The code is checked when the account is created
+
+Room prefs allowing new guests cannot carry that weight on their own: they have
+to be on for any QR to work at all, so on their own they let in whoever finds
+the address — and everyone in a room shares its queue and its photo album. The
+code is checked in `POST /api/user` (see `server/Rooms/inviteGuard.ts`), where a
+hidden radio button cannot be worked around; the sign-in form only follows,
+offering "New user" and "Guest" once an invite for the selected room is in hand.
+
+Someone who already has an account is unaffected — their password is their
+invitation, and they may sign into any open room. Links of the older
+`?roomId=N` form still sign such a person in, but no longer admit anyone new.
+
+Wrong codes have their own allowance, separate from the code-lookup endpoint: a
+guest arriving by QR spends both, and a shared bucket would have a party
+locking itself out. Successes are not counted at all — they were never guesses,
+and behind a proxy every guest looks like one caller.
+
+### Typing a code, and handing one out
+
+The alphabet was chosen for dictation, and the Player prints the code beside
+the QR for exactly that, so the sign-in screen takes a typed code and resolves
+it the same way a scanned one is resolved.
+
+Whoever is in a room can read its code off their own account screen, with the
+link to send. Without it, a singer who opened a room away from home would have
+a party nobody could join: the QR lives on the television in the room, which is
+no help for asking someone who has not arrived yet, and the overlay may be off.
+Guests are refused it — at the endpoint, not only on the screen — since a guest
+was asked in themselves and passing the invitation on belongs to the host.
 
 ## Public exposure
 
@@ -513,7 +565,8 @@ taken from the upload.
 
 ## Guest accounts
 
-Created automatically by scanning the QR, and swept after 24 hours. The sweep
+Created by scanning the QR or typing the code it carries — never without one —
+and swept after 24 hours. The sweep
 reuses the normal user-removal path so queued songs and stars are cleaned up
 too; deleting rows directly would leave the queue pointing at users that no
 longer exist.
