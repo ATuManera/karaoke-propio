@@ -95,12 +95,15 @@ router.get('/code/:code', (ctx) => {
   ctx.body = { roomId, name: room.name, hasPassword: room.hasPassword, status: room.status }
 })
 
-// the code for a room the caller is actually in (or any, for an admin)
+// The code for a room the caller is actually in (or any, for an admin).
+//
+// Guests are refused: the code is what lets someone new in, and a guest was
+// let in themselves rather than asked to bring others.
 router.get('/:roomId/code', (ctx) => {
   const roomId = parseInt(ctx.params.roomId, 10)
   if (Number.isNaN(roomId)) ctx.throw(422, 'invalid roomId')
 
-  if (!ctx.user.isAdmin && ctx.user.roomId !== roomId) ctx.throw(401)
+  if (!ctx.user.isAdmin && (ctx.user.isGuest || ctx.user.roomId !== roomId)) ctx.throw(401)
 
   const res = Rooms.get(roomId, { status: STATUSES, includeCode: true })
   const room = res.entities[roomId]

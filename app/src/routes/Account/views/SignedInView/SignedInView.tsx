@@ -8,6 +8,7 @@ import Account from '../../components/Account/Account'
 import MyPitches from '../../components/MyPitches/MyPitches'
 import MyRepertoire from '../../components/MyRepertoire/MyRepertoire'
 import Prefs from '../../components/Prefs/Prefs'
+import RoomInvite from '../../components/RoomInvite/RoomInvite'
 import Rooms from '../../components/Rooms/Rooms'
 import Users from '../../components/Users/Users'
 
@@ -36,6 +37,8 @@ const SignedInView = () => {
 
       {isAdmin
         && <Prefs />}
+
+      <RoomInvite />
 
       <Account />
 

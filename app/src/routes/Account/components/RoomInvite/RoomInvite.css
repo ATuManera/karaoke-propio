@@ -1,0 +1,23 @@
+.hint {
+  margin: 0 0 var(--space-m) 0;
+  color: var(--color-gray-5);
+}
+
+.code {
+  font-family: var(--font-family-custom);
+  font-size: var(--font-size-xl);
+  letter-spacing: 0.15em;
+  text-align: center;
+  margin-bottom: var(--space-m);
+}
+
+.linkRow {
+  display: flex;
+  gap: var(--space-s);
+  align-items: center;
+
+  input[type="text"] {
+    flex: 1;
+    min-width: 0;
+  }
+}
