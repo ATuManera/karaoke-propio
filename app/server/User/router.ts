@@ -8,7 +8,8 @@ import crypto from '../lib/crypto.js'
 import KoaRouter from '@koa/router'
 import Prefs from '../Prefs/Prefs.js'
 import Queue from '../Queue/Queue.js'
-import Rooms from '../Rooms/Rooms.js'
+import Rooms, { getRoomIdByCode } from '../Rooms/Rooms.js'
+import { InviteFailureLimiter, isInviteFor } from '../Rooms/inviteGuard.js'
 import User from '../User/User.js'
 import parseCookie from '../lib/parseCookie.js'
 import { QUEUE_PUSH, SOCKET_AUTH_ERROR } from '../../shared/actionTypes.js'
@@ -32,6 +33,11 @@ interface RequestWithBody {
 }
 
 const router = new KoaRouter({ prefix: '/api' })
+
+// Its own allowance, separate from the one on the code-lookup endpoint: a
+// guest arriving by QR spends both, and sharing a bucket would have them
+// locking each other out halfway through a party.
+const joinFailures = new InviteFailureLimiter(10, 60_000)
 const readFile = promisify(fs.readFile)
 const deleteFile = promisify(fs.unlink)
 const { sign: jwtSign } = jsonWebToken
@@ -397,10 +403,28 @@ router.post('/user', async (ctx) => {
       ctx.throw(401, 'Invalid role')
     }
 
+    // An invite is what says this person was asked in.
+    //
+    // Room prefs allowing new guests cannot carry that weight on their own:
+    // they have to be on for any QR to work at all, so with only that check a
+    // stranger who found the address could sign in as a guest and be handed
+    // the room's queue and its photo album. The code they scanned is the
+    // permission, and it is checked here rather than only in the form.
+    const roomId = parseInt(req.body.roomId, 10)
+
+    if (joinFailures.isBlocked(ctx.request.ip)) {
+      ctx.throw(429, 'Too many attempts; wait a minute and try again')
+    }
+
+    if (!isInviteFor(roomId, req.body.roomCode, getRoomIdByCode)) {
+      joinFailures.recordFailure(ctx.request.ip)
+      ctx.throw(401, 'An invite is required to join this room')
+    }
+
     // new users must choose a room at the same time
     try {
       await Rooms.validate(
-        req.body.roomId,
+        roomId,
         req.body.roomPassword,
         { role: req.body.role },
       )

@@ -38,3 +38,9 @@
   color: var(--btn-danger-bg-color);
   text-align: center;
 }
+
+.inviteHint {
+  margin-top: var(--space-m);
+  font-size: var(--font-size-s);
+  color: var(--color-gray-5);
+}

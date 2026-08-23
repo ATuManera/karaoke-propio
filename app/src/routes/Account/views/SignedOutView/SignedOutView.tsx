@@ -38,6 +38,7 @@ const SignedOutView = () => {
   // An invite code says nothing about which room it opens, so it has to be
   // resolved server-side; the mapping is deliberately not published anywhere.
   const [invitedRoomId, setInvitedRoomId] = useState<number | null>(null)
+  const [inviteCode, setInviteCode] = useState<string | null>(null)
   const [inviteError, setInviteError] = useState<string | null>(null)
 
   useEffect(() => {
@@ -52,6 +53,7 @@ const SignedOutView = () => {
             : 'This invite is not valid. Ask the host for a new one.')))
       .then((data): undefined => {
         setInvitedRoomId(data.roomId)
+        setInviteCode(code)
         return undefined
       })
       .catch((err: Error): undefined => {
@@ -132,6 +134,7 @@ const SignedOutView = () => {
     data.append('newPasswordConfirm', passwordConfirm)
     data.append('roomId', String(roomId))
     data.append('roomPassword', roomPassword)
+    data.append('roomCode', inviteCode ?? '')
     data.append('name', name.trim())
 
     if (typeof image !== 'undefined') {
@@ -167,8 +170,14 @@ const SignedOutView = () => {
     return !!rooms.entities[roomId]?.prefs?.roles?.[roleId]?.allowNew
   }
 
-  const allowNewGuest = getAllowed('guest')
-  const allowNewStandard = getAllowed('standard')
+  // Making an account is for people who were invited to this room, and the
+  // invite is the code they arrived with — checked again server-side, since a
+  // hidden radio button has never stopped anyone. Someone who already has an
+  // account signs in as before: their password is their invitation.
+  const hasInvite = inviteCode !== null && invitedRoomId !== null && invitedRoomId === roomId
+
+  const allowNewGuest = hasInvite && getAllowed('guest')
+  const allowNewStandard = hasInvite && getAllowed('standard')
   const allowNew = allowNewStandard || allowNewGuest
 
   useEffect(() => {
@@ -220,6 +229,13 @@ const SignedOutView = () => {
             onSubmit={handleLogin}
             onFirstFieldRef={handleFirstFieldRef}
           />
+        )}
+
+        {(mode === 'returning' || !allowNew) && !hasInvite && roomId !== null && (
+          <p className={styles.inviteHint}>
+            New here? A room is joined by invitation — ask the host to show you
+            its QR code.
+          </p>
         )}
 
         {mode !== 'returning' && allowNew && (

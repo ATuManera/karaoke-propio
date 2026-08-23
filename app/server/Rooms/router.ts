@@ -4,6 +4,7 @@ import { db } from '../lib/Database.js'
 import getLogger from '../lib/Log.js'
 import Prefs from '../Prefs/Prefs.js'
 import Rooms, { STATUSES, getRoomIdByCode, newUniqueCode } from '../Rooms/Rooms.js'
+import { InviteFailureLimiter } from './inviteGuard.js'
 import { ValidationError } from '../lib/Errors.js'
 import type { Prefs as PrefsType } from '../../shared/types.js'
 
@@ -54,21 +55,13 @@ router.get(['/', '/:roomId'], (ctx) => {
 // Resolve an invite code to the room it opens.
 //
 // Rate limited per IP because this endpoint is, by design, reachable by
-// anyone: it is the one place a stranger could grind through codes. Six
-// characters give ~1.07e9 possibilities, which only stays out of reach if
-// guessing is slow.
-const codeAttempts = new Map<string, { count: number, resetAt: number }>()
-const MAX_ATTEMPTS = 10
-const WINDOW_MS = 60_000
+// anyone: it is the one place a stranger could grind through codes.
+const codeLookupFailures = new InviteFailureLimiter(10, 60_000)
 
 router.get('/code/:code', (ctx) => {
   const ip = ctx.request.ip
-  const now = Date.now()
-  const entry = codeAttempts.get(ip)
 
-  if (!entry || entry.resetAt < now) {
-    codeAttempts.set(ip, { count: 1, resetAt: now + WINDOW_MS })
-  } else if (++entry.count > MAX_ATTEMPTS) {
+  if (codeLookupFailures.isBlocked(ip)) {
     ctx.throw(429, 'Too many attempts; wait a minute and try again')
     return
   }
@@ -78,6 +71,7 @@ router.get('/code/:code', (ctx) => {
   // same answer either way: never reveal whether a code exists but is closed,
   // which would let someone map valid codes
   if (roomId === null) {
+    codeLookupFailures.recordFailure(ip)
     ctx.throw(404, 'Invalid or expired invite')
     return
   }
@@ -86,6 +80,7 @@ router.get('/code/:code', (ctx) => {
   const room = res.entities[roomId]
 
   if (!room) {
+    codeLookupFailures.recordFailure(ip)
     ctx.throw(404, 'Invalid or expired invite')
     return
   }
