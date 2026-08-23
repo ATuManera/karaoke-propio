@@ -1,6 +1,7 @@
 import React from 'react'
 import CDGraphics from 'cdgraphics'
 import HttpApi from 'lib/HttpApi'
+import describeMediaError, { mediaErrorText } from '../mediaError'
 import styles from './CDGPlayer.css'
 
 const api = new HttpApi('media')
@@ -174,8 +175,11 @@ class CDGPlayer extends React.Component<CDGPlayerProps> {
   }
 
   handleError = (el: React.SyntheticEvent<HTMLAudioElement>) => {
-    const { message, code } = el.currentTarget.error
-    this.props.onError(`${message} (code ${code})`)
+    const { error, src } = el.currentTarget
+
+    describeMediaError(src, error)
+      .then(msg => this.props.onError(msg))
+      .catch(() => this.props.onError(mediaErrorText(error)))
   }
 
   handlePlay = () => {

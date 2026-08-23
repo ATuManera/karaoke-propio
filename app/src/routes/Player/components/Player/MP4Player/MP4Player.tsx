@@ -1,4 +1,5 @@
 import React from 'react'
+import describeMediaError, { mediaErrorText } from '../mediaError'
 import styles from './MP4Player.css'
 
 interface MP4PlayerProps {
@@ -90,8 +91,11 @@ class MP4Player extends React.Component<MP4PlayerProps> {
   * <video> event handlers
   */
   handleError = () => {
-    const { message, code } = this.video.current.error
-    this.props.onError(`${message} (code ${code})`)
+    const { error, src } = this.video.current
+
+    describeMediaError(src, error)
+      .then(msg => this.props.onError(msg))
+      .catch(() => this.props.onError(mediaErrorText(error)))
   }
 
   handlePlay = () => this.props.onPlay()

@@ -1,5 +1,6 @@
 import { promisify } from 'util'
 import fs from 'fs'
+import { randomUUID } from 'node:crypto'
 import { db } from '../lib/Database.js'
 import sql from 'sqlate'
 import jsonWebToken from 'jsonwebtoken'
@@ -9,7 +10,8 @@ import Prefs from '../Prefs/Prefs.js'
 import Queue from '../Queue/Queue.js'
 import Rooms from '../Rooms/Rooms.js'
 import User from '../User/User.js'
-import { QUEUE_PUSH } from '../../shared/actionTypes.js'
+import parseCookie from '../lib/parseCookie.js'
+import { QUEUE_PUSH, SOCKET_AUTH_ERROR } from '../../shared/actionTypes.js'
 import {
   USERNAME_MIN_LENGTH,
   USERNAME_MAX_LENGTH,
@@ -33,6 +35,17 @@ const router = new KoaRouter({ prefix: '/api' })
 const readFile = promisify(fs.readFile)
 const deleteFile = promisify(fs.unlink)
 const { sign: jwtSign } = jsonWebToken
+
+/**
+ * Sign a session token.
+ *
+ * The `jti` is what makes one session distinguishable from another. Without
+ * it the payload is the account plus `iat`, which counts whole seconds, so
+ * signing the same account into the same room twice in the same second — a
+ * host setting up the TV and then their phone — yields two byte-identical
+ * tokens. Logout tells sessions apart by their token, and would take both.
+ */
+const signSession = (userCtx: object, jwtKey: string) => jwtSign(userCtx, jwtKey, { jwtid: randomUUID() })
 
 // Takes the "raw" object returned by the User class and massages it
 // into the shape used by the client (state.user) and in server-side
@@ -84,7 +97,7 @@ router.post('/login', async (ctx) => {
   const userCtx = createUserCtx(user, roomId)
 
   // create JWT
-  const token = jwtSign(userCtx, ctx.jwtKey)
+  const token = signSession(userCtx, ctx.jwtKey)
 
   // set JWT as an httpOnly cookie
   ctx.cookies.set('keToken', token, {
@@ -96,11 +109,36 @@ router.post('/login', async (ctx) => {
 })
 
 // logout
-router.get('/logout', (ctx) => {
-  // @todo force socket room leave
+router.get('/logout', async (ctx) => {
+  const { keToken } = parseCookie(ctx.request.header.cookie)
+
   ctx.cookies.set('keToken', '')
   ctx.status = 200
   ctx.body = {}
+
+  if (!keToken) return
+
+  // A cookie belongs to the browser, not to the tab that cleared it, so every
+  // other tab is signed out too — and the one that matters is a running
+  // Player. Its socket was authenticated once, at the handshake, and keeps
+  // working: queue pushes still arrive, the current song still plays, and
+  // nothing looks wrong until the next song needs bytes. Then the media
+  // request goes out with no cookie, is refused, and the browser reports the
+  // refusal the only way a <video> can — as a file it cannot decode.
+  //
+  // So say it out loud instead. Every socket holding this exact token is told
+  // its session ended and dropped; the client resets state.user on
+  // SOCKET_AUTH_ERROR and the Player lands on the sign-in screen, which is
+  // both true and actionable.
+  //
+  // Matched on the token and never on the userId: the same account signed in
+  // on someone's phone is a different session and has no part in this.
+  for (const sock of await ctx.io.fetchSockets()) {
+    if (parseCookie(sock.handshake.headers.cookie).keToken !== keToken) continue
+
+    sock.emit('action', { type: SOCKET_AUTH_ERROR })
+    sock.disconnect()
+  }
 })
 
 // get own account (helps sync account changes across devices)
@@ -332,7 +370,7 @@ router.put('/user/:userId', async (ctx) => {
 
   // create JWT
   // @todo: this should not extend the JWT expiry date
-  const token = jwtSign(userCtx, ctx.jwtKey)
+  const token = signSession(userCtx, ctx.jwtKey)
 
   // set JWT as an httpOnly cookie
   ctx.cookies.set('keToken', token, {
@@ -403,7 +441,7 @@ router.post('/user', async (ctx) => {
     const userCtx = createUserCtx(user, req.body.roomId || null)
 
     // create JWT
-    const token = jwtSign(userCtx, ctx.jwtKey)
+    const token = signSession(userCtx, ctx.jwtKey)
 
     // set JWT as an httpOnly cookie
     ctx.cookies.set('keToken', token, {
@@ -455,7 +493,7 @@ router.post('/setup', async (ctx) => {
 
     // create JWT
     const userCtx = createUserCtx(user, roomRes.lastID)
-    const token = jwtSign(userCtx, ctx.jwtKey)
+    const token = signSession(userCtx, ctx.jwtKey)
 
     // set JWT as an httpOnly cookie
     ctx.cookies.set('keToken', token, {

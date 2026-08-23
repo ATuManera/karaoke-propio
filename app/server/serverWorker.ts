@@ -160,6 +160,7 @@ async function serverWorker ({ env, startScanner, stopScanner, shutdownHandlers 
   // all http requests
   app.use(async (ctx, next) => {
     ctx.jwtKey = jwtKey // used by login route
+    ctx.io = io // used by the logout route, which is exempt from the block below
 
     // skip JWT/session validation if non-API request or logging in/out
     if (!ctx.request.path.startsWith(`${urlPath}api/`)
@@ -185,7 +186,6 @@ async function serverWorker ({ env, startScanner, stopScanner, shutdownHandlers 
     }
 
     // validated
-    ctx.io = io
     ctx.startScanner = startScanner
     ctx.stopScanner = stopScanner
 

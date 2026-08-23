@@ -1,5 +1,6 @@
 import React from 'react'
 import GLChroma from 'gl-chromakey'
+import describeMediaError, { mediaErrorText } from '../mediaError'
 import styles from './MP4Player.css'
 
 const BACKDROP_PADDING = 10 // px at 1:1 scale
@@ -187,8 +188,11 @@ class MP4AlphaPlayer extends React.Component<MP4AlphaPlayerProps> {
   }
 
   handleError = () => {
-    const { message, code } = this.video.error
-    this.props.onError(`${message} (code ${code})`)
+    const { error, src } = this.video
+
+    describeMediaError(src, error)
+      .then(msg => this.props.onError(msg))
+      .catch(() => this.props.onError(mediaErrorText(error)))
   }
 
   handlePlay = () => {

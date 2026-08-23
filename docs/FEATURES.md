@@ -571,3 +571,35 @@ offered, not what is reachable.
 - Known limitation: `ROOM_PREFS_PUSH` still only reaches admins, so QR settings
   changed while a non-admin's Player is running apply on its next load rather
   than live.
+
+## Signing out ends the session everywhere that browser is open
+
+`GET /api/logout` clears the `keToken` cookie, and a cookie belongs to the
+browser rather than to the tab that cleared it. So signing out on the account
+screen signs out every other tab too — and the tab that matters is a running
+Player on a TV.
+
+It used to say nothing. The Player's socket is authenticated once, at the
+handshake, so it kept working: queue pushes arrived, the current song played
+to its end, and nothing looked wrong until the next song needed bytes. That
+request went out with no cookie, the server refused it, and the browser
+reported the refusal the only way a `<video>` can — `MEDIA_ELEMENT_ERROR:
+Format error (code 4)`, a perfectly good file blamed for a session that had
+ended three minutes earlier.
+
+Logout now drops every socket holding that exact token, after telling it
+`SOCKET_AUTH_ERROR`. The client resets `state.user`, and `RequireAuth` sends
+`/player` to `/account?redirect=/player` — the TV shows the sign-in screen,
+which is both true and something a host can act on.
+
+- **Matched on the token, never on the userId.** The same account signed in on
+  someone's phone is a different session and has no part in it.
+- Which means sessions have to be distinguishable. The payload is the account
+  plus `iat`, and `iat` counts whole seconds, so signing the same account into
+  the same room twice in one second — a host setting up the TV and then their
+  phone — produced two byte-identical tokens. Every token now carries a `jti`.
+- **The media element's account of a failure is never the whole story.** It
+  reports a refused request and an undecodable file with the same sentence, and
+  it is usually the first case. All three players now re-ask the server for the
+  same URL when a load fails and report *its* answer, so `403: queueId does not
+  belong to your room` reaches the queue instead of a complaint about the file.
