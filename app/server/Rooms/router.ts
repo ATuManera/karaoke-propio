@@ -34,9 +34,16 @@ router.get(['/', '/:roomId'], (ctx) => {
     && (Prefs.get() as unknown as PrefsType).isPlayerLaunchEnabled === true
 
   res.result.forEach((roomId) => {
+    const sockets = ctx.io.sockets.adapter.rooms.get(Rooms.prefix(roomId))
+    const numUsers = sockets ? sockets.size : 0
+
+    // Whether anyone is in there, never how many. Someone deciding where to
+    // sing needs to know if a party is already going; the size of it is the
+    // room's business, and this list is readable without signing in.
+    res.entities[roomId].isLive = numUsers > 0
+
     if (ctx.user.isAdmin) {
-      const room = ctx.io.sockets.adapter.rooms.get(Rooms.prefix(roomId))
-      res.entities[roomId].numUsers = room ? room.size : 0
+      res.entities[roomId].numUsers = numUsers
     } else {
       // only pass the 'roles' prefs key (plus 'qr' for a Player they may run)
       const prefs = res.entities[roomId].prefs

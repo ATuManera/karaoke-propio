@@ -12,6 +12,13 @@
   }
 }
 
+/* lines up under the room name, past the radio */
+.state {
+  margin-left: calc(1.5em + var(--space-s));
+  font-size: var(--font-size-xs);
+  color: var(--color-gray-5);
+}
+
 .hidden {
   display: none !important;
 }

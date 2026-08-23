@@ -89,6 +89,8 @@ export interface Room {
   status: 'open' | 'closed'
   dateCreated: number
   hasPassword: boolean
+  /** whether anyone is connected to the room right now */
+  isLive?: boolean
   numUsers: number
   prefs?: IRoomPrefs
 }

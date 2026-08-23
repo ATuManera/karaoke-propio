@@ -65,6 +65,13 @@ const SelectRoom = ({
               checked={id === roomId}
             />
 
+            {/* Said plainly so the choice can be made from the outside: one of
+                these rooms may have a party going, and the rest are somewhere
+                to start one. */}
+            <div className={styles.state}>
+              {rooms.entities[id].isLive ? 'someone is in here' : 'nobody here yet'}
+            </div>
+
             {rooms.entities[id]?.hasPassword && (
               <input
                 type='password'

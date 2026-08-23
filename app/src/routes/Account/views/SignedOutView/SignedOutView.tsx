@@ -88,10 +88,11 @@ const SignedOutView = () => {
       } else {
         setFocusRequest(r => r + 1)
       }
-    } else if (rooms.result.length === 1) {
-      setRoomId(rooms.result[0])
-      setShowRoomSection(rooms.entities[rooms.result[0]]?.hasPassword)
     } else {
+      // Never picked for them, not even when there is only one room. Someone
+      // signing in may be at the party the room already has, or away from home
+      // and wanting one of their own; only they know which, and being put in a
+      // room silently is how they end up in somebody else's.
       setShowRoomSection(rooms.result.length !== 0)
     }
   }
@@ -194,7 +195,15 @@ const SignedOutView = () => {
 
       {showRoomSection && (
         <>
-          <h1>Join room...</h1>
+          <h1>Which room?</h1>
+
+          {rooms.result.length > 1 && (
+            <p className={styles.roomHint}>
+              Join the party already going, or take a room nobody is in and
+              start your own.
+            </p>
+          )}
+
           <SelectRoom
             rooms={rooms}
             roomId={roomId}
@@ -206,7 +215,7 @@ const SignedOutView = () => {
         </>
       )}
 
-      <div ref={userSectionRef} className={clsx(rooms.result.length > 1 && roomId === null && styles.hidden)}>
+      <div ref={userSectionRef} className={clsx(rooms.result.length > 0 && roomId === null && styles.hidden)}>
         {allowNew
           ? (
               <>

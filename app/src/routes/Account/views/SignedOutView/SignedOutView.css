@@ -39,6 +39,12 @@
   text-align: center;
 }
 
+.roomHint {
+  margin-bottom: var(--space-m);
+  font-size: var(--font-size-s);
+  color: var(--color-gray-5);
+}
+
 .inviteHint {
   margin-top: var(--space-m);
   font-size: var(--font-size-s);
