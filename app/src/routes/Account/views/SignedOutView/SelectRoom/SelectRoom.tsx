@@ -1,10 +1,9 @@
-import React, { useRef } from 'react'
+import React, { useEffect, useRef } from 'react'
 import clsx from 'clsx'
-import InputRadio from 'components/InputRadio/InputRadio'
 import styles from './SelectRoom.css'
 import type { Room } from 'shared/types'
 
-interface SelectRoomProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'onChange'> {
+interface SelectRoomProps {
   className?: string
   rooms: {
     result: number[]
@@ -18,7 +17,7 @@ interface SelectRoomProps extends Omit<React.InputHTMLAttributes<HTMLInputElemen
 }
 
 const SelectRoom = ({
-  onRoomSelect: onRoomIdChange,
+  onRoomSelect,
   onRoomPasswordChange,
   className,
   rooms,
@@ -26,67 +25,60 @@ const SelectRoom = ({
   roomPassword,
   showAllRooms,
 }: SelectRoomProps) => {
-  const roomPasswordRefs = useRef<Record<number, HTMLInputElement | null>>({})
+  const passwordRef = useRef<HTMLInputElement>(null)
+  const selected = roomId === null ? undefined : rooms.entities[roomId]
+  const hasPassword = !!selected?.hasPassword
 
-  const setPasswordRef = (roomId: number) => (el: HTMLInputElement | null) => {
-    roomPasswordRefs.current[roomId] = el
-  }
+  // choosing a room that wants a password leaves exactly one thing to do next
+  useEffect(() => {
+    if (hasPassword) passwordRef.current?.focus()
+  }, [hasPassword, roomId])
 
-  const handleRoomChange = (value: string) => {
-    const selectedRoomId = value
+  const password = hasPassword && (
+    <input
+      type='password'
+      autoComplete='off'
+      onChange={(e) => { onRoomPasswordChange(e.target.value) }}
+      placeholder='room password (required)'
+      aria-label='room password (required)'
+      ref={passwordRef}
+      value={roomPassword}
+    />
+  )
 
-    Object.entries(roomPasswordRefs.current).forEach(([id, ref]) => {
-      if (ref) {
-        if (id === selectedRoomId) {
-          ref.classList.remove(styles.hidden)
-          ref.focus()
-        } else {
-          ref.classList.add(styles.hidden)
-        }
-      }
-    })
-
-    onRoomIdChange(parseInt(selectedRoomId))
+  // an invite names its room, so there is nothing here to choose
+  if (!showAllRooms) {
+    return (
+      <div className={clsx(styles.container, className)}>
+        {selected && <div className={styles.pinned} translate='no'>{selected.name}</div>}
+        {password}
+      </div>
+    )
   }
 
   return (
     <div className={clsx(styles.container, className)}>
-      {rooms.result.map((id) => {
-        if (!showAllRooms && id !== roomId) return null
+      {/* A radio per room ran off the bottom of the screen as soon as a few
+          existed, and the sign-in form went with it. A select stays one row
+          however many rooms there are, and hands the phone its own picker —
+          easier to hit than a column of dots. Which rooms have somebody in
+          them still shows, on each option. */}
+      <select
+        className={styles.select}
+        value={roomId ?? ''}
+        onChange={e => onRoomSelect(parseInt(e.target.value, 10))}
+        aria-label='room'
+      >
+        <option value='' disabled>choose a room…</option>
+        {rooms.result.map(id => (
+          <option key={`room-${id}`} value={id}>
+            {rooms.entities[id].name}
+            {rooms.entities[id].isLive ? ' — someone here' : ' — free'}
+          </option>
+        ))}
+      </select>
 
-        return (
-          <div key={`room-${id}`}>
-            <InputRadio
-              name='roomId'
-              className={clsx(styles.option, id === roomId && styles.checked)}
-              label={rooms.entities[id].name}
-              value={id}
-              onChange={handleRoomChange}
-              checked={id === roomId}
-            />
-
-            {/* Said plainly so the choice can be made from the outside: one of
-                these rooms may have a party going, and the rest are somewhere
-                to start one. */}
-            <div className={styles.state}>
-              {rooms.entities[id]?.isLive ? 'someone is in here' : 'nobody here yet'}
-            </div>
-
-            {rooms.entities[id]?.hasPassword && (
-              <input
-                type='password'
-                autoComplete='off'
-                className={clsx((roomId === null || id !== roomId) && styles.hidden)}
-                onChange={(e) => { onRoomPasswordChange(e.target.value) }}
-                placeholder='room password (required)'
-                aria-label='room password (required)'
-                ref={setPasswordRef(id)}
-                value={roomPassword}
-              />
-            )}
-          </div>
-        )
-      })}
+      {password}
     </div>
   )
 }
