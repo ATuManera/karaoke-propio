@@ -95,11 +95,19 @@ export const createAccount = createAsyncThunk<void, FormData, { state: RootState
     thunkAPI.dispatch(connectSocket())
     socket.open()
 
-    // redirect in query string?
+    // Somewhere to sing, not a settings screen. Someone who typed a display
+    // name to get into a party has no use yet for preferences, repertoire
+    // export and the rest of the account page, and being met with it reads as
+    // one more form. They will find it when they want it.
+    //
+    // Except on first run: the admin who just created this installation is on
+    // the one screen where the work is — a library with no paths yet has
+    // nothing to show them.
     const redirect = new URLSearchParams(window.location.search).get('redirect')
+    const to = redirect ?? (isFirstRun ? null : '/library')
 
-    if (redirect) {
-      AppRouter.navigate(basename.replace(/\/$/, '') + redirect)
+    if (to) {
+      AppRouter.navigate(basename.replace(/\/$/, '') + to)
     }
   },
 )
