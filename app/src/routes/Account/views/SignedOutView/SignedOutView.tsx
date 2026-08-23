@@ -11,9 +11,12 @@ import Create, { type RepertoireChoice } from './Create/Create'
 import SignIn from './SignIn/SignIn'
 import Button from 'components/Button/Button'
 import { ROOM_CODE_LENGTH, normalizeRoomCode } from 'shared/roomCode'
+import LanguagePicker from 'components/LanguagePicker/LanguagePicker'
+import { translate, useT } from 'lib/i18n'
 import styles from './SignedOutView.css'
 
 const SignedOutView = () => {
+  const t = useT()
   const userSectionRef = useRef<HTMLDivElement | null>(null)
   const firstFieldRef = useRef<HTMLInputElement | null>(null)
 
@@ -51,8 +54,8 @@ const SignedOutView = () => {
     .then((res): Promise<{ roomId: number }> => res.ok
       ? res.json()
       : Promise.reject(new Error(res.status === 429
-          ? 'Too many attempts. Wait a minute and try again.'
-          : 'This invite is not valid. Ask the host for a new one.')))
+          ? translate('signedOut.tooManyAttempts')
+          : translate('signedOut.inviteInvalid'))))
     .then((data): undefined => {
       setInvitedRoomId(data.roomId)
       setInviteCode(code)
@@ -79,7 +82,7 @@ const SignedOutView = () => {
     const code = normalizeRoomCode(codeEntry)
 
     if (code.length !== ROOM_CODE_LENGTH) {
-      setInviteError(`An invite code is ${ROOM_CODE_LENGTH} characters.`)
+      setInviteError(t('signedOut.codeWrongLength', { count: ROOM_CODE_LENGTH }))
       return
     }
 
@@ -186,10 +189,10 @@ const SignedOutView = () => {
     if (importRepertoire.fulfilled.match(imported)) {
       const { songs, pitches } = imported.payload
 
-      alert(`${songs.matched} of your ${songs.total} songs are in this library`
-        + (pitches.applied ? `, and ${pitches.applied} of your pitches are saved.` : '.'))
+      alert(t('signedOut.repertoireImported', { matched: songs.matched, total: songs.total, count: songs.total })
+        + (pitches.applied ? t('signedOut.repertoirePitchesSaved', { count: pitches.applied }) : '.'))
     } else {
-      alert(`You're in, but your repertoire could not be read: ${imported.error.message}`)
+      alert(t('signedOut.repertoireFailed', { error: imported.error.message }))
     }
   }
 
@@ -226,19 +229,21 @@ const SignedOutView = () => {
     <div className={styles.container} style={{ maxWidth: Math.max(340, ui.contentWidth * 0.66) }}>
       <Logo className={styles.logo} />
 
+      {/* Before any account exists there is nowhere else to say it, and a
+          guest arriving by QR on an English phone would otherwise have to
+          sign in first to be understood. */}
+      <LanguagePicker className={styles.language} showHint={false} />
+
       {/* a bad invite must say so; otherwise the room picker appears and the
           guest cannot tell the link was the problem */}
       {inviteError && <p className={styles.inviteError}>{inviteError}</p>}
 
       {showRoomSection && (
         <>
-          <h1>Which room?</h1>
+          <h1>{t('signedOut.whichRoom')}</h1>
 
           {rooms.result.length > 1 && (
-            <p className={styles.roomHint}>
-              Join the party already going, or take a room nobody is in and
-              start your own.
-            </p>
+            <p className={styles.roomHint}>{t('signedOut.roomHint')}</p>
           )}
 
           <SelectRoom
@@ -266,11 +271,11 @@ const SignedOutView = () => {
             maxLength={ROOM_CODE_LENGTH}
             value={codeEntry}
             onChange={e => setCodeEntry(e.target.value.toUpperCase())}
-            placeholder='invite code'
-            aria-label='invite code'
+            placeholder={t('signedOut.inviteCode')}
+            aria-label={t('signedOut.inviteCode')}
           />
           <Button type='submit' disabled={isCheckingCode}>
-            {isCheckingCode ? 'Checking…' : 'Use invite'}
+            {isCheckingCode ? t('signedOut.checking') : t('signedOut.useInvite')}
           </Button>
         </form>
       )}
@@ -279,15 +284,15 @@ const SignedOutView = () => {
         {allowNew
           ? (
               <>
-                <h1>Join as...</h1>
+                <h1>{t('signedOut.joinAs')}</h1>
                 <div className={styles.radioContainer}>
-                  <InputRadio name='type' value='returning' checked={mode === 'returning'} onChange={setMode} label='Returning user' />
-                  {allowNewStandard && <InputRadio name='type' value='standard' checked={mode === 'standard'} onChange={setMode} label='New user' />}
-                  {allowNewGuest && <InputRadio name='type' value='guest' checked={mode === 'guest'} onChange={setMode} label='Guest' />}
+                  <InputRadio name='type' value='returning' checked={mode === 'returning'} onChange={setMode} label={t('signedOut.returningUser')} />
+                  {allowNewStandard && <InputRadio name='type' value='standard' checked={mode === 'standard'} onChange={setMode} label={t('signedOut.newUser')} />}
+                  {allowNewGuest && <InputRadio name='type' value='guest' checked={mode === 'guest'} onChange={setMode} label={t('signedOut.guest')} />}
                 </div>
               </>
             )
-          : <h1>Sign in</h1>}
+          : <h1>{t('signedOut.signInShort')}</h1>}
 
         {(mode === 'returning' || !allowNew) && (
           <SignIn
@@ -301,10 +306,7 @@ const SignedOutView = () => {
         )}
 
         {(mode === 'returning' || !allowNew) && !hasInvite && roomId !== null && (
-          <p className={styles.inviteHint}>
-            New here? A room is joined by invitation — scan the QR code your
-            host is showing, or enter the code they read out to you above.
-          </p>
+          <p className={styles.inviteHint}>{t('signedOut.inviteHint')}</p>
         )}
 
         {mode !== 'returning' && allowNew && (

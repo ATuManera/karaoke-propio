@@ -4,6 +4,7 @@ import sql from 'sqlate'
 import { QueueItem } from '../../shared/types.js'
 import { isValidPitch } from '../../shared/pitch.js'
 import { getPitchStatus } from '../Pitch/pitchState.js'
+import { MessageError } from '../lib/i18n.js'
 
 class Queue {
   /**
@@ -45,7 +46,7 @@ class Queue {
     const res = db.run(String(query), query.parameters)
 
     if (res.changes !== 1) {
-      throw new Error('Could not add song to queue')
+      throw new MessageError(500, 'server.queue.addFailed')
     }
 
     // the exact row is needed to attach a pitch request to it; never try to

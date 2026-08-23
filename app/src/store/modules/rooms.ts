@@ -16,6 +16,7 @@ import {
 } from 'shared/actionTypes'
 
 import HttpApi from 'lib/HttpApi'
+import { translate } from 'lib/i18n'
 const api = new HttpApi('rooms')
 
 // ------------------------------------
@@ -34,7 +35,7 @@ export const fetchCurrentRoom = createAsyncThunk<object, void, { state: RootStat
     const roomId = thunkAPI.getState().user.roomId
 
     if (typeof roomId !== 'number') {
-      return Promise.reject('Please sign into a room')
+      return Promise.reject(translate('errors.signIntoARoom'))
     }
 
     return await api.get(`/${roomId}`)

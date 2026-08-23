@@ -4,6 +4,7 @@ import { resolveInviteBaseUrl } from 'shared/inviteUrl'
 import Panel from 'components/Panel/Panel'
 import Button from 'components/Button/Button'
 import styles from './RoomInvite.css'
+import { useT } from 'lib/i18n'
 
 /**
  * How someone in a room asks another person into it.
@@ -16,6 +17,7 @@ import styles from './RoomInvite.css'
  * on is the host's to do.
  */
 const RoomInvite = () => {
+  const t = useT()
   const { isGuest, roomId } = useAppSelector(state => state.user)
   const publicUrl = useAppSelector(state => state.prefs.publicUrl ?? '')
   const [code, setCode] = useState<string | null>(null)
@@ -53,10 +55,10 @@ const RoomInvite = () => {
   }
 
   return (
-    <Panel title='Invite to this room'>
+    <Panel title={t('rooms.invite.title')}>
       <>
         <p className={styles.hint}>
-          Anyone new needs this to get in. Read the code out, or send the link.
+          {t('rooms.invite.hint')}
         </p>
 
         <div className={styles.code} translate='no'>{code}</div>
@@ -68,11 +70,11 @@ const RoomInvite = () => {
             value={url.href}
             ref={linkRef}
             onFocus={e => e.target.select()}
-            aria-label='invite link'
+            aria-label={t('rooms.invite.linkLabel')}
           />
           {typeof navigator.clipboard !== 'undefined' && (
             <Button onClick={handleCopy}>
-              {isCopied ? 'Copied' : 'Copy'}
+              {isCopied ? t('common.copied') : t('common.copy')}
             </Button>
           )}
         </div>

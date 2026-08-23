@@ -3,6 +3,7 @@ import { useAppDispatch, useAppSelector } from 'store/hooks'
 import Icon from 'components/Icon/Icon'
 import Button from 'components/Button/Button'
 import { formatDuration } from 'lib/dateTime'
+import { useT } from 'lib/i18n'
 import { bulkImportPlaylist, stopBulkImport } from 'routes/Library/modules/acquisition'
 import { playlistUrl } from 'shared/youtubePlaylist'
 import {
@@ -50,6 +51,7 @@ interface PlaylistImportProps {
  * the preview would have been.
  */
 const PlaylistImport = ({ playlist, onFind, onGet, onOpen }: PlaylistImportProps) => {
+  const t = useT()
   const dispatch = useAppDispatch()
   const songs = useAppSelector(state => state.songs)
   const artists = useAppSelector(state => state.artists)
@@ -108,9 +110,7 @@ const PlaylistImport = ({ playlist, onFind, onGet, onOpen }: PlaylistImportProps
   const handleBulk = () => {
     // minutes of downloading that writes files to disk, so it is asked for
     // once and explicitly rather than started by a stray tap
-    const message = `Download ${bulkable.length} karaoke tracks from this playlist?\n\n`
-      + `They are downloaded one at a time and nothing is added to the queue. `
-      + `Each one is held for you to check its artist and title.`
+    const message = t('acquisition.playlist.confirmBulk', { count: bulkable.length })
 
     if (window.confirm(message)) dispatch(bulkImportPlaylist(playlistUrl(playlist.playlistId)))
   }
@@ -122,23 +122,20 @@ const PlaylistImport = ({ playlist, onFind, onGet, onOpen }: PlaylistImportProps
 
         {rows.length > 0 && (
           <div className={styles.counts}>
-            {found.length}
-            {' of '}
-            {rows.length}
-            {' already in the library'}
+            {t('acquisition.playlist.inLibraryCount', { found: found.length, total: rows.length })}
           </div>
         )}
 
         {/* said out loud rather than left to look like the whole playlist */}
         {isTruncated && (
           <div className={styles.counts}>
-            {`Showing the first ${playlist.read} of ${playlist.total} songs.`}
+            {t('acquisition.playlist.truncated', { read: playlist.read, total: playlist.total })}
           </div>
         )}
       </div>
 
       {rows.length === 0 && (
-        <p className={styles.empty}>There are no songs to read in this playlist.</p>
+        <p className={styles.empty}>{t('acquisition.playlist.empty')}</p>
       )}
 
       {/* Only an admin sees this, and only the server's copy of that rule
@@ -153,12 +150,9 @@ const PlaylistImport = ({ playlist, onFind, onGet, onOpen }: PlaylistImportProps
             disabled={isBulkStarting}
             onClick={handleBulk}
           >
-            {isBulkStarting ? 'Starting…' : `Download all ${bulkable.length} missing`}
+            {isBulkStarting ? t('common.starting') : t('acquisition.playlist.downloadAll', { count: bulkable.length })}
           </Button>
-          <p className={styles.hint}>
-            Karaoke tracks only, one at a time, nothing queued. Each one waits for
-            you to check its artist and title afterwards.
-          </p>
+          <p className={styles.hint}>{t('acquisition.playlist.bulkHint')}</p>
         </div>
       )}
 
@@ -171,20 +165,18 @@ const PlaylistImport = ({ playlist, onFind, onGet, onOpen }: PlaylistImportProps
         <div className={styles.bulk}>
           <div className={styles.bulkCounts}>
             {bulk.isRunning
-              ? `Downloading ${bulkDone + 1} of ${bulkTotal}…`
-              : `${bulkDone} of ${bulkTotal} downloaded`}
-            {bulkFailed > 0 && ` · ${bulkFailed} failed`}
+              ? t('acquisition.playlist.bulkProgress', { done: bulkDone + 1, total: bulkTotal })
+              : t('acquisition.playlist.bulkFinished', { done: bulkDone, total: bulkTotal })}
+            {bulkFailed > 0 && t('acquisition.playlist.bulkFailed', { count: bulkFailed })}
           </div>
           {bulkCurrent && <div className={styles.bulkCurrent} translate='no'>{bulkCurrent}</div>}
           {bulk.isRunning && (
             <Button onClick={() => dispatch(stopBulkImport())} disabled={bulk.isStopping}>
-              {bulk.isStopping ? 'Stopping after this one…' : 'Stop'}
+              {bulk.isStopping ? t('acquisition.playlist.stopping') : t('acquisition.playlist.stop')}
             </Button>
           )}
           {!bulk.isRunning && bulkDone > 0 && (
-            <p className={styles.hint}>
-              Waiting for you in the library, under the flag in the search bar.
-            </p>
+            <p className={styles.hint}>{t('acquisition.playlist.heldForReview')}</p>
           )}
         </div>
       )}
@@ -192,11 +184,9 @@ const PlaylistImport = ({ playlist, onFind, onGet, onOpen }: PlaylistImportProps
       {missing.length > 0 && (
         <>
           <h2 className={styles.heading}>
-            {`Not here yet (${missing.length})`}
+            {t('acquisition.playlist.notHereYet', { count: missing.length })}
           </h2>
-          <p className={styles.hint}>
-            Tap one to add it — you get to watch it first, and pick your pitch.
-          </p>
+          <p className={styles.hint}>{t('acquisition.playlist.tapToAdd')}</p>
           <ul className={styles.rows}>
             {missing.map(({ entry, meta, label, isKaraoke }) => (
               <li key={entry.id}>
@@ -204,7 +194,9 @@ const PlaylistImport = ({ playlist, onFind, onGet, onOpen }: PlaylistImportProps
                   type='button'
                   className={styles.row}
                   onClick={() => isKaraoke ? onGet(entry, meta) : onFind(meta, entry.title)}
-                  aria-label={isKaraoke ? `Add ${label}` : `Find a karaoke version of ${label}`}
+                  aria-label={isKaraoke
+                    ? t('acquisition.playlist.addSong', { song: label })
+                    : t('acquisition.playlist.findKaraokeFor', { song: label })}
                 >
                   {entry.thumbnail && <img src={entry.thumbnail} alt='' className={styles.thumbnail} />}
                   <div className={styles.info}>
@@ -228,7 +220,7 @@ const PlaylistImport = ({ playlist, onFind, onGet, onOpen }: PlaylistImportProps
       {found.length > 0 && (
         <>
           <h2 className={styles.heading}>
-            {`Ready to sing (${found.length})`}
+            {t('acquisition.playlist.readyToSing', { count: found.length })}
           </h2>
           <ul className={styles.rows}>
             {found.map(({ entry, label, libraryTitle, inLibrary }) => (

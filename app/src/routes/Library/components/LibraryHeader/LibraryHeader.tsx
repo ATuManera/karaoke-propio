@@ -6,8 +6,10 @@ import Button from 'components/Button/Button'
 import CategoryFilter from 'components/CategoryFilter/CategoryFilter'
 import { fetchPendingReview, toggleFilterPendingReview } from 'store/modules/songReview'
 import styles from './LibraryHeader.css'
+import { useT } from 'lib/i18n'
 
 const LibraryHeader = () => {
+  const t = useT()
   const dispatch = useAppDispatch()
   const { filterStr, filterStarred, version } = useAppSelector(state => state.library)
   const isAdmin = useAppSelector(state => state.user.isAdmin)
@@ -53,7 +55,7 @@ const LibraryHeader = () => {
           className={styles.searchInput}
           // the only place a playlist import is announced: pasting a link is
           // the whole gesture, and it was invisible while this said 'search'
-          placeholder='search or paste a playlist'
+          placeholder={t('library.searchPlaceholder')}
           value={value}
           onChange={handleChange}
           ref={searchInput}

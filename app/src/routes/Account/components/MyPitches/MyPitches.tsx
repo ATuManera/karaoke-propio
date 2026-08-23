@@ -1,4 +1,5 @@
 import React from 'react'
+import { Trans } from 'react-i18next'
 import { ensureState } from 'redux-optimistic-ui'
 import { useAppDispatch, useAppSelector } from 'store/hooks'
 import Panel from 'components/Panel/Panel'
@@ -7,6 +8,7 @@ import { clearSongPitchPref, setSongPitchPref } from 'store/modules/userPitchPre
 import { queueSong } from 'routes/Queue/modules/queue'
 import getSongsStatus from 'routes/Library/selectors/getSongsStatus'
 import { formatPitch, PITCH_MAX, PITCH_MIN } from 'shared/pitch'
+import { msg, useT } from 'lib/i18n'
 import styles from './MyPitches.css'
 
 /**
@@ -22,6 +24,7 @@ import styles from './MyPitches.css'
  * else (see migration 012).
  */
 const MyPitches = () => {
+  const t = useT()
   const dispatch = useAppDispatch()
   const prefs = useAppSelector(state => ensureState(state.userPitchPrefs))
   const songs = useAppSelector(state => state.songs.entities)
@@ -59,29 +62,17 @@ const MyPitches = () => {
   const handleForget = (songId: number) => dispatch(clearSongPitchPref(songId))
 
   return (
-    <Panel title='My Pitches' contentClassName={styles.content}>
+    <Panel title={t('repertoire.myPitches')} contentClassName={styles.content}>
       <>
         {rows.length === 0 && (
           <p className={styles.empty}>
-            Nothing saved yet. Tick
-            {' '}
-            <em>Remember this pitch for me</em>
-            {' '}
-            when you add a song, and it will be waiting for you next time.
+            <Trans i18nKey={msg('repertoire.nothingSavedYet')} components={{ b: <em /> }} />
           </p>
         )}
 
         {rows.length > 0 && (
           <p className={styles.hint}>
-            Your songs, each at the pitch that suits your voice. Use
-            {' '}
-            <strong>−</strong>
-            {' '}
-            and
-            {' '}
-            <strong>+</strong>
-            {' '}
-            to correct one whenever you find a better fit.
+            <Trans i18nKey={msg('repertoire.nudgeHint')} components={{ b: <strong /> }} />
           </p>
         )}
 
@@ -91,7 +82,7 @@ const MyPitches = () => {
               <div className={styles.title} translate='no'>{title}</div>
               <div className={styles.artist} translate='no'>{artist}</div>
               {pref.source === 'inferred' && (
-                <div className={styles.inferredNote}>last sung at this pitch</div>
+                <div className={styles.inferredNote}>{t('repertoire.lastSungAtThisPitch')}</div>
               )}
             </div>
 
@@ -100,7 +91,7 @@ const MyPitches = () => {
                 className={styles.nudge}
                 onClick={() => handleNudge(songId, pref.pitchSemitones, -1)}
                 disabled={pref.pitchSemitones <= PITCH_MIN}
-                aria-label={`Lower my pitch for ${title}`}
+                aria-label={t('repertoire.lowerPitchFor', { song: title })}
               >
                 −
               </Button>
@@ -109,7 +100,7 @@ const MyPitches = () => {
                 className={styles.nudge}
                 onClick={() => handleNudge(songId, pref.pitchSemitones, 1)}
                 disabled={pref.pitchSemitones >= PITCH_MAX}
-                aria-label={`Raise my pitch for ${title}`}
+                aria-label={t('repertoire.raisePitchFor', { song: title })}
               >
                 +
               </Button>
@@ -122,24 +113,24 @@ const MyPitches = () => {
                 className={styles.queue}
                 onClick={() => handleQueue(songId)}
                 disabled={roomId === null || isQueued}
-                title={roomId === null ? 'Join a room to add songs' : undefined}
+                title={roomId === null ? t('repertoire.joinToAddSongs') : undefined}
               >
-                {isQueued ? 'Queued' : 'Sing it'}
+                {isQueued ? t('queue.queued') : t('queue.singIt')}
               </Button>
 
               <a
                 className={styles.forget}
                 onClick={() => handleForget(songId)}
-                aria-label={`Forget my pitch for ${title}`}
+                aria-label={t('repertoire.forgetPitchFor', { song: title })}
               >
-                Forget
+                {t('repertoire.forget')}
               </a>
             </div>
           </div>
         ))}
 
         {rows.length > 0 && roomId === null && (
-          <p className={styles.hint}>Join a room to add any of these to the queue.</p>
+          <p className={styles.hint}>{t('repertoire.joinToQueue')}</p>
         )}
       </>
     </Panel>

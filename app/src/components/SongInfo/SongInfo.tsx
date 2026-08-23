@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import { useT } from 'lib/i18n'
 import { useAppDispatch, useAppSelector } from 'store/hooks'
 import Button from 'components/Button/Button'
 import Modal from 'components/Modal/Modal'
@@ -22,6 +23,7 @@ interface EditFieldsProps {
  * would silently revert (see server/Media/retagSong.ts).
  */
 const EditFields = ({ songId, currentArtist, currentTitle }: EditFieldsProps) => {
+  const t = useT()
   const dispatch = useAppDispatch()
   const [artist, setArtist] = useState(currentArtist)
   const [title, setTitle] = useState(currentTitle)
@@ -52,34 +54,32 @@ const EditFields = ({ songId, currentArtist, currentTitle }: EditFieldsProps) =>
   return (
     <div className={styles.editFields}>
       <label className={styles.editLabel}>
-        Artist
+        {t('songInfo.artist')}
         <input
           type='text'
           className={styles.editInput}
           value={artist}
           onChange={e => setArtist(e.target.value)}
-          placeholder='e.g. Marc Anthony'
+          placeholder={t('songInfo.artistPlaceholder')}
         />
       </label>
       <label className={styles.editLabel}>
-        Title
+        {t('songInfo.songTitle')}
         <input
           type='text'
           className={styles.editInput}
           value={title}
           onChange={e => setTitle(e.target.value)}
-          placeholder='e.g. Y hubo alguien'
+          placeholder={t('songInfo.titlePlaceholder')}
         />
       </label>
 
       {saveError && <p className={styles.saveError}>{saveError}</p>}
 
       <Button variant='primary' onClick={handleSave} disabled={!canSave}>
-        {isSaving ? 'Saving…' : 'Save changes'}
+        {isSaving ? t('common.saving') : t('songInfo.saveChanges')}
       </Button>
-      <p className={styles.editHint}>
-        Renames the files too, so the change survives a library rescan.
-      </p>
+      <p className={styles.editHint}>{t('songInfo.renameHint')}</p>
     </div>
   )
 }
@@ -96,6 +96,7 @@ const EditFields = ({ songId, currentArtist, currentTitle }: EditFieldsProps) =>
  * want a second look at something they just retyped.
  */
 const PendingReview = ({ songId }: { songId: number }) => {
+  const t = useT()
   const dispatch = useAppDispatch()
   const pending = useAppSelector(state => state.songReview.pending.find(row => row.songId === songId))
 
@@ -105,18 +106,19 @@ const PendingReview = ({ songId }: { songId: number }) => {
     <div className={styles.pendingReview}>
       <p className={styles.pendingHeading}>
         {pending.isAmbiguous
-          ? 'Downloaded in bulk — nothing in the library confirmed this artist and title.'
-          : 'Downloaded in bulk — not checked yet.'}
+          ? t('songInfo.pendingAmbiguous')
+          : t('songInfo.pendingUnchecked')}
       </p>
       <p className={styles.pendingSource} translate='no'>{pending.sourceTitle}</p>
       <Button onClick={() => dispatch(markSongReviewed(songId))}>
-        Mark reviewed
+        {t('songInfo.markReviewed')}
       </Button>
     </div>
   )
 }
 
 const SongInfo = () => {
+  const t = useT()
   const { isLoading, isVisible, songId, media } = useAppSelector(state => state.songInfo)
   const songs = useAppSelector(state => state.songs.entities)
   const artists = useAppSelector(state => state.artists.entities)
@@ -129,8 +131,8 @@ const SongInfo = () => {
   const handleDelete = (mediaId: number) => {
     const isLast = media.result.length === 1
     const warning = isLast
-      ? `Delete the ONLY version of this song?\n\nThe song will be removed from the library and from anyone's queue, and the file will be deleted from disk.`
-      : `Delete this version?\n\nThe file is deleted from disk. The other ${media.result.length - 1} version(s) stay.`
+      ? t('songInfo.confirmDeleteLast')
+      : t('songInfo.confirmDeleteVersion', { count: media.result.length - 1 })
 
     // deleting files is irreversible, so never on a single stray tap
     if (window.confirm(warning)) dispatch(deleteMediaVersion({ songId, mediaId }))
@@ -148,31 +150,35 @@ const SongInfo = () => {
       <div key={item.mediaId} className={styles.media}>
         {item.path + (item.path.indexOf('/') === 0 ? '/' : '\\') + item.relPath}
         <br />
-        <span className={styles.label}>Duration: </span>
+        <span className={styles.label}>{t('songInfo.duration')}</span>
+        {' '}
         {formatDuration(item.duration)}
         <br />
-        <span className={styles.label}>Media ID: </span>
+        <span className={styles.label}>{t('songInfo.mediaId')}</span>
+        {' '}
         {mediaId}
         <br />
-        <span className={styles.label}>Preferred: </span>
+        <span className={styles.label}>{t('songInfo.preferred')}</span>
+        {' '}
         {isPreferred
           && (
             <span>
-              <strong>Yes</strong>
+              <strong>{t('common.yes')}</strong>
 &nbsp;
-              <a onClick={() => handleRemovePrefer(mediaId)}>(Unset)</a>
+              <a onClick={() => handleRemovePrefer(mediaId)}>{t('songInfo.unset')}</a>
             </span>
           )}
         {!isPreferred
           && (
             <span>
-              No&nbsp;
-              <a onClick={() => handlePrefer(mediaId)}>(Set)</a>
+              {t('common.no')}
+&nbsp;
+              <a onClick={() => handlePrefer(mediaId)}>{t('songInfo.set')}</a>
             </span>
           )}
         <br />
         <a className={styles.delete} onClick={() => handleDelete(mediaId)}>
-          {media.result.length === 1 ? 'Delete song (last version)' : 'Delete this version'}
+          {media.result.length === 1 ? t('songInfo.deleteLastVersion') : t('songInfo.deleteThisVersion')}
         </a>
       </div>
     )
@@ -182,7 +188,7 @@ const SongInfo = () => {
     <Modal
       visible={isVisible}
       onClose={handleCloseSongInfo}
-      title='Song Info'
+      title={t('songInfo.title')}
       scrollable
     >
       <div className={styles.container}>
@@ -208,20 +214,22 @@ const SongInfo = () => {
         {songId !== null && <SongPitchPref songId={songId} />}
 
         <p>
-          <span className={styles.label}>Song ID: </span>
+          <span className={styles.label}>{t('songInfo.songId')}</span>
+          {' '}
           {songId}
           <br />
-          <span className={styles.label}>Media Files: </span>
+          <span className={styles.label}>{t('songInfo.mediaFiles')}</span>
+          {' '}
           {isLoading ? '?' : media.result.length}
         </p>
 
         <div className={styles.mediaContainer}>
-          {isLoading ? <p>Loading...</p> : mediaDetails}
+          {isLoading ? <p>{t('common.loading')}</p> : mediaDetails}
         </div>
 
         <div>
           <Button variant='primary' onClick={handleCloseSongInfo}>
-            Done
+            {t('common.done')}
           </Button>
         </div>
       </div>

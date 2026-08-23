@@ -3,6 +3,7 @@ import sql from 'sqlate'
 import crypto from 'crypto'
 import { db } from '../lib/Database.js'
 import getLogger from '../lib/Log.js'
+import { MessageError } from '../lib/i18n.js'
 
 const log = getLogger('Prefs')
 
@@ -93,7 +94,7 @@ class Prefs {
 
     // is it a subfolder of an already-added folder?
     if (result.some(pathId => (dir + path.sep).indexOf(entities[pathId].path + path.sep) === 0)) {
-      throw new Error('Folder has already been added')
+      throw new MessageError(409, 'server.prefs.folderAlreadyAdded')
     }
 
     const fields = new Map()

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import Button from 'components/Button/Button'
 import Icon from 'components/Icon/Icon'
 import loadImage from 'blueimp-load-image'
+import { useT } from 'lib/i18n'
 import { User } from 'shared/types'
 import styles from './InputImage.css'
 
@@ -11,6 +12,7 @@ interface UserImageProps {
 }
 
 const InputImage = ({ user, onSelect }: UserImageProps) => {
+  const t = useT()
   const cameraInput = React.useRef<HTMLInputElement>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [imageURL, setImageURL] = useState<string | null>(
@@ -49,7 +51,7 @@ const InputImage = ({ user, onSelect }: UserImageProps) => {
       file,
       (canvas) => {
         if (canvas instanceof Event) {
-          alert('The image could not be loaded.')
+          alert(t('account.form.imageFailed'))
           return
         }
 
@@ -89,7 +91,7 @@ const InputImage = ({ user, onSelect }: UserImageProps) => {
           height={72}
           onLoad={handleImgLoad}
           onError={handleImgError}
-          alt='User Profile'
+          alt={t('account.form.userProfile')}
         />
       )}
 
@@ -113,8 +115,8 @@ const InputImage = ({ user, onSelect }: UserImageProps) => {
         icon='CAMERA'
         size={32}
         onClick={() => cameraInput.current?.click()}
-        aria-label='Take a photo'
-        title='Take a photo'
+        aria-label={t('account.form.takeAPhoto')}
+        title={t('account.form.takeAPhoto')}
       />
 
       <input

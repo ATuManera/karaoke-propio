@@ -16,6 +16,7 @@ import ArtistItem from '../ArtistItem/ArtistItem'
 import SongList from '../SongList/SongList'
 import type { ListImperativeAPI, RowComponentProps } from 'react-window'
 import styles from './SearchResults.css'
+import { useT } from 'lib/i18n'
 
 const ROW_HEIGHT_RESULT_HEADING = 24
 const ROW_HEIGHT_ARTIST = 48
@@ -122,6 +123,7 @@ const RowComponent = ({
 }
 
 const SearchResults = ({ ui }: SearchResultsProps) => {
+  const t = useT()
   const dispatch = useAppDispatch()
   // same source as browsing, so an expanded artist's songs follow the chosen
   // order here too
@@ -201,14 +203,14 @@ const SearchResults = ({ ui }: SearchResultsProps) => {
     return (
       <>
         <TextOverlay className={styles.noResults}>
-          <h1>{isPlaylistLink ? 'That’s a playlist' : 'No local results'}</h1>
+          <h1>{isPlaylistLink ? t('library.thatsAPlaylist') : t('library.noLocalResults')}</h1>
           <p>
             {isPlaylistLink
-              ? 'See which of its songs are already here.'
-              : 'Try searching YouTube instead.'}
+              ? t('library.seeWhichSongsAreHere')
+              : t('library.trySearchingYouTube')}
           </p>
           <Button variant='primary' onClick={() => setAcquisitionView('search')}>
-            {isPlaylistLink ? 'Open playlist' : 'Search YouTube'}
+            {isPlaylistLink ? t('library.openPlaylist') : t('library.searchYouTube')}
           </Button>
         </TextOverlay>
 
@@ -256,7 +258,7 @@ const SearchResults = ({ ui }: SearchResultsProps) => {
               survives in the store until another one replaces it */}
           {playlist && (
             <Button className={styles.moreButton} onClick={() => setAcquisitionView('playlist')}>
-              Your playlist
+              {t('library.yourPlaylist')}
             </Button>
           )}
           <Button
@@ -264,7 +266,7 @@ const SearchResults = ({ ui }: SearchResultsProps) => {
             variant='primary'
             onClick={() => setAcquisitionView('search')}
           >
-            Not what you wanted? Search YouTube
+            {t('library.notWhatYouWanted')}
           </Button>
         </div>
       )}
@@ -281,7 +283,7 @@ const SearchResults = ({ ui }: SearchResultsProps) => {
             disabled={isRechecking}
             onClick={handleRecheck}
           >
-            {isRechecking ? 'Starting…' : `Re-read these ${pending.length} names`}
+            {isRechecking ? t('common.starting') : t('library.rereadNames', { count: pending.length })}
           </Button>
         </div>
       )}

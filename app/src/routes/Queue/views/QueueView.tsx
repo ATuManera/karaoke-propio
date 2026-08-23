@@ -2,6 +2,8 @@ import React, { useEffect, useRef } from 'react'
 import { useAppDispatch, useAppSelector } from 'store/hooks'
 import { ensureState } from 'redux-optimistic-ui'
 import { Link } from 'react-router'
+import { Trans } from 'react-i18next'
+import { msg, useT } from 'lib/i18n'
 import getRoundRobinQueue from '../selectors/getRoundRobinQueue'
 import QueueList from '../components/QueueList/QueueList'
 import Button from 'components/Button/Button'
@@ -13,6 +15,7 @@ import styles from './QueueView.css'
 const QUEUE_ITEM_HEIGHT = 92
 
 const QueueView = () => {
+  const t = useT()
   const dispatch = useAppDispatch()
   const { innerWidth, innerHeight, headerHeight, footerHeight } = useAppSelector(state => state.ui)
   const isInRoom = useAppSelector(state => !!state.user.roomId)
@@ -26,7 +29,7 @@ const QueueView = () => {
   // re-checks ownership server-side, so admin-only here is a UI affordance on
   // top of a rule the server enforces regardless.
   const handleClearQueue = () => {
-    if (window.confirm(`Clear the whole queue? ${queue.result.length} song(s) will be removed for everyone.`)) {
+    if (window.confirm(t('queue.confirmClear', { count: queue.result.length }))) {
       dispatch(removeItem({ queueId: [...queue.result] as number[] }))
     }
   }
@@ -52,11 +55,9 @@ const QueueView = () => {
     >
       {!isInRoom && (
         <TextOverlay>
-          <h1>Get a Room!</h1>
+          <h1>{t('queue.getARoom')}</h1>
           <p>
-            <Link to='/account'>Sign in to a room</Link>
-            {' '}
-            to start queueing songs.
+            <Trans i18nKey={msg('queue.startQueueing')} components={{ a: <Link to='/account' /> }} />
           </p>
         </TextOverlay>
       )}
@@ -65,13 +66,9 @@ const QueueView = () => {
 
       {!isLoading && queue.result.length === 0 && (
         <TextOverlay>
-          <h1>Queue Empty</h1>
+          <h1>{t('queue.empty')}</h1>
           <p>
-            Tap a song in the
-            {' '}
-            <Link to='/library'>library</Link>
-            {' '}
-            to queue it.
+            <Trans i18nKey={msg('queue.tapASong')} components={{ a: <Link to='/library' /> }} />
           </p>
         </TextOverlay>
       )}
@@ -79,7 +76,7 @@ const QueueView = () => {
       {isAdmin && !isLoading && queue.result.length > 0 && (
         <div className={styles.adminBar} style={{ top: headerHeight }}>
           <Button className={styles.clearBtn} onClick={handleClearQueue}>
-            Clear queue
+            {t('queue.clearQueue')}
           </Button>
         </div>
       )}

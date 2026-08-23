@@ -4,6 +4,7 @@ import Accordion from 'components/Accordion/Accordion'
 import Icon from 'components/Icon/Icon'
 import { setPref } from 'store/modules/prefs'
 import styles from './RepertoirePrefs.css'
+import { useT } from 'lib/i18n'
 
 /**
  * Who may bring a repertoire in, and the library's own manifest to hand out.
@@ -14,6 +15,7 @@ import styles from './RepertoirePrefs.css'
  * not have to argue with the feature.
  */
 const RepertoirePrefs = () => {
+  const t = useT()
   const isRepertoireImportEnabled = useAppSelector(state => state.prefs.isRepertoireImportEnabled !== false)
   const dispatch = useAppDispatch()
 
@@ -27,7 +29,7 @@ const RepertoirePrefs = () => {
       headingComponent={(
         <div className={styles.heading}>
           <Icon icon='DOWNLOAD' size={32} className={styles.icon} />
-          <div className={styles.title}>Repertoire</div>
+          <div className={styles.title}>{t('prefs.repertoire')}</div>
         </div>
       )}
     >
@@ -40,17 +42,13 @@ const RepertoirePrefs = () => {
             name='isRepertoireImportEnabled'
           />
           {' '}
-          Let singers bring a repertoire from another Karaoke Propio
+          {t('prefs.letSingersBringRepertoire')}
         </label>
 
-        <p className={styles.hint}>
-          Their own songs and pitches only, applied to their own account. It
-          never downloads anything — songs this library does not have are
-          listed for you to decide about.
-        </p>
+        <p className={styles.hint}>{t('prefs.repertoireHint')}</p>
 
         <a href={`${document.baseURI}api/repertoire/library`} download>
-          Download this library&apos;s song list
+          {t('prefs.downloadSongList')}
         </a>
 
         <p className={styles.hint}>

@@ -1,4 +1,5 @@
 import React from 'react'
+import { useT } from 'lib/i18n'
 import { ensureState } from 'redux-optimistic-ui'
 import { useAppDispatch, useAppSelector } from 'store/hooks'
 import { clearSongPitchPref } from 'store/modules/userPitchPrefs'
@@ -11,6 +12,7 @@ import styles from './SongInfo.css'
  * or none.
  */
 const SongPitchPref = ({ songId }: { songId: number }) => {
+  const t = useT()
   const dispatch = useAppDispatch()
   const pref = useAppSelector(state => ensureState(state.userPitchPrefs)[songId])
 
@@ -18,17 +20,23 @@ const SongPitchPref = ({ songId }: { songId: number }) => {
 
   return (
     <p>
-      <span className={styles.label}>My pitch: </span>
+      <span className={styles.label}>{t('songInfo.myPitch')}</span>
+      {' '}
       {pref
         ? (
             <>
               {formatPitch(pref.pitchSemitones)}
-              {pref.source === 'inferred' && <span className={styles.confidence}> (last sung)</span>}
+              {pref.source === 'inferred' && (
+                <span className={styles.confidence}>
+                  {' '}
+                  {t('songInfo.pitchLastSung')}
+                </span>
+              )}
               &nbsp;
-              <a onClick={handleForget}>(Forget)</a>
+              <a onClick={handleForget}>{t('songInfo.pitchForget')}</a>
             </>
           )
-        : 'not saved'}
+        : t('songInfo.pitchNotSaved')}
     </p>
   )
 }

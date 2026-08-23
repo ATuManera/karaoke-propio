@@ -10,6 +10,7 @@ import Prefs from '../Prefs/Prefs.js'
 import MetaParser from '../Scanner/MetaParser/MetaParser.js'
 import getConfig from '../Scanner/FileScanner/getConfig.js'
 import { sanitizePathSegment } from './MediaRegistrar.js'
+import { MessageError } from '../lib/i18n.js'
 
 const log = getLogger('retagSong')
 
@@ -39,7 +40,7 @@ export async function retagSong (songId: number, artistInput: string, titleInput
   const artist = artistInput.trim()
   const title = titleInput.trim()
 
-  if (!artist || !title) throw new Error('artist and title are required')
+  if (!artist || !title) throw new MessageError(422, 'server.library.artistAndTitleRequired')
 
   const mediaRes = Media.search({ songId })
   if (!mediaRes.result.length) throw new Error(`songId not found: ${songId}`)
@@ -73,7 +74,7 @@ export async function retagSong (songId: number, artistInput: string, titleInput
       const from = path.join(dir, file)
       const to = path.join(dir, targetBase + ext)
 
-      if (fs.existsSync(to)) throw new Error(`cannot rename: "${targetBase + ext}" already exists`)
+      if (fs.existsSync(to)) throw new MessageError(409, 'server.library.renameConflict', { name: targetBase + ext })
 
       await fsPromises.rename(from, to)
       renamed.push({ from: file, to: targetBase + ext })

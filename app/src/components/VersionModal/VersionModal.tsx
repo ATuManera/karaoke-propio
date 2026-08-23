@@ -4,6 +4,7 @@ import Modal from 'components/Modal/Modal'
 import Button from 'components/Button/Button'
 import Spinner from 'components/Spinner/Spinner'
 import { formatDuration } from 'lib/dateTime'
+import { useT } from 'lib/i18n'
 import styles from './VersionModal.css'
 
 export interface SongVersion {
@@ -30,6 +31,7 @@ interface VersionModalProps {
  * asking to pick between one option is just friction.
  */
 const VersionModal = ({ songId, songTitle, onConfirm, onClose }: VersionModalProps) => {
+  const t = useT()
   const [versions, setVersions] = useState<SongVersion[] | null>(null)
   const [selected, setSelected] = useState<number | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -61,13 +63,13 @@ const VersionModal = ({ songId, songTitle, onConfirm, onClose }: VersionModalPro
 
   return (
     <Modal
-      title='Choose version'
+      title={t('version.title')}
       onClose={onClose}
       buttons={(
         <>
-          <Button onClick={onClose}>Cancel</Button>
+          <Button onClick={onClose}>{t('common.cancel')}</Button>
           <Button variant='primary' onClick={() => selected !== null && onConfirm(selected)} disabled={selected === null}>
-            Next
+            {t('version.next')}
           </Button>
         </>
       )}
@@ -88,8 +90,8 @@ const VersionModal = ({ songId, songTitle, onConfirm, onClose }: VersionModalPro
               <span className={styles.radio}>{selected === v.mediaId ? '◉' : '○'}</span>
               <span className={styles.info}>
                 <span className={styles.label}>
-                  {`Version ${i + 1}`}
-                  {v.isPreferred && <span className={styles.badge}>default</span>}
+                  {t('version.numbered', { number: i + 1 })}
+                  {v.isPreferred && <span className={styles.badge}>{t('version.isDefault')}</span>}
                 </span>
                 <span className={styles.meta}>
                   {formatDuration(v.duration)}

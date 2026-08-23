@@ -1,19 +1,22 @@
 import React, { useEffect } from 'react'
+import { Trans } from 'react-i18next'
 import { useAppDispatch, useAppSelector } from 'store/hooks'
+import { msg, translate, useT } from 'lib/i18n'
 import Button from 'components/Button/Button'
 import Icon from 'components/Icon/Icon'
 import { clearPitchFeedback, respondPitchFeedback } from 'store/modules/userPitchFeedback'
 import { formatPitch, PITCH_MAX, PITCH_MIN } from 'shared/pitch'
 import { PITCH_FEEDBACK_TTL_MS, type PitchFeedbackChoice, type PitchFeedbackResolved } from 'shared/pitchFeedback'
+import type { MessageKey } from 'shared/i18n'
 import styles from './PitchFeedbackPrompt.css'
 
 /** High to low, the way the answers sit on a scale. */
-const CHOICES: { choice: PitchFeedbackChoice, label: string, isWide?: boolean }[] = [
-  { choice: 'much_too_high', label: 'Too high' },
-  { choice: 'slightly_high', label: 'A little high' },
-  { choice: 'good', label: 'Just right', isWide: true },
-  { choice: 'slightly_low', label: 'A little low' },
-  { choice: 'much_too_low', label: 'Too low' },
+const CHOICES: { choice: PitchFeedbackChoice, key: MessageKey, isWide?: boolean }[] = [
+  { choice: 'much_too_high', key: 'pitch.feedback.tooHigh' },
+  { choice: 'slightly_high', key: 'pitch.feedback.aLittleHigh' },
+  { choice: 'good', key: 'pitch.feedback.justRight', isWide: true },
+  { choice: 'slightly_low', key: 'pitch.feedback.aLittleLow' },
+  { choice: 'much_too_low', key: 'pitch.feedback.tooLow' },
 ]
 
 /** How long the confirmation stays up before the sheet gets out of the way. */
@@ -22,17 +25,20 @@ const CONFIRMATION_MS = 5000
 function getConfirmation (performedPitch: number, { pitchSemitones, limit }: PitchFeedbackResolved): string {
   if (pitchSemitones === null) {
     return limit === 'min'
-      ? `Even at ${formatPitch(PITCH_MIN)} this version stays too high for you — worth trying another version.`
-      : `Even at ${formatPitch(PITCH_MAX)} this version stays too low for you — worth trying another version.`
+      ? translate('pitch.feedback.stillTooHigh', { pitch: formatPitch(PITCH_MIN) })
+      : translate('pitch.feedback.stillTooLow', { pitch: formatPitch(PITCH_MAX) })
   }
 
   if (limit) {
-    return `Saved ${formatPitch(pitchSemitones)} — as ${limit === 'min' ? 'low' : 'high'} as this version goes.`
+    return translate(
+      limit === 'min' ? 'pitch.feedback.savedAtLowest' : 'pitch.feedback.savedAtHighest',
+      { pitch: formatPitch(pitchSemitones) },
+    )
   }
 
   return pitchSemitones === performedPitch
-    ? 'Saved — this is your pitch for this song.'
-    : `Saved — next time we'll try ${formatPitch(pitchSemitones)}.`
+    ? translate('pitch.feedback.saved')
+    : translate('pitch.feedback.savedNextTime', { pitch: formatPitch(pitchSemitones) })
 }
 
 /**
@@ -51,6 +57,7 @@ function getConfirmation (performedPitch: number, { pitchSemitones, limit }: Pit
  * screen, and this question belongs to one person.
  */
 const PitchFeedbackPrompt = () => {
+  const t = useT()
   const dispatch = useAppDispatch()
   const { prompt, resolution, isSubmitting } = useAppSelector(state => state.userPitchFeedback)
   const songs = useAppSelector(state => state.songs.entities)
@@ -104,27 +111,29 @@ const PitchFeedbackPrompt = () => {
       <div className={styles.sheet}>
         <div className={styles.heading}>
           <Icon icon='TUNE' size={24} className={styles.icon} />
-          <h2 id='pitch-feedback-title' className={styles.title}>How was that pitch?</h2>
+          <h2 id='pitch-feedback-title' className={styles.title}>{t('pitch.feedback.title')}</h2>
           <Button
             icon='CLEAR'
             className={styles.close}
             onClick={handleDismiss}
             disabled={isSubmitting}
-            aria-label='Close without saving'
+            aria-label={t('pitch.feedback.closeWithoutSaving')}
           />
         </div>
 
         {/* the library copy can lag behind a song being added; the question is
             still answerable without knowing what it was called */}
         <p className={styles.song} translate='no'>
-          {song ? song.title : 'The song you just sang'}
+          {song ? song.title : t('pitch.feedback.subtitle')}
           {artist && <span className={styles.artist}>{artist}</span>}
         </p>
 
         <p className={styles.performed}>
-          You sang it at
-          {' '}
-          <strong>{formatPitch(prompt.pitchSemitones)}</strong>
+          <Trans
+            i18nKey={msg('pitch.feedback.youSangItAt')}
+            components={{ b: <strong /> }}
+            values={{ pitch: formatPitch(prompt.pitchSemitones) }}
+          />
         </p>
 
         {resolution
@@ -136,20 +145,20 @@ const PitchFeedbackPrompt = () => {
           : (
               <>
                 <div className={styles.choices}>
-                  {CHOICES.map(({ choice, label, isWide }) => (
+                  {CHOICES.map(({ choice, key, isWide }) => (
                     <Button
                       key={choice}
                       className={isWide ? styles.wideChoice : styles.choice}
                       onClick={() => handleRespond(choice)}
                       disabled={isSubmitting}
                     >
-                      {label}
+                      {t(key)}
                     </Button>
                   ))}
                 </div>
 
                 <a className={styles.unsure} onClick={isSubmitting ? undefined : handleDismiss}>
-                  Not sure
+                  {t('pitch.feedback.notSure')}
                 </a>
               </>
             )}

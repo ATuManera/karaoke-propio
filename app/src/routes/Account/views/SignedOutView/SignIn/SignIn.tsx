@@ -1,6 +1,7 @@
 import React from 'react'
 import Button from 'components/Button/Button'
 import styles from './SignIn.css'
+import { useT } from 'lib/i18n'
 
 interface SignInProps {
   username: string
@@ -19,12 +20,13 @@ const SignIn = ({
   onSubmit,
   onFirstFieldRef,
 }: SignInProps) => {
+  const t = useT()
   return (
     <form noValidate onSubmit={onSubmit} className={styles.container}>
       <input
         type='email'
         autoComplete='username'
-        placeholder='username or email'
+        placeholder={t('account.form.username')}
         value={username}
         onChange={e => onUsernameChange(e.target.value)}
         ref={onFirstFieldRef}
@@ -32,12 +34,12 @@ const SignIn = ({
       <input
         type='password'
         autoComplete='current-password'
-        placeholder='password'
+        placeholder={t('account.form.password')}
         value={password}
         onChange={e => onPasswordChange(e.target.value)}
       />
       <Button type='submit' variant='primary'>
-        Sign In
+        {t('signedOut.signIn')}
       </Button>
     </form>
   )

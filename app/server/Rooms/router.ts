@@ -16,6 +16,7 @@ const log = getLogger('Rooms')
 const router = new KoaRouter({ prefix: '/api/rooms' })
 
 import { ROOM_PREFS_PUSH } from '../../shared/actionTypes.js'
+import { MessageError } from '../lib/i18n.js'
 
 // list rooms
 router.get(['/', '/:roomId'], (ctx) => {
@@ -69,8 +70,7 @@ router.get('/code/:code', (ctx) => {
   const ip = ctx.request.ip
 
   if (codeLookupFailures.isBlocked(ip)) {
-    ctx.throw(429, 'Too many attempts; wait a minute and try again')
-    return
+    throw new MessageError(429, 'server.room.tooManyAttempts')
   }
 
   const roomId = getRoomIdByCode(ctx.params.code)
@@ -79,8 +79,7 @@ router.get('/code/:code', (ctx) => {
   // which would let someone map valid codes
   if (roomId === null) {
     codeLookupFailures.recordFailure(ip)
-    ctx.throw(404, 'Invalid or expired invite')
-    return
+    throw new MessageError(404, 'server.room.inviteInvalid')
   }
 
   const res = Rooms.get(roomId)
@@ -88,8 +87,7 @@ router.get('/code/:code', (ctx) => {
 
   if (!room) {
     codeLookupFailures.recordFailure(ip)
-    ctx.throw(404, 'Invalid or expired invite')
-    return
+    throw new MessageError(404, 'server.room.inviteInvalid')
   }
 
   ctx.body = { roomId, name: room.name, hasPassword: room.hasPassword, status: room.status }

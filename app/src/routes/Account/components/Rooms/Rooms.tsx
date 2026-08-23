@@ -9,8 +9,10 @@ import { filterByRoom } from '../../modules/users'
 import getRoomList from '../../selectors/getRoomList'
 import type { Room } from 'shared/types'
 import styles from './Rooms.css'
+import { useT } from 'lib/i18n'
 
 const Rooms = () => {
+  const t = useT()
   // undefined, not null: EditRoom tells "create" from "edit" by the absence of
   // a room, and null is a room it would try to read fields off
   const [editorRoom, setEditorRoom] = useState<Room | undefined>(undefined)
@@ -45,7 +47,7 @@ const Rooms = () => {
       <tr key={String(roomId)}>
         <td translate='no'><a data-room-id={roomId} onClick={handleOpen}>{room.name}</a></td>
         <td>
-          {room.status}
+          {room.status === 'open' ? t('rooms.open') : t('rooms.closed')}
           {room.numUsers > 0 && (
             <>
 &nbsp;
@@ -64,21 +66,21 @@ const Rooms = () => {
 
   const roomsFilter = (
     <select className={styles.roomsFilter} onChange={handleFilterChange} value={filterStatus === false ? 'all' : filterStatus as string}>
-      <option key='all' value='all'>All</option>
-      <option key='open' value='open'>Open</option>
-      <option key='closed' value='closed'>Closed</option>
+      <option key='all' value='all'>{t('rooms.all')}</option>
+      <option key='open' value='open'>{t('rooms.open')}</option>
+      <option key='closed' value='closed'>{t('rooms.closed')}</option>
     </select>
   )
 
   return (
-    <Panel title='Rooms' titleComponent={roomsFilter}>
+    <Panel title={t('rooms.title')} titleComponent={roomsFilter}>
       <>
         <table className={styles.table}>
           <thead>
             <tr>
-              <th>Name</th>
-              <th>Status</th>
-              <th>Created</th>
+              <th>{t('rooms.name')}</th>
+              <th>{t('rooms.status')}</th>
+              <th>{t('rooms.created')}</th>
             </tr>
           </thead>
           <tbody>
@@ -88,7 +90,7 @@ const Rooms = () => {
 
         <br />
         <Button onClick={handleCreate} variant='primary'>
-          Create Room
+          {t('rooms.createRoom')}
         </Button>
 
         {isEditorOpen && <EditRoom onClose={handleClose} room={editorRoom} />}

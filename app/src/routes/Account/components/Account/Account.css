@@ -8,3 +8,6 @@
   gap: var(--space-s);
   margin-top: var(--space-s);
 }
+.language {
+  margin-top: 12px;
+}

@@ -64,3 +64,8 @@
   font-size: var(--font-size-s);
   color: var(--color-gray-5);
 }
+
+.language {
+  margin-bottom: 12px;
+  text-align: right;
+}

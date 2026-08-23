@@ -4,6 +4,7 @@ import crypto from '../lib/crypto.js'
 import Queue from '../Queue/Queue.js'
 import { randomChars } from '../lib/util.js'
 import { User as UserType } from '../../shared/types.js'
+import { MessageError } from '../lib/i18n.js'
 
 export type ServerUser = UserType & {
   role: string
@@ -85,31 +86,31 @@ class User {
 
     if (role !== 'guest') {
       if (!username) {
-        throw new Error('Username or email is required')
+        throw new MessageError(422, 'server.user.usernameRequired')
       }
 
       if (username.length < USERNAME_MIN_LENGTH || username.length > USERNAME_MAX_LENGTH) {
-        throw new Error(`Username or email must have ${USERNAME_MIN_LENGTH}-${USERNAME_MAX_LENGTH} characters`)
+        throw new MessageError(422, 'server.user.usernameLength', { min: USERNAME_MIN_LENGTH, max: USERNAME_MAX_LENGTH })
       }
 
       if (!newPassword) {
-        throw new Error('Password is required')
+        throw new MessageError(422, 'server.user.passwordRequired')
       }
 
       if (newPassword.length < PASSWORD_MIN_LENGTH) {
-        throw new Error(`Password must have at least ${PASSWORD_MIN_LENGTH} characters`)
+        throw new MessageError(422, 'server.user.passwordLength', { min: PASSWORD_MIN_LENGTH })
       }
 
       if (!newPasswordConfirm) {
-        throw new Error('Password confirmation is required')
+        throw new MessageError(422, 'server.user.passwordConfirmRequired')
       }
 
       if (newPassword !== newPasswordConfirm) {
-        throw new Error('New passwords do not match')
+        throw new MessageError(422, 'server.user.passwordsDoNotMatch')
       }
 
       if (User.getByUsername(username)) {
-        throw new Error('Username or email is not available')
+        throw new MessageError(409, 'server.user.usernameTaken')
       }
 
       fields.set('username', username)
@@ -133,11 +134,11 @@ class User {
     }
 
     if (!name) {
-      throw new Error('Display name is required')
+      throw new MessageError(422, 'server.user.displayNameRequired')
     }
 
     if (name.length < NAME_MIN_LENGTH || name.length > NAME_MAX_LENGTH) {
-      throw new Error(`Display name must have ${NAME_MIN_LENGTH}-${NAME_MAX_LENGTH} characters`)
+      throw new MessageError(422, 'server.user.displayNameLength', { min: NAME_MIN_LENGTH, max: NAME_MAX_LENGTH })
     }
 
     fields.set('name', name)
@@ -147,7 +148,7 @@ class User {
     // user image?
     if (image) {
       if (image.length > IMG_MAX_LENGTH) {
-        throw new Error('Invalid image')
+        throw new MessageError(413, 'server.user.imageInvalid')
       }
 
       fields.set('image', image)
@@ -160,7 +161,7 @@ class User {
     const res = db.run(String(query), query.parameters)
 
     if (typeof res.lastID !== 'number') {
-      throw new Error('Unable to create user')
+      throw new MessageError(500, 'server.user.createFailed')
     }
 
     return res.lastID
@@ -168,13 +169,13 @@ class User {
 
   static async validate ({ username, password }) {
     if (!username || !password) {
-      throw new Error('Username/email and password are required')
+      throw new MessageError(422, 'server.user.credentialsRequired')
     }
 
     const user = User.getByUsername(username, true) as ServerUser
 
     if (!user || !(await crypto.compare(password, user.password))) {
-      throw new Error('Incorrect username/email or password')
+      throw new MessageError(401, 'server.user.credentialsIncorrect')
     }
 
     return user

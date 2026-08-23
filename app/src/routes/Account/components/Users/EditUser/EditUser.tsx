@@ -7,6 +7,7 @@ import Modal from 'components/Modal/Modal'
 import AccountForm from '../../AccountForm/AccountForm'
 import { UserWithRole } from 'shared/types'
 import styles from './EditUser.css'
+import { useT } from 'lib/i18n'
 
 interface EditUserProps {
   user?: UserWithRole
@@ -14,6 +15,7 @@ interface EditUserProps {
 }
 
 const EditUser = ({ user, onClose }: EditUserProps) => {
+  const t = useT()
   const dispatch = useAppDispatch()
   const isImporting = useAppSelector(state => state.repertoire.isImporting)
   const repertoireFile = useRef<HTMLInputElement>(null)
@@ -30,7 +32,7 @@ const EditUser = ({ user, onClose }: EditUserProps) => {
     const file = repertoireFile.current?.files?.[0]
 
     if (!user || !file) {
-      alert('Choose a repertoire file first.')
+      alert(t('users.repertoireChooseFirst'))
       return
     }
 
@@ -39,15 +41,17 @@ const EditUser = ({ user, onClose }: EditUserProps) => {
     if (importRepertoire.fulfilled.match(imported)) {
       const { songs, pitches } = imported.payload
 
-      alert(`${songs.matched} of ${songs.total} songs are in this library`
-        + (pitches.applied ? `, and ${pitches.applied} pitches were saved for ${user.name}.` : '.'))
+      alert(t('users.repertoireImported', { matched: songs.matched, total: songs.total, count: songs.total })
+        + (pitches.applied
+          ? t('users.repertoirePitchesSaved', { count: pitches.applied, name: user.name })
+          : '.'))
     } else {
       alert(imported.error.message)
     }
   }
 
   const handleRemoveClick = () => {
-    if (user && confirm(`Remove user "${user.username}"?\n\nTheir queued songs will also be removed.`)) {
+    if (user && confirm(t('users.confirmRemove', { username: user.username }))) {
       dispatch(removeUser(user.userId))
     }
   }
@@ -56,37 +60,37 @@ const EditUser = ({ user, onClose }: EditUserProps) => {
     <Modal
       className={styles.modal}
       onClose={onClose}
-      title={user ? user.username : 'Create User'}
+      title={user ? user.username : t('users.createUser')}
     >
       <AccountForm user={user} onSubmit={handleSubmit} showRole autoFocus={!user}>
         <div className={styles.btnContainer}>
           {!user && (
             <Button type='submit' className={styles.btn} variant='primary'>
-              Create User
+              {t('users.createUser')}
             </Button>
           )}
 
           {user && (
             <Button type='submit' className={styles.btn} variant='primary'>
-              Update User
+              {t('users.updateUser')}
             </Button>
           )}
 
           {user && (
             <Button onClick={handleRemoveClick} className={styles.btn} variant='danger'>
-              Remove User
+              {t('users.removeUser')}
             </Button>
           )}
 
           <Button onClick={onClose} variant='default'>
-            Cancel
+            {t('common.cancel')}
           </Button>
         </div>
       </AccountForm>
 
       {user && (
         <div className={styles.repertoire}>
-          <label htmlFor='user-repertoire'>Repertoire from another Karaoke Propio</label>
+          <label htmlFor='user-repertoire'>{t('users.repertoireTitle')}</label>
 
           <input
             id='user-repertoire'
@@ -96,7 +100,7 @@ const EditUser = ({ user, onClose }: EditUserProps) => {
           />
 
           <Button onClick={handleImport} disabled={isImporting}>
-            {isImporting ? 'Reading…' : `Import for ${user.name}`}
+            {isImporting ? t('common.reading') : t('users.importFor', { name: user.name })}
           </Button>
         </div>
       )}

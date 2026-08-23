@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { useAppDispatch, useAppSelector } from 'store/hooks'
 import { useLocation } from 'react-router'
+import { useT } from 'lib/i18n'
 import clsx from 'clsx'
 import screenfull from 'screenfull'
 import { requestOptions, requestPause, requestPlay, requestPlayNext, requestVolume } from 'store/modules/status'
@@ -20,6 +21,7 @@ const handleFullscreen = () => {
 }
 
 const PlaybackCtrl = () => {
+  const t = useT()
   const [isDisplayCtrlVisible, setDisplayCtrlVisible] = useState(false)
   const location = useLocation()
   const isPlayer = location.pathname.replace(/\/$/, '').endsWith('/player')
@@ -50,7 +52,7 @@ const PlaybackCtrl = () => {
         className={clsx(styles.btn, status.isPlaying ? styles.pause : styles.play)}
         icon={status.isPlaying ? 'PAUSE' : 'PLAY'}
         onClick={status.isPlaying ? handlePause : handlePlay}
-        aria-label={status.isPlaying ? 'Pause' : 'Play'}
+        aria-label={status.isPlaying ? t('playback.pause') : t('playback.play')}
       />
 
       <Button
@@ -58,7 +60,7 @@ const PlaybackCtrl = () => {
         className={clsx(styles.btn, styles.next)}
         icon='PLAY_NEXT'
         onClick={handlePlayNext}
-        aria-label='Play Next'
+        aria-label={t('playback.playNext')}
       />
 
       <VolumeSlider
@@ -71,7 +73,7 @@ const PlaybackCtrl = () => {
         icon='TUNE'
         onClick={toggleDisplayCtrl}
         size={48}
-        aria-label='Display Options'
+        aria-label={t('playback.displayOptions')}
       />
 
       {isPlayer && screenfull.isEnabled && (
@@ -79,7 +81,7 @@ const PlaybackCtrl = () => {
           className={clsx(styles.btn, styles.fullscreen)}
           icon='FULLSCREEN'
           onClick={handleFullscreen}
-          aria-label='Enter Fullscreen'
+          aria-label={t('playback.enterFullscreen')}
         />
       )}
 

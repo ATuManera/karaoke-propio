@@ -7,6 +7,7 @@ import playerVisualizerReducer from '../modules/playerVisualizer'
 import PlayerController from '../components/PlayerController/PlayerController'
 import { fetchCurrentRoom } from 'store/modules/rooms'
 import styles from './PlayerView.css'
+import { translate } from 'lib/i18n'
 
 const PlayerView = () => {
   const { innerWidth, innerHeight, headerHeight, footerHeight } = useAppSelector(state => state.ui)
@@ -27,7 +28,7 @@ const PlayerView = () => {
 
   // set page title
   useEffect(() => {
-    document.title = 'Karaoke Eternal | Player'
+    document.title = translate('player.windowTitle')
   }, [])
 
   return (

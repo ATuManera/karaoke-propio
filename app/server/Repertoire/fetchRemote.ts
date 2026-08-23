@@ -1,6 +1,7 @@
 import dns from 'node:dns/promises'
 import net from 'node:net'
 import { MAX_BYTES } from '../../shared/repertoire.js'
+import { MessageError } from '../lib/i18n.js'
 
 /** a repertoire is kilobytes; anything larger is not one */
 export const MAX_REDIRECTS = 3
@@ -91,12 +92,12 @@ export async function fetchRepertoire (rawUrl: string): Promise<string> {
   try {
     url = new URL(rawUrl)
   } catch {
-    throw new Error('That is not a valid link')
+    throw new MessageError(422, 'server.repertoire.linkInvalid')
   }
 
   for (let hop = 0; hop <= MAX_REDIRECTS; hop++) {
     if (url.protocol !== 'http:' && url.protocol !== 'https:') {
-      throw new Error('A repertoire link must start with http:// or https://')
+      throw new MessageError(422, 'server.repertoire.linkScheme')
     }
 
     const host = url.hostname.replace(/^\[|\]$/g, '')
@@ -108,12 +109,12 @@ export async function fetchRepertoire (rawUrl: string): Promise<string> {
       try {
         addresses = (await dns.lookup(host, { all: true })).map(entry => entry.address)
       } catch {
-        throw new Error(`Could not find ${url.hostname}`)
+        throw new MessageError(422, 'server.repertoire.linkHostUnknown', { host: url.hostname })
       }
     }
 
     if (!addresses.length || !addresses.every(isPublicAddress)) {
-      throw new Error('That link points inside this network, so it will not be fetched')
+      throw new MessageError(422, 'server.repertoire.linkPrivateNetwork')
     }
 
     const res = await fetch(url, {
@@ -124,14 +125,14 @@ export async function fetchRepertoire (rawUrl: string): Promise<string> {
 
     if (res.status >= 300 && res.status < 400) {
       const location = res.headers.get('location')
-      if (!location) throw new Error('That link led nowhere')
+      if (!location) throw new MessageError(422, 'server.repertoire.linkNowhere')
 
       url = new URL(location, url)
       continue
     }
 
     if (!res.ok) {
-      throw new Error(`That link answered ${res.status}`)
+      throw new MessageError(422, 'server.repertoire.linkStatus', { status: res.status })
     }
 
     const declared = parseInt(res.headers.get('content-length') ?? '', 10)
@@ -143,7 +144,7 @@ export async function fetchRepertoire (rawUrl: string): Promise<string> {
     // read with a ceiling rather than trusting content-length, which is a
     // claim the other end makes about itself
     const reader = res.body?.getReader()
-    if (!reader) throw new Error('That link returned nothing')
+    if (!reader) throw new MessageError(422, 'server.repertoire.linkEmpty')
 
     const chunks: Uint8Array[] = []
     let bytes = 0
@@ -165,5 +166,5 @@ export async function fetchRepertoire (rawUrl: string): Promise<string> {
     return Buffer.concat(chunks).toString('utf8')
   }
 
-  throw new Error('That link redirects too many times')
+  throw new MessageError(422, 'server.repertoire.linkTooManyRedirects')
 }

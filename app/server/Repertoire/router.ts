@@ -8,6 +8,7 @@ import { exportForUser, exportLibrary, importForUser } from './Repertoire.js'
 import { fetchRepertoire } from './fetchRemote.js'
 import { pushImportedRepertoire } from './push.js'
 import { MAX_BYTES, parseRepertoire, repertoireFileName } from '../../shared/repertoire.js'
+import { MessageError } from '../lib/i18n.js'
 
 const log = getLogger('Repertoire')
 const router = new KoaRouter({ prefix: '/api/repertoire' })
@@ -72,7 +73,7 @@ router.post('/import', async (ctx) => {
   requireSignedIn(ctx)
 
   if (!ctx.user.isAdmin && !isImportEnabled()) {
-    ctx.throw(403, 'Importing a repertoire is turned off here')
+    throw new MessageError(403, 'server.repertoire.turnedOff')
   }
 
   const req = ctx.request as unknown as RequestWithBody
@@ -81,7 +82,7 @@ router.post('/import', async (ctx) => {
 
   if (Number.isInteger(targetId) && targetId !== ctx.user.userId) {
     if (!ctx.user.isAdmin) ctx.throw(403)
-    if (!User.getById(targetId)) ctx.throw(404, 'No such user')
+    if (!User.getById(targetId)) throw new MessageError(404, 'server.repertoire.noSuchUser')
 
     userId = targetId
   }
@@ -92,7 +93,7 @@ router.post('/import', async (ctx) => {
   if (raw) {
     if (raw.size > MAX_BYTES) {
       await fs.unlink(raw.filepath).catch(() => undefined)
-      ctx.throw(413, 'That file is too large to be a repertoire')
+      throw new MessageError(413, 'server.repertoire.fileTooLarge')
     }
 
     text = await fs.readFile(raw.filepath, 'utf8')
@@ -105,7 +106,7 @@ router.post('/import', async (ctx) => {
     if (!entry || entry.resetAt < now) {
       urlAttempts.set(ip, { count: 1, resetAt: now + URL_WINDOW_MS })
     } else if (++entry.count > MAX_URL_ATTEMPTS) {
-      ctx.throw(429, 'Too many attempts; wait a minute and try again')
+      throw new MessageError(429, 'server.repertoire.tooManyAttempts')
     }
 
     try {
@@ -114,7 +115,7 @@ router.post('/import', async (ctx) => {
       ctx.throw(422, (err as Error).message)
     }
   } else {
-    ctx.throw(422, 'Choose a repertoire file, or paste a link to one')
+    throw new MessageError(422, 'server.repertoire.chooseFileOrLink')
   }
 
   let report
@@ -142,12 +143,12 @@ router.post('/import', async (ctx) => {
  */
 router.post('/fetch-missing', (ctx) => {
   if (!ctx.user.isAdmin) ctx.throw(403)
-  if (typeof ctx.user.roomId !== 'number') ctx.throw(400, 'Join a room first')
+  if (typeof ctx.user.roomId !== 'number') throw new MessageError(400, 'server.repertoire.joinARoomFirst')
 
   const req = ctx.request as unknown as RequestWithBody
   const songs = Array.isArray(req.body?.songs) ? req.body.songs : []
 
-  if (!songs.length) ctx.throw(422, 'Nothing to fetch')
+  if (!songs.length) throw new MessageError(422, 'server.repertoire.nothingToFetch')
 
   const wanted = songs
     .filter((song): song is Record<string, string> => !!song && typeof song === 'object')

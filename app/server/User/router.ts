@@ -12,6 +12,8 @@ import Rooms, { getRoomIdByCode } from '../Rooms/Rooms.js'
 import { InviteFailureLimiter, isInviteFor } from '../Rooms/inviteGuard.js'
 import User from '../User/User.js'
 import parseCookie from '../lib/parseCookie.js'
+import { MessageError, rethrowAs } from '../lib/i18n.js'
+import { isSupportedLocale, matchLocale } from '../../shared/i18n/index.js'
 import { QUEUE_PUSH, SOCKET_AUTH_ERROR } from '../../shared/actionTypes.js'
 import {
   USERNAME_MIN_LENGTH,
@@ -62,6 +64,9 @@ const createUserCtx = (user, roomId) => {
     dateUpdated: user.dateUpdated,
     isAdmin: user.role === 'admin',
     isGuest: user.role === 'guest',
+    // carried in the session so every router can answer in the reader's
+    // language without a query per request; re-signed whenever it changes
+    locale: user.locale ?? null,
     name: user.name,
     roomId: parseInt(roomId, 10) || null,
     userId: user.userId,
@@ -84,10 +89,10 @@ router.post('/login', async (ctx) => {
         validatePassword: true,
       })
     } else if (user.role !== 'admin') {
-      ctx.throw(401, 'Please select a room')
+      throw new MessageError(401, 'server.user.selectARoom')
     }
   } catch (err) {
-    ctx.throw(401, err.message)
+    rethrowAs(401, err)
   }
 
   if (crypto.isLegacy(user.password)) {
@@ -161,6 +166,63 @@ router.get('/user', (ctx) => {
   }
 
   ctx.body = createUserCtx(user, ctx.user.roomId)
+})
+
+/**
+ * Choose the language, or hand the choice back to the browser.
+ *
+ * Its own endpoint rather than a field on the account update, because that
+ * one demands the current password before it changes anything — the right
+ * price for a new username, an absurd one for reading the screen in Spanish.
+ * Nothing here is a credential: the worst a stolen call can do is make
+ * someone's own phone speak a language they can change back in one tap.
+ */
+router.put('/user/locale', async (ctx) => {
+  if (typeof ctx.user.userId !== 'number') {
+    ctx.throw(401)
+    return
+  }
+
+  const req = ctx.request as unknown as RequestWithBody
+  const raw = req.body?.locale
+
+  // null (or nothing) is a real answer: "stop forcing one, follow the phone"
+  const asked = raw === null || raw === undefined || raw === '' ? null : String(raw)
+
+  if (asked !== null && !isSupportedLocale(asked)) {
+    throw new MessageError(422, 'server.user.localeUnsupported')
+  }
+
+  // stored in the one spelling the whole app compares against: the client
+  // checks its copy against the registry exactly, and would quietly ignore an
+  // 'ES' that the server was happy to accept
+  const locale = asked === null ? null : matchLocale([asked])
+
+  const query = sql`
+    UPDATE users
+    SET locale = ${locale}
+    WHERE userId = ${ctx.user.userId}
+  `
+  db.run(String(query), query.parameters)
+
+  const user = User.getById(ctx.user.userId, true)
+
+  if (!user) {
+    ctx.throw(404)
+    return
+  }
+
+  // the language rides in the session token, so a changed one has to be
+  // re-signed or the server would keep answering in the old language until
+  // the next sign-in
+  const userCtx = createUserCtx(user, ctx.user.roomId || null)
+
+  ctx.cookies.set('keToken', signSession(userCtx, ctx.jwtKey), {
+    httpOnly: true,
+    sameSite: 'lax',
+  })
+
+  ctx.body = userCtx
 })
 
 // list all users (admin only)
@@ -247,11 +309,11 @@ router.put('/user/:userId', async (ctx) => {
   // validate current password if updating own account
   if (targetId === user.userId && !ctx.user.isGuest) {
     if (!password) {
-      ctx.throw(422, 'Current password is required')
+      throw new MessageError(422, 'server.user.currentPasswordRequired')
     }
 
     if (!(await crypto.compare(password, user.password))) {
-      ctx.throw(401, 'Incorrect current password')
+      throw new MessageError(401, 'server.user.currentPasswordIncorrect')
     }
   }
 
@@ -263,12 +325,12 @@ router.put('/user/:userId', async (ctx) => {
     username = username.trim()
 
     if (username.length < USERNAME_MIN_LENGTH || username.length > USERNAME_MAX_LENGTH) {
-      ctx.throw(400, `Username or email must have ${USERNAME_MIN_LENGTH}-${USERNAME_MAX_LENGTH} characters`)
+      throw new MessageError(400, 'server.user.usernameLength', { min: USERNAME_MIN_LENGTH, max: USERNAME_MAX_LENGTH })
     }
 
     // check for duplicate
     if (User.getByUsername(username)) {
-      ctx.throw(409, 'Username or email is not available')
+      throw new MessageError(409, 'server.user.usernameTaken')
     }
 
     fields.set('username', username)
@@ -279,7 +341,7 @@ router.put('/user/:userId', async (ctx) => {
     name = name.trim()
 
     if (name.length < NAME_MIN_LENGTH || name.length > NAME_MAX_LENGTH) {
-      ctx.throw(400, `Display name must have ${NAME_MIN_LENGTH}-${NAME_MAX_LENGTH} characters`)
+      throw new MessageError(400, 'server.user.displayNameLength', { min: NAME_MIN_LENGTH, max: NAME_MAX_LENGTH })
     }
 
     fields.set('name', name)
@@ -288,11 +350,11 @@ router.put('/user/:userId', async (ctx) => {
   // changing password?
   if (newPassword && !ctx.user.isGuest) {
     if (newPassword.length < PASSWORD_MIN_LENGTH) {
-      ctx.throw(400, `Password must have at least ${PASSWORD_MIN_LENGTH} characters`)
+      throw new MessageError(400, 'server.user.passwordLength', { min: PASSWORD_MIN_LENGTH })
     }
 
     if (newPassword !== newPasswordConfirm) {
-      ctx.throw(422, 'New passwords do not match')
+      throw new MessageError(422, 'server.user.passwordsDoNotMatch')
     }
 
     fields.set('password', await crypto.hash(newPassword))
@@ -304,7 +366,7 @@ router.put('/user/:userId', async (ctx) => {
 
     if (imageFile.size > IMG_MAX_LENGTH) {
       await deleteFile(imageFile.filepath)
-      ctx.throw(413, `Image must not exceed ${Math.floor(IMG_MAX_LENGTH / 1024)}KB`)
+      throw new MessageError(413, 'server.user.imageTooLarge', { max: Math.floor(IMG_MAX_LENGTH / 1024) })
     }
 
     fields.set('image', await readFile(imageFile.filepath))
@@ -363,7 +425,7 @@ router.put('/user/:userId', async (ctx) => {
         password: newPassword || password,
       })
     } catch (err) {
-      ctx.throw(401, err.message)
+      rethrowAs(401, err)
     }
   } else {
     updatedUser = {
@@ -395,12 +457,12 @@ router.post('/user', async (ctx) => {
   if (!ctx.user.isAdmin) {
     // already signed in?
     if (ctx.user.userId !== null) {
-      ctx.throw(401, 'You are already signed in')
+      throw new MessageError(401, 'server.user.alreadySignedIn')
     }
 
     // only possible roles; further validated per-room below
     if (!['guest', 'standard'].includes(req.body.role)) {
-      ctx.throw(401, 'Invalid role')
+      throw new MessageError(401, 'server.user.invalidRole')
     }
 
     // An invite is what says this person was asked in.
@@ -413,12 +475,12 @@ router.post('/user', async (ctx) => {
     const roomId = parseInt(req.body.roomId, 10)
 
     if (joinFailures.isBlocked(ctx.request.ip)) {
-      ctx.throw(429, 'Too many attempts; wait a minute and try again')
+      throw new MessageError(429, 'server.user.tooManyAttempts')
     }
 
     if (!isInviteFor(roomId, req.body.roomCode, getRoomIdByCode)) {
       joinFailures.recordFailure(ctx.request.ip)
-      ctx.throw(401, 'An invite is required to join this room')
+      throw new MessageError(401, 'server.user.inviteRequired')
     }
 
     // new users must choose a room at the same time
@@ -429,7 +491,7 @@ router.post('/user', async (ctx) => {
         { role: req.body.role },
       )
     } catch (err) {
-      ctx.throw(401, err.message)
+      rethrowAs(401, err)
     }
   }
 
@@ -438,7 +500,7 @@ router.post('/user', async (ctx) => {
 
     if (imageFile.size > IMG_MAX_LENGTH) {
       await deleteFile(imageFile.filepath)
-      ctx.throw(413, `Image must not exceed ${Math.floor(IMG_MAX_LENGTH / 1024)}KB`)
+      throw new MessageError(413, 'server.user.imageTooLarge', { max: Math.floor(IMG_MAX_LENGTH / 1024) })
     }
 
     image = await readFile(imageFile.filepath)
@@ -475,7 +537,7 @@ router.post('/user', async (ctx) => {
 
     ctx.body = userCtx
   } catch (err) {
-    ctx.throw(403, err.message)
+    rethrowAs(403, err)
   }
 })
 
@@ -536,7 +598,7 @@ router.post('/setup', async (ctx) => {
     // success
     ctx.body = userCtx
   } catch (err) {
-    ctx.throw(403, err.message)
+    rethrowAs(403, err)
   }
 })
 

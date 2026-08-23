@@ -6,6 +6,7 @@ import Icon from 'components/Icon/Icon'
 import Spinner from 'components/Spinner/Spinner'
 import TextOverlay from 'components/TextOverlay/TextOverlay'
 import styles from './PhotosView.css'
+import { translate, useT } from 'lib/i18n'
 
 interface Photo {
   photoId: number
@@ -25,6 +26,7 @@ const MAX_DIMENSION = 1600
 const JPEG_QUALITY = 0.85
 
 const PhotosView = () => {
+  const t = useT()
   const { userId, isAdmin, roomId } = useAppSelector(state => state.user)
   const [photos, setPhotos] = useState<Photo[] | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -36,7 +38,7 @@ const PhotosView = () => {
 
   const load = useCallback(() => {
     fetch(`${document.baseURI}api/photos`, { credentials: 'same-origin' })
-      .then((res): Promise<{ photos: Photo[] }> => res.ok ? res.json() : Promise.reject(new Error('Could not load photos')))
+      .then((res): Promise<{ photos: Photo[] }> => res.ok ? res.json() : Promise.reject(new Error(translate('photos.couldNotLoad'))))
       .then((data): undefined => {
         setPhotos(data.photos)
         return undefined
@@ -73,12 +75,12 @@ const PhotosView = () => {
 
         fetch(`${document.baseURI}api/photos`, { method: 'POST', body: form, credentials: 'same-origin' })
           .then((res): undefined => {
-            if (!res.ok) setError('A photo could not be uploaded.')
+            if (!res.ok) setError(t('photos.uploadFailed'))
             resolve()
             return undefined
           })
           .catch((): undefined => {
-            setError('A photo could not be uploaded.')
+            setError(t('photos.uploadFailed'))
             resolve()
             return undefined
           })
@@ -105,7 +107,7 @@ const PhotosView = () => {
   }
 
   const handleDelete = (photo: Photo) => {
-    if (!window.confirm('Delete this photo for everyone?')) return
+    if (!window.confirm(t('photos.confirmDelete'))) return
 
     fetch(`${document.baseURI}api/photos/${photo.photoId}`, { method: 'DELETE', credentials: 'same-origin' })
       .then((): undefined => {
@@ -119,8 +121,8 @@ const PhotosView = () => {
   if (roomId === null) {
     return (
       <TextOverlay>
-        <h1>Get a Room!</h1>
-        <p>Sign in to a room to share photos.</p>
+        <h1>{t('photos.getARoom')}</h1>
+        <p>{t('photos.signInToShare')}</p>
       </TextOverlay>
     )
   }
@@ -134,13 +136,13 @@ const PhotosView = () => {
             is given, and a stretched toolbar button turned the camera glyph
             into a full-screen image on desktop */}
         <Button variant='primary' icon='CAMERA' size={20} onClick={() => cameraRef.current?.click()}>
-          Take photo
+          {t('photos.takePhoto')}
         </Button>
         <Button icon='PHOTO_ADD' size={20} onClick={() => galleryRef.current?.click()}>
-          Upload
+          {t('photos.upload')}
         </Button>
         <span className={styles.count}>
-          {photos?.length ? `${photos.length} photo${photos.length === 1 ? '' : 's'}` : ''}
+          {photos?.length ? t('photos.count', { count: photos.length }) : ''}
         </span>
       </div>
 
@@ -168,8 +170,8 @@ const PhotosView = () => {
 
       {photos?.length === 0 && (
         <TextOverlay>
-          <h1>No photos yet</h1>
-          <p>Take the first one of the night.</p>
+          <h1>{t('photos.none')}</h1>
+          <p>{t('photos.takeTheFirst')}</p>
         </TextOverlay>
       )}
 
@@ -180,7 +182,7 @@ const PhotosView = () => {
             type='button'
             className={styles.thumb}
             onClick={() => setViewing(photo)}
-            aria-label={`Photo by ${photo.userDisplayName ?? 'someone'}`}
+            aria-label={t('photos.photoBy', { name: photo.userDisplayName ?? t('photos.someone') })}
           >
             <img src={`${document.baseURI}api/photos/${photo.photoId}`} loading='lazy' alt='' />
           </button>

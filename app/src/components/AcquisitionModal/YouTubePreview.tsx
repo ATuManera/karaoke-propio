@@ -1,4 +1,5 @@
 import React from 'react'
+import { useT } from 'lib/i18n'
 import Spinner from 'components/Spinner/Spinner'
 import type { AcquisitionSource } from 'shared/types'
 import styles from './YouTubePreview.css'
@@ -37,6 +38,7 @@ const YouTubePreview = ({ source, resultId, videoId, isLoading, error }: YouTube
   const [playbackError, setPlaybackError] = React.useState(false)
   const [retryCount, setRetryCount] = React.useState(0)
 
+  const t = useT()
   const proxiedSrc = `${document.baseURI}api/acquisition/preview-stream`
     + `?source=${encodeURIComponent(source)}&resultId=${encodeURIComponent(resultId)}&retry=${retryCount}`
 
@@ -52,15 +54,15 @@ const YouTubePreview = ({ source, resultId, videoId, isLoading, error }: YouTube
 
       {playbackError && !isLoading && !error && (
         <div className={styles.embedError}>
-          <p>This video could not be previewed here.</p>
-          <button type='button' className={styles.retryButton} onClick={handleRetry}>Try again</button>
+          <p>{t('acquisition.previewFailed')}</p>
+          <button type='button' className={styles.retryButton} onClick={handleRetry}>{t('common.tryAgain')}</button>
           <a
             href={`https://www.youtube.com/watch?v=${videoId}`}
             target='_blank'
             rel='noreferrer'
             className={styles.watchLink}
           >
-            Watch on YouTube ↗
+            {t('acquisition.watchOnYouTube')}
           </a>
         </div>
       )}

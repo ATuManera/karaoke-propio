@@ -1,4 +1,5 @@
 import React from 'react'
+import { translate } from 'lib/i18n'
 import Slider from 'components/Slider/Slider'
 import Icon from 'components/Icon/Icon'
 import styles from './VolumeSlider.css'
@@ -24,7 +25,7 @@ const handle = (node: React.ReactElement<HandleProps>, { value }: { value: numbe
 
   // rc-slider passes a node (div) to which we add style and children
   return React.cloneElement(node, {
-    'aria-label': 'Volume',
+    'aria-label': translate('playback.volume'),
     'className': styles.handle,
   }, (
     <Icon icon={icon} />

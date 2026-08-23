@@ -4,6 +4,7 @@ import InputCheckbox from 'components/InputCheckbox/InputCheckbox'
 import Button from 'components/Button/Button'
 import styles from './PathInfo.css'
 import type { Path } from 'shared/types'
+import { useT } from 'lib/i18n'
 
 interface PathInfoProps {
   onClose: () => void
@@ -13,6 +14,7 @@ interface PathInfoProps {
 }
 
 const PathInfo = ({ onClose, onRemove, onUpdate, path }: PathInfoProps) => {
+  const t = useT()
   const handleChange = (data: Record<string, boolean>) => {
     onUpdate(path.pathId, data)
   }
@@ -22,11 +24,11 @@ const PathInfo = ({ onClose, onRemove, onUpdate, path }: PathInfoProps) => {
   return (
     <Modal
       onClose={onClose}
-      title='Media Folder'
+      title={t('prefs.mediaFolder')}
       buttons={(
         <>
-          <Button onClick={handleRemove} variant='danger'>Remove Folder</Button>
-          <Button onClick={onClose} variant='primary'>Done</Button>
+          <Button onClick={handleRemove} variant='danger'>{t('prefs.removeFolder')}</Button>
+          <Button onClick={onClose} variant='primary'>{t('common.done')}</Button>
         </>
       )}
     >
@@ -40,12 +42,12 @@ const PathInfo = ({ onClose, onRemove, onUpdate, path }: PathInfoProps) => {
 
         <form className={styles.form}>
           <InputCheckbox
-            label='Watch folder'
+            label={t('prefs.watchFolder')}
             defaultChecked={path?.prefs?.isWatchingEnabled}
             onChange={event => handleChange({ isWatchingEnabled: event.currentTarget.checked })}
           />
           <InputCheckbox
-            label='Allow video background keying'
+            label={t('prefs.allowVideoKeying')}
             defaultChecked={path?.prefs?.isVideoKeyingEnabled}
             onChange={event => handleChange({ isVideoKeyingEnabled: event.currentTarget.checked })}
           />

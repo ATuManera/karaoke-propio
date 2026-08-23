@@ -2,13 +2,25 @@ import React, { useEffect, useState } from 'react'
 import { useAppDispatch, useAppSelector } from 'store/hooks'
 import { closeUserEditor, fetchUsers, filterByOnline, filterByRoom, openUserEditor, type UserWithRoomsAndRole } from '../../modules/users'
 import { formatDateTime } from 'lib/dateTime'
+import type { MessageKey, Translate } from 'shared/i18n'
 import Panel from 'components/Panel/Panel'
 import Button from 'components/Button/Button'
 import EditUser from './EditUser/EditUser'
 import getUsers from '../../selectors/getUsers'
 import styles from './Users.css'
+import { useT } from 'lib/i18n'
+
+/**
+ * A role name, said in the reader's language. Keyed off what is stored rather
+ * than matched against the three the editor offers: migration 005 also
+ * creates 'player', and folding an unknown role into "Standard" would rename
+ * an account on screen that nobody asked to rename.
+ */
+const roleLabel = (role: string, t: Translate) =>
+  t(`account.role.${role}` as MessageKey, { defaultValue: role })
 
 const Users = () => {
+  const t = useT()
   const [editorUser, setEditorUser] = useState<UserWithRoomsAndRole | null>(null)
 
   const curUserId = useAppSelector(state => state.user.userId)
@@ -57,7 +69,7 @@ const Users = () => {
             )
           </td>
         )}
-        <td>{user.role}</td>
+        <td>{roleLabel(user.role, t)}</td>
         <td>{formatDateTime(new Date(user.dateCreated * 1000))}</td>
       </tr>
     )
@@ -69,9 +81,9 @@ const Users = () => {
 
   const userFilter = (
     <select className={styles.usersFilter} onChange={handleFilterChange} value={filterOnline ? 'online' : filterRoomId || 'all'}>
-      <option key='all' value='all'>All</option>
-      <option key='online' value='online'>Online</option>
-      <optgroup label='Online in...'>
+      <option key='all' value='all'>{t('users.all')}</option>
+      <option key='online' value='online'>{t('users.online')}</option>
+      <optgroup label={t('users.onlineIn')}>
         {roomOpts}
       </optgroup>
     </select>
@@ -79,16 +91,16 @@ const Users = () => {
 
   return (
     <Panel
-      title='Users'
+      title={t('users.title')}
       titleComponent={userFilter}
     >
       <>
         <table className={styles.table}>
           <thead>
             <tr>
-              <th>Username</th>
-              <th>Role</th>
-              <th>Joined</th>
+              <th>{t('users.username')}</th>
+              <th>{t('users.role')}</th>
+              <th>{t('users.joined')}</th>
             </tr>
           </thead>
           <tbody>
@@ -98,7 +110,7 @@ const Users = () => {
 
         <br />
         <Button onClick={handleOpen} variant='primary'>
-          Create User
+          {t('users.createUser')}
         </Button>
 
         {isEditorOpen && (

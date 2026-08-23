@@ -11,10 +11,12 @@ import Button from 'components/Button/Button'
 import styles from './PathPrefs.css'
 import { receivePrefs, requestScan, requestScanAll, setPathPriority, setPathPrefs } from 'store/modules/prefs'
 import type { Path } from 'shared/types'
+import { useT } from 'lib/i18n'
 
 const api = new HttpApi('prefs/path')
 
 const PathPrefs = () => {
+  const t = useT()
   const paths = useAppSelector(state => state.prefs.paths)
   const [isChoosing, setChoosing] = useState(false)
   const [editingPath, setEditingPath] = useState<Path | null>(null)
@@ -55,7 +57,7 @@ const PathPrefs = () => {
   }
 
   const handleRemove = (pathId: number) => {
-    if (!confirm(`Remove folder from library?\n\n${paths.entities[pathId].path}`)) {
+    if (!confirm(t('prefs.confirmRemoveFolder', { path: paths.entities[pathId].path }))) {
       return
     }
 
@@ -84,13 +86,13 @@ const PathPrefs = () => {
     <Accordion headingComponent={(
       <div className={styles.heading}>
         <Icon icon='FOLDER_MUSIC' />
-        <div className={styles.title}>Media Folders</div>
+        <div className={styles.title}>{t('prefs.mediaFolders')}</div>
       </div>
     )}
     >
       <div className={styles.content}>
         {paths.result.length === 0
-          && <p style={{ marginTop: 0 }}>Add a media folder to get started.</p>}
+          && <p style={{ marginTop: 0 }}>{t('prefs.addAFolderToStart')}</p>}
         <DragDropContext onDragEnd={handleDragEnd}>
           <Droppable droppableId='droppable'>
             {provided => (
@@ -114,11 +116,11 @@ const PathPrefs = () => {
         <div className={styles.btnContainer}>
           {paths.result.length > 0 && (
             <Button onClick={handleRefreshAll} variant='default'>
-              Scan Folders
+              {t('prefs.scanFolders')}
             </Button>
           )}
           <Button onClick={handleOpenChooser} variant='primary'>
-            Add Folder
+            {t('prefs.addFolder')}
           </Button>
         </div>
 

@@ -14,6 +14,7 @@ import fileTypes from './fileTypes.js'
 import { resolveMedia, readSource } from './mediaResolver.js'
 import { deleteMedia } from './deleteMedia.js'
 import { LIBRARY_PUSH, LIBRARY_PUSH_SONG, QUEUE_PUSH } from '../../shared/actionTypes.js'
+import { MessageError } from '../lib/i18n.js'
 const log = getLogger('Media')
 const router = new KoaRouter({ prefix: '/api/media' })
 
@@ -93,7 +94,7 @@ router.get('/:mediaId', async (ctx) => {
 
   if (type === 'cdg') {
     // CD+G graphics are never regenerated per pitch; always the original
-    if (!resolved.cdg) ctx.throw(404, 'The .cdg file could not be found')
+    if (!resolved.cdg) throw new MessageError(404, 'server.media.cdgNotFound')
 
     if (resolved.cdg.type === 'file') {
       streamPath = resolved.cdg.path
@@ -116,7 +117,7 @@ router.get('/:mediaId', async (ctx) => {
       if (!variantPath) {
         // shouldn't normally happen: the Player is gated on pitchStatus and
         // shouldn't mount until 'ready'. Treat as a transient race, not a bug.
-        ctx.throw(409, 'pitch variant not ready yet')
+        throw new MessageError(409, 'server.media.pitchNotReady')
       }
 
       streamPath = variantPath

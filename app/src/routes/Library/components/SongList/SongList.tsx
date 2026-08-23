@@ -9,6 +9,7 @@ import { showSongInfo } from 'store/modules/songInfo'
 import { setSongPitchPref, clearSongPitchPref } from 'store/modules/userPitchPrefs'
 import { toggleSongStarred } from 'store/modules/userStars'
 import getSongsStatus from '../../selectors/getSongsStatus'
+import { useT } from 'lib/i18n'
 
 interface SongListProps {
   filterKeywords?: string[]
@@ -17,6 +18,7 @@ interface SongListProps {
 }
 
 const SongList = (props: SongListProps) => {
+  const t = useT()
   const dispatch = useAppDispatch()
   const artists = useAppSelector(state => state.artists.entities)
   const songs = useAppSelector(state => state.songs.entities)
@@ -105,7 +107,7 @@ const SongList = (props: SongListProps) => {
 
       {pitchModalSongId !== null && (
         <PitchModal
-          title='Choose pitch'
+          title={t('library.choosePitch')}
           songTitle={songs[pitchModalSongId].title}
           savedPref={pitchPrefs[pitchModalSongId] ?? null}
           onConfirm={handlePitchConfirm}

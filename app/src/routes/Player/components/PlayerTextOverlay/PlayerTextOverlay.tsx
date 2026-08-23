@@ -5,6 +5,7 @@ import ColorCycle from './ColorCycle/ColorCycle'
 import UpNow from './UpNow/UpNow'
 import Icon from 'components/Icon/Icon'
 import { formatPitch } from 'shared/pitch'
+import { useT } from 'lib/i18n'
 import type { QueueItem } from 'shared/types'
 import styles from './PlayerTextOverlay.css'
 
@@ -27,6 +28,7 @@ const PlayerTextOverlay = ({
   width,
   height,
 }: PlayerTextOverlayProps) => {
+  const t = useT()
   const dispatch = useAppDispatch()
   const handlePlay = () => dispatch(requestPlay())
   const [errorOffset] = useState(() => Math.random() * -300)
@@ -34,7 +36,7 @@ const PlayerTextOverlay = ({
   let Component
 
   if (isQueueEmpty || (isAtQueueEnd && !nextQueueItem)) {
-    Component = <ColorCycle text='CAN HAZ MOAR SONGZ?' className={styles.backdrop} />
+    Component = <ColorCycle text={t('player.noMoreSongs')} className={styles.backdrop} />
   } else if (!queueItem || (isAtQueueEnd && nextQueueItem)) {
     Component = (
       <>
@@ -46,7 +48,7 @@ const PlayerTextOverlay = ({
             </linearGradient>
           </defs>
         </svg>
-        <button className={styles.playButton} onClick={handlePlay} aria-label='Play'>
+        <button className={styles.playButton} onClick={handlePlay} aria-label={t('player.play')}>
           <Icon icon='PLAY' />
         </button>
       </>
@@ -57,7 +59,7 @@ const PlayerTextOverlay = ({
     // player (see PlayerController's isVisible) — hold the singer's turn
     // here instead of letting another singer's song jump ahead.
     Component = (
-      <ColorCycle text={`PREPARANDO TONO ${formatPitch(queueItem.pitchSemitones)}...`} className={styles.backdrop} />
+      <ColorCycle text={t('player.preparingPitch', { pitch: formatPitch(queueItem.pitchSemitones) })} className={styles.backdrop} />
     )
   } else if (queueItem.pitchStatus === 'error') {
     // distinct from player.isErrored: this is a transcode failure, not a
@@ -65,15 +67,15 @@ const PlayerTextOverlay = ({
     // matching per-item message)
     Component = (
       <>
-        <ColorCycle text='ERROR PREPARANDO TONO' offset={errorOffset} className={styles.backdrop} />
-        <ColorCycle text='SEE QUEUE FOR DETAILS' offset={errorOffset} className={styles.backdrop} />
+        <ColorCycle text={t('player.pitchError')} offset={errorOffset} className={styles.backdrop} />
+        <ColorCycle text={t('player.seeQueueForDetails')} offset={errorOffset} className={styles.backdrop} />
       </>
     )
   } else if (isErrored) {
     Component = (
       <>
-        <ColorCycle text='OOPS...' offset={errorOffset} className={styles.backdrop} />
-        <ColorCycle text='SEE QUEUE FOR DETAILS' offset={errorOffset} className={styles.backdrop} />
+        <ColorCycle text={t('player.oops')} offset={errorOffset} className={styles.backdrop} />
+        <ColorCycle text={t('player.seeQueueForDetails')} offset={errorOffset} className={styles.backdrop} />
       </>
     )
   } else {

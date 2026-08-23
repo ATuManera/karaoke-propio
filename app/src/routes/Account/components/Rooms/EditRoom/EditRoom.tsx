@@ -8,6 +8,7 @@ import UserPrefs from './UserPrefs/UserPrefs'
 import QRPrefs from './QRPrefs/QRPrefs'
 import type { Room, IRoomPrefs } from 'shared/types'
 import styles from './EditRoom.css'
+import { useT } from 'lib/i18n'
 
 interface EditRoomProps {
   room?: Room
@@ -15,6 +16,7 @@ interface EditRoomProps {
 }
 
 const EditRoom = ({ onClose, room }: EditRoomProps) => {
+  const t = useT()
   const [inviteCode, setInviteCode] = useState<string | null>(null)
   const [isRegenerating, setIsRegenerating] = useState(false)
 
@@ -35,7 +37,7 @@ const EditRoom = ({ onClose, room }: EditRoomProps) => {
 
   const handleRegenerateCode = () => {
     if (!room) return
-    if (!window.confirm('Generate a new invite code?\n\nEvery QR and link already shared stops working. People already in the room are unaffected.')) return
+    if (!window.confirm(t('rooms.confirmNewCode'))) return
 
     setIsRegenerating(true)
     fetch(`${document.baseURI}api/rooms/${room.roomId}/code`, { method: 'POST', credentials: 'same-origin' })
@@ -79,7 +81,7 @@ const EditRoom = ({ onClose, room }: EditRoomProps) => {
   }
 
   const handleRemoveClick = () => {
-    if (room && confirm(`Remove room "${room.name}" and its queue?`)) {
+    if (room && confirm(t('rooms.confirmRemove', { name: room.name }))) {
       dispatch(removeRoom(room.roomId))
     }
   }
@@ -108,7 +110,7 @@ const EditRoom = ({ onClose, room }: EditRoomProps) => {
     <Modal
       className={styles.modal}
       onClose={handleClose}
-      title={room ? 'Edit Room' : 'Create Room'}
+      title={room ? t('rooms.editRoom') : t('rooms.createRoom')}
     >
       <form onSubmit={handleSubmit} ref={formRef} className={styles.form}>
         <div className={styles.fieldContainer}>
@@ -117,7 +119,7 @@ const EditRoom = ({ onClose, room }: EditRoomProps) => {
             autoComplete='off'
             defaultValue={room ? room.name : ''}
             name='name'
-            placeholder='room name'
+            placeholder={t('rooms.roomName')}
             // https://github.com/facebook/react/issues/23301
             ref={r => typeof room === 'undefined' ? r?.setAttribute('autofocus', 'true') : undefined}
           />
@@ -129,7 +131,7 @@ const EditRoom = ({ onClose, room }: EditRoomProps) => {
             name='password'
             onChange={handlePasswordChange}
             onFocus={e => e.target.select()}
-            placeholder='room password (optional)'
+            placeholder={t('rooms.roomPassword')}
           />
 
           {/* Regenerating invalidates every invite already handed out — the
@@ -143,7 +145,7 @@ const EditRoom = ({ onClose, room }: EditRoomProps) => {
                 <strong>{inviteCode ?? '…'}</strong>
               </span>
               <Button onClick={handleRegenerateCode} disabled={isRegenerating}>
-                {isRegenerating ? 'Generating…' : 'New code'}
+                {isRegenerating ? t('rooms.generating') : t('rooms.newCode')}
               </Button>
             </div>
           )}
@@ -152,8 +154,8 @@ const EditRoom = ({ onClose, room }: EditRoomProps) => {
             name='status'
             defaultValue={room?.status ?? 'open'}
           >
-            <option value='open'>Open</option>
-            <option value='closed'>Closed</option>
+            <option value='open'>{t('rooms.open')}</option>
+            <option value='closed'>{t('rooms.closed')}</option>
           </select>
         </div>
 
@@ -164,15 +166,15 @@ const EditRoom = ({ onClose, room }: EditRoomProps) => {
 
         <div className={styles.btnContainer}>
           <Button type='submit' variant='primary' className={styles.btn}>
-            {room ? 'Update Room' : 'Create Room'}
+            {room ? t('rooms.updateRoom') : t('rooms.createRoom')}
           </Button>
           {room && (
             <Button onClick={handleRemoveClick} className={styles.btn} variant='danger'>
-              Remove Room
+              {t('rooms.removeRoom')}
             </Button>
           )}
           <Button onClick={handleClose} variant='default'>
-            Cancel
+            {t('common.cancel')}
           </Button>
         </div>
       </form>

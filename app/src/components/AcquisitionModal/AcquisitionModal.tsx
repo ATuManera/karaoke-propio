@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import clsx from 'clsx'
 import { useAppDispatch, useAppSelector } from 'store/hooks'
+import { useT } from 'lib/i18n'
 import Modal from 'components/Modal/Modal'
 import Button from 'components/Button/Button'
 import InputCheckbox from 'components/InputCheckbox/InputCheckbox'
@@ -52,6 +53,7 @@ function formatViewCount (n: number): string {
  * as an ordinary search, preview and pitch.
  */
 const AcquisitionModal = ({ initialQuery, initialView = 'search', onClose }: AcquisitionModalProps) => {
+  const t = useT()
   const dispatch = useAppDispatch()
   const {
     isSearching, searchError, results, resultsQuery, resultsSource,
@@ -224,7 +226,9 @@ const AcquisitionModal = ({ initialQuery, initialView = 'search', onClose }: Acq
         // modal: closing outright would throw away a search the user already
         // waited on, forcing them to run it again just to try another version
         onClose={previewingResult ? handlePreviewBack : onClose}
-        title={previewingResult ? 'Preview' : isPlaylistView ? 'Your playlist' : 'Search for a song'}
+        title={previewingResult
+          ? t('acquisition.preview')
+          : isPlaylistView ? t('acquisition.playlist.title') : t('acquisition.searchForASong')}
         scrollable
         // preview's Choose another/Add to queue live in Modal's fixed
         // footer (buttons prop), NOT in the scrollable content area — a
@@ -235,14 +239,14 @@ const AcquisitionModal = ({ initialQuery, initialView = 'search', onClose }: Acq
           ? (
               <>
                 <Button onClick={handlePreviewBack}>
-                  {previewOrigin.from === 'playlist' ? 'Back to playlist' : 'Choose another'}
+                  {previewOrigin.from === 'playlist' ? t('acquisition.backToPlaylist') : t('acquisition.chooseAnother')}
                 </Button>
                 <Button
                   variant='primary'
                   onClick={handlePreviewAdd}
                   disabled={!previewVideoId || isPreviewLoading || !!previewError || !meta.artist.trim() || !meta.title.trim()}
                 >
-                  Add to queue
+                  {t('pitch.addToQueue')}
                 </Button>
               </>
             )
@@ -269,27 +273,27 @@ const AcquisitionModal = ({ initialQuery, initialView = 'search', onClose }: Acq
                     reliable source (see shared/acquisitionMeta.ts) */}
                 <div className={styles.metaFields}>
                   <label className={styles.metaLabel}>
-                    Artist
+                    {t('songInfo.artist')}
                     <input
                       type='text'
                       className={styles.metaInput}
                       value={meta.artist}
                       onChange={e => setMeta(m => ({ ...m, artist: e.target.value }))}
-                      placeholder='e.g. The Beatles'
+                      placeholder={t('acquisition.artistPlaceholder')}
                     />
                   </label>
                   <label className={styles.metaLabel}>
-                    Title
+                    {t('songInfo.songTitle')}
                     <input
                       type='text'
                       className={styles.metaInput}
                       value={meta.title}
                       onChange={e => setMeta(m => ({ ...m, title: e.target.value }))}
-                      placeholder='e.g. Here Comes The Sun'
+                      placeholder={t('acquisition.titlePlaceholder')}
                     />
                   </label>
                   <button type='button' className={styles.swapButton} onClick={handleSwapMeta}>
-                    ⇅ Swap artist and title
+                    {t('acquisition.swapArtistAndTitle')}
                   </button>
                 </div>
               </>
@@ -297,14 +301,14 @@ const AcquisitionModal = ({ initialQuery, initialView = 'search', onClose }: Acq
           : (
               <>
                 {!isPlaylistView && (
-                  <div className={styles.sourceTabs} role='tablist' aria-label='Source'>
+                  <div className={styles.sourceTabs} role='tablist' aria-label={t('acquisition.source')}>
                     <Button
                       variant={source === 'youtube' ? 'primary' : 'default'}
                       onClick={() => handleSourceChange('youtube')}
                       role='tab'
                       aria-selected={source === 'youtube'}
                     >
-                      YouTube
+                      {t('acquisition.youtube')}
                     </Button>
                     <Button
                       variant={source === 'usdb' ? 'primary' : 'default'}
@@ -312,7 +316,7 @@ const AcquisitionModal = ({ initialQuery, initialView = 'search', onClose }: Acq
                       role='tab'
                       aria-selected={source === 'usdb'}
                     >
-                      UltraStar (USDB)
+                      {t('acquisition.usdb')}
                     </Button>
                   </div>
                 )}
@@ -323,11 +327,11 @@ const AcquisitionModal = ({ initialQuery, initialView = 'search', onClose }: Acq
                     className={styles.searchInput}
                     value={query}
                     onChange={e => setQuery(e.target.value)}
-                    placeholder='Artist, song title or playlist link'
+                    placeholder={t('acquisition.searchPlaceholder')}
                     autoFocus
                   />
                   <Button variant='primary' type='submit' disabled={!query.trim()}>
-                    {isPlaylistQuery ? 'Open' : 'Search'}
+                    {isPlaylistQuery ? t('common.open') : t('common.search')}
                   </Button>
                 </form>
 
@@ -335,7 +339,7 @@ const AcquisitionModal = ({ initialQuery, initialView = 'search', onClose }: Acq
                 {!isPlaylistView && source === 'youtube' && (
                   <InputCheckbox
                     className={styles.karaokeOnly}
-                    label='Karaoke versions only'
+                    label={t('acquisition.karaokeVersionsOnly')}
                     checked={karaokeOnly}
                     onChange={e => handleKaraokeOnlyChange(e.target.checked)}
                   />
@@ -343,9 +347,7 @@ const AcquisitionModal = ({ initialQuery, initialView = 'search', onClose }: Acq
 
                 {/* the entry point is a paste, so it has to be said somewhere */}
                 {!isPlaylistView && !playlist && (
-                  <p className={styles.hint}>
-                    Have a playlist? Paste its link — public or unlisted — to see which of its songs are already here.
-                  </p>
+                  <p className={styles.hint}>{t('acquisition.playlistHint')}</p>
                 )}
 
                 {!isPlaylistView && playlist && (
@@ -356,10 +358,10 @@ const AcquisitionModal = ({ initialQuery, initialView = 'search', onClose }: Acq
 
                 {activeRequest && (
                   <div className={clsx(styles.status, activeRequest.state === 'error' && styles.danger)}>
-                    {activeRequest.state === 'downloading' && 'Downloading…'}
-                    {activeRequest.state === 'processing' && 'Processing (generating CD+G)…'}
-                    {activeRequest.state === 'publishing' && 'Publishing…'}
-                    {activeRequest.state === 'registering' && 'Registering in library…'}
+                    {activeRequest.state === 'downloading' && t('acquisition.state.downloading')}
+                    {activeRequest.state === 'processing' && t('acquisition.state.processing')}
+                    {activeRequest.state === 'publishing' && t('acquisition.state.publishing')}
+                    {activeRequest.state === 'registering' && t('acquisition.state.registering')}
                     {activeRequest.state === 'queued' && `Added to queue: ${activeRequest.result?.title}`}
                     {activeRequest.state === 'error' && `Error: ${activeRequest.error}`}
                   </div>
@@ -391,7 +393,7 @@ const AcquisitionModal = ({ initialQuery, initialView = 'search', onClose }: Acq
                         {searchError && <div className={clsx(styles.status, styles.danger)}>{searchError}</div>}
 
                         {!isSearching && !searchError && results.length === 0 && (
-                          <p className={styles.empty}>No results yet — try a search above.</p>
+                          <p className={styles.empty}>{t('acquisition.noResultsYet')}</p>
                         )}
 
                         <ul className={styles.results}>
@@ -411,15 +413,13 @@ const AcquisitionModal = ({ initialQuery, initialView = 'search', onClose }: Acq
                                     <div className={styles.resultUploader}>
                                       <span translate='no'>{result.uploader}</span>
                                       {result.isVerified && (
-                                        <span className={styles.verified} title='Verified channel' aria-label='Verified channel'>✓</span>
+                                        <span className={styles.verified} title={t('acquisition.verifiedChannel')} aria-label={t('acquisition.verifiedChannel')}>✓</span>
                                       )}
                                     </div>
                                   )}
                                   {typeof result.viewCount === 'number' && (
                                     <div className={styles.resultViews}>
-                                      {formatViewCount(result.viewCount)}
-                                      {' '}
-                                      views
+                                      {t('acquisition.viewCount', { views: formatViewCount(result.viewCount) })}
                                     </div>
                                   )}
                                 </div>
@@ -438,7 +438,7 @@ const AcquisitionModal = ({ initialQuery, initialView = 'search', onClose }: Acq
 
       {pickedResult && (
         <PitchModal
-          title='Choose pitch'
+          title={t('pitch.choosePitch')}
           songTitle={pickedResult.title}
           onConfirm={handlePitchConfirm}
           onClose={handlePitchClose}

@@ -15,6 +15,7 @@ import PitchWorkerClient from '../Pitch/PitchWorkerClient.js'
 const keyCache = new Map<number, unknown>()
 let pitchWorker: PitchWorkerClient | null = null
 import { LIBRARY_PUSH } from '../../shared/actionTypes.js'
+import { MessageError } from '../lib/i18n.js'
 const log = getLogger('LibraryRouter')
 const router = new KoaRouter({ prefix: '/api' })
 
@@ -214,8 +215,7 @@ router.put('/song/:songId', async (ctx) => {
   const { artist, title } = (ctx.request as unknown as { body: Record<string, unknown> }).body ?? {}
 
   if (typeof artist !== 'string' || !artist.trim() || typeof title !== 'string' || !title.trim()) {
-    ctx.throw(422, 'artist and title are required')
-    return
+    throw new MessageError(422, 'server.library.artistAndTitleRequired')
   }
 
   try {

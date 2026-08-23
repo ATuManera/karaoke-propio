@@ -21,8 +21,10 @@
  * nothing to add — hence `mediaErrorText`, which every caller also needs for
  * the rejection branch its linter insists on.
  */
+import { translate } from 'lib/i18n'
+
 export const mediaErrorText = (error: MediaError | null): string =>
-  error ? `${error.message} (code ${error.code})` : 'The media could not be played'
+  error ? `${error.message} (code ${error.code})` : translate('player.mediaError')
 
 export default async function describeMediaError (src: string, error: MediaError | null): Promise<string> {
   const fallback = mediaErrorText(error)

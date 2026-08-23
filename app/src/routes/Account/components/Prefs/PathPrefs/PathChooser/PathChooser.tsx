@@ -4,6 +4,7 @@ import PathItem from './PathItem/PathItem'
 import Modal from 'components/Modal/Modal'
 import HttpApi from 'lib/HttpApi'
 import styles from './PathChooser.css'
+import { useT } from 'lib/i18n'
 
 const api = new HttpApi('prefs/path')
 
@@ -24,6 +25,7 @@ interface PathChooserProps {
 }
 
 const PathChooser = ({ onCancel, onChoose }: PathChooserProps) => {
+  const t = useT()
   const listRef = useRef<HTMLDivElement>(null)
   const [pathInfo, setPathInfo] = useState<PathInfoType>({
     current: null,
@@ -57,17 +59,17 @@ const PathChooser = ({ onCancel, onChoose }: PathChooserProps) => {
 
   return (
     <Modal
-      title='Add Folder'
+      title={t('prefs.addFolder')}
       className={styles.modal}
       onClose={onCancel}
       scrollable
       buttons={(
         <div className={styles.btnContainer}>
           <Button onClick={onCancel} variant='default'>
-            Cancel
+            {t('common.cancel')}
           </Button>
           <Button onClick={handleChoose} variant='primary'>
-            Add Folder
+            {t('prefs.addFolder')}
           </Button>
         </div>
       )}

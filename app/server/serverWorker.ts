@@ -6,6 +6,7 @@ import http from 'http'
 import fs from 'fs'
 import { promisify } from 'util'
 import parseCookie from './lib/parseCookie.js'
+import { MessageError } from './lib/i18n.js'
 import jsonWebToken from 'jsonwebtoken'
 import Koa from 'koa'
 import koaRouter from '@koa/router'
@@ -145,7 +146,9 @@ async function serverWorker ({ env, startScanner, stopScanner, shutdownHandlers 
       await next()
     } catch (err) {
       ctx.status = err.status || 500
-      ctx.body = err.message
+      // a MessageError has waited until here to be worded, because here is
+      // the first place that knows who is reading it
+      ctx.body = err instanceof MessageError ? err.translate(ctx) : err.message
       ctx.app.emit('error', err, ctx)
     }
   })
@@ -178,6 +181,7 @@ async function serverWorker ({ env, startScanner, stopScanner, shutdownHandlers 
         dateUpdated: null,
         isAdmin: false,
         isGuest: false,
+        locale: null,
         name: null,
         roomId: null,
         userId: null,

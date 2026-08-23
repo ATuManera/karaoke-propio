@@ -14,6 +14,7 @@ import SongInfo from 'components/SongInfo/SongInfo'
 import Routes from '../Routes/Routes'
 import { fetchPrefs } from 'store/modules/prefs'
 import { clearErrorMessage, setFooterHeight, setHeaderHeight } from 'store/modules/ui'
+import { applyLocale, resolveLocale } from 'lib/i18n'
 
 const CoreLayout = () => {
   const isPlayerRoute = useMatch('/player')
@@ -22,6 +23,16 @@ const CoreLayout = () => {
   const navRef = useRef<HTMLDivElement>(null)
   const isSignedIn = useAppSelector(state => state.user.userId !== null)
   const isAdmin = useAppSelector(state => state.user.isAdmin)
+  const accountLocale = useAppSelector(state => state.user.locale)
+
+  // The account's language wins over the phone's, and this is where it starts
+  // to: the app boots before anyone is signed in, so the first paint follows
+  // the browser and this puts the account's answer over it the moment there
+  // is one — a sign-in, a rehydrated session, a language changed on another
+  // device and picked up here.
+  useEffect(() => {
+    applyLocale(resolveLocale(accountLocale))
+  }, [accountLocale])
 
   // An admin is handed prefs over the socket the moment it connects; everyone
   // else has to ask, and until they do the app can't know whether this person

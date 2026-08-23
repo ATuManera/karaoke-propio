@@ -1,6 +1,7 @@
 import { createAction, createAsyncThunk, createReducer } from '@reduxjs/toolkit'
 import HttpApi from 'lib/HttpApi'
 import { LOGOUT } from 'shared/actionTypes'
+import { translate } from 'lib/i18n'
 
 const api = new HttpApi()
 
@@ -87,7 +88,7 @@ const repertoireReducer = createReducer(initialState, (builder) => {
     })
     .addCase(importRepertoire.rejected, (state, action) => {
       state.isImporting = false
-      state.error = action.error.message ?? 'That repertoire could not be read'
+      state.error = action.error.message ?? translate('repertoire.couldNotRead')
     })
     .addCase(fetchMissingSongs.pending, (state) => {
       state.isFetchingMissing = true

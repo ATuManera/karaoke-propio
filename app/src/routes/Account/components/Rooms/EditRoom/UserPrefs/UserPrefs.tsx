@@ -5,6 +5,7 @@ import InputCheckbox from 'components/InputCheckbox/InputCheckbox'
 import Icon from 'components/Icon/Icon'
 import type { IRoomPrefs } from 'shared/types'
 import styles from './UserPrefs.css'
+import { useT } from 'lib/i18n'
 
 interface UserPrefsProps {
   prefs: Partial<IRoomPrefs>
@@ -12,6 +13,7 @@ interface UserPrefsProps {
 }
 
 const UserPrefs = ({ onChange, prefs = {} }: UserPrefsProps) => {
+  const t = useT()
   const roles = useAppSelector(state => state.prefs.roles)
 
   const getRoleId = (roleName: string) => {
@@ -43,14 +45,14 @@ const UserPrefs = ({ onChange, prefs = {} }: UserPrefsProps) => {
       headingComponent={(
         <div className={styles.heading}>
           <Icon icon='PERSON' />
-          <div className={styles.title}>Users</div>
+          <div className={styles.title}>{t('rooms.userPrefs.title')}</div>
         </div>
       )}
     >
       <div className={styles.content}>
         <div className={styles.field}>
           <InputCheckbox
-            label='Allow new standard users'
+            label={t('rooms.userPrefs.allowNewStandard')}
             name='standard'
             checked={allowNewStandard}
             onChange={handleChange}
@@ -58,7 +60,7 @@ const UserPrefs = ({ onChange, prefs = {} }: UserPrefsProps) => {
         </div>
         <div className={styles.field}>
           <InputCheckbox
-            label='Allow new guests'
+            label={t('rooms.userPrefs.allowNewGuests')}
             name='guest'
             checked={allowNewGuest}
             onChange={handleChange}

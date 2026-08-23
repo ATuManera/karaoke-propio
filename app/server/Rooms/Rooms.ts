@@ -4,6 +4,7 @@ import sql from 'sqlate'
 import { generateRoomCode, isValidRoomCode, normalizeRoomCode } from '../../shared/roomCode.js'
 import { db } from '../lib/Database.js'
 import { ValidationError } from '../lib/Errors.js'
+import { MessageError } from '../lib/i18n.js'
 
 const NAME_MIN_LENGTH = 1
 const NAME_MAX_LENGTH = 50
@@ -191,20 +192,20 @@ class Rooms {
     const room = res.entities[roomId]
 
     if (!room) {
-      throw new Error('Room not found')
+      throw new MessageError(404, 'server.room.notFound')
     }
 
     if (isOpen && room.status !== 'open') {
-      throw new Error('Room is no longer open')
+      throw new MessageError(403, 'server.room.notOpen')
     }
 
     if (validatePassword && room.password) {
       if (!password) {
-        throw new Error('Room password is required')
+        throw new MessageError(401, 'server.room.passwordRequired')
       }
 
       if (!(await crypto.compare(password, room.password))) {
-        throw new Error('Incorrect room password')
+        throw new MessageError(401, 'server.room.passwordIncorrect')
       }
 
       if (crypto.isLegacy(room.password)) {
@@ -224,11 +225,11 @@ class Rooms {
       const roleId = row?.roleId
 
       if (!roleId) {
-        throw new Error('Role not found')
+        throw new MessageError(404, 'server.room.roleNotFound')
       }
 
       if (!room.prefs?.roles?.[roleId]?.allowNew) {
-        throw new Error(`New "${role}" accounts are not allowed in this room`)
+        throw new MessageError(403, 'server.room.roleNotAllowed', { role })
       }
     }
 

@@ -3,6 +3,7 @@ import { useAppDispatch, useAppSelector } from 'store/hooks'
 import Panel from 'components/Panel/Panel'
 import Button from 'components/Button/Button'
 import { clearImportReport, fetchMissingSongs, importRepertoire } from 'store/modules/repertoire'
+import { useT } from 'lib/i18n'
 import styles from './MyRepertoire.css'
 
 /**
@@ -14,6 +15,7 @@ import styles from './MyRepertoire.css'
  * other way is the pitch, which took a party and a pitch assistant to learn.
  */
 const MyRepertoire = () => {
+  const t = useT()
   const dispatch = useAppDispatch()
   const { isImporting, isFetchingMissing, report, error } = useAppSelector(state => state.repertoire)
   const { isAdmin, name } = useAppSelector(state => state.user)
@@ -28,7 +30,7 @@ const MyRepertoire = () => {
     const file = fileRef.current?.files?.[0]
 
     if (!file && !url.trim()) {
-      alert('Choose a repertoire file, or paste a link to one.')
+      alert(t('repertoire.chooseFileOrLink'))
       return
     }
 
@@ -38,19 +40,18 @@ const MyRepertoire = () => {
   const missingFetchable = report?.songs.missing.filter(song => song.sourceId) ?? []
 
   const handleFetchMissing = () => {
-    if (!confirm(`Download ${missingFetchable.length} missing songs?\n\nThey arrive one at a time and are held for review before anyone sings them.`)) return
+    if (!confirm(t('repertoire.confirmDownloadMissing', { count: missingFetchable.length }))) return
 
-    dispatch(fetchMissingSongs({ songs: missingFetchable, title: `${report?.singer ?? 'Imported'} repertoire` }))
+    dispatch(fetchMissingSongs({
+      songs: missingFetchable,
+      title: t('repertoire.importedRepertoireTitle', { singer: report?.singer ?? t('repertoire.imported') }),
+    }))
   }
 
   return (
-    <Panel title='My Repertoire' contentClassName={styles.content}>
+    <Panel title={t('repertoire.title')} contentClassName={styles.content}>
       <>
-        <p className={styles.hint}>
-          Take your songs and your pitches to another Karaoke Propio — or bring
-          them here from one. The file holds no music, only what you have
-          learned about singing it.
-        </p>
+        <p className={styles.hint}>{t('repertoire.intro')}</p>
 
         {/* a plain link, not a fetch: the browser saves the file itself, and
             on a phone that is what puts it somewhere the person can find it */}
@@ -59,15 +60,12 @@ const MyRepertoire = () => {
           href={`${document.baseURI}api/repertoire`}
           download
         >
-          Download
-          {name ? ` ${name}'s` : ' my'}
-          {' '}
-          repertoire
+          {name ? t('repertoire.downloadTheirs', { name }) : t('repertoire.downloadMine')}
         </a>
 
         {canImport && (
           <div className={styles.import}>
-            <label className={styles.label} htmlFor='repertoire-file'>Bring a repertoire in</label>
+            <label className={styles.label} htmlFor='repertoire-file'>{t('repertoire.bringItIn')}</label>
 
             <input
               id='repertoire-file'
@@ -77,24 +75,24 @@ const MyRepertoire = () => {
               className={styles.file}
             />
 
-            <div className={styles.or}>or paste a link to it</div>
+            <div className={styles.or}>{t('repertoire.orPasteALink')}</div>
 
             <input
               type='url'
               inputMode='url'
-              placeholder='https://…/fernando.karaoke-propio.json'
+              placeholder={t('repertoire.urlPlaceholder')}
               value={url}
               onChange={e => setUrl(e.target.value)}
             />
 
             <Button variant='primary' onClick={handleImport} disabled={isImporting}>
-              {isImporting ? 'Reading…' : 'Import'}
+              {isImporting ? t('common.reading') : t('repertoire.import')}
             </Button>
           </div>
         )}
 
         {!canImport && (
-          <p className={styles.hint}>Bringing a repertoire in is turned off here.</p>
+          <p className={styles.hint}>{t('repertoire.turnedOff')}</p>
         )}
 
         {error && <p className={styles.error}>{error}</p>}
@@ -102,10 +100,12 @@ const MyRepertoire = () => {
         {report && (
           <div className={styles.report}>
             <p className={styles.reportLine}>
-              <strong>{`${report.songs.matched} of ${report.songs.total}`}</strong>
-              {' songs are in this library. '}
-              {report.pitches.applied > 0 && `${report.pitches.applied} pitch${report.pitches.applied === 1 ? '' : 'es'} saved.`}
-              {report.pitches.kept > 0 && ` ${report.pitches.kept} left as ${report.pitches.kept === 1 ? 'it was' : 'they were'}, being newer here.`}
+              <strong>
+                {t('repertoire.matched', { matched: report.songs.matched, total: report.songs.total, count: report.songs.total })}
+              </strong>
+              {t('repertoire.songsInThisLibrary')}
+              {report.pitches.applied > 0 && t('repertoire.pitchesSaved', { count: report.pitches.applied })}
+              {report.pitches.kept > 0 && t('repertoire.pitchesKept', { count: report.pitches.kept })}
             </p>
 
             {/* worth saying rather than hiding: a karaoke upload is often
@@ -113,33 +113,31 @@ const MyRepertoire = () => {
                 on one is a starting point against the other, not the answer */}
             {report.pitches.approximated > 0 && (
               <p className={styles.reportNote}>
-                {report.pitches.approximated === 1
-                  ? '1 of those pitches was learned on a different recording, so it starts as a guess and the pitch question will correct it.'
-                  : `${report.pitches.approximated} of those pitches were learned on different recordings, so they start as guesses and the pitch question will correct them.`}
+                {t('repertoire.approximated', { count: report.pitches.approximated })}
               </p>
             )}
 
             {report.songs.missing.length > 0 && (
               <details className={styles.missing}>
-                <summary>{`${report.songs.missing.length} not here`}</summary>
+                <summary>{t('repertoire.notHere', { count: report.songs.missing.length })}</summary>
                 <ul>
                   {report.songs.missing.map((song, i) => (
                     <li key={i} translate='no'>
                       {[song.artist, song.title].filter(Boolean).join(' — ')}
-                      {!song.sourceId && <span className={styles.unfetchable}> (no source to fetch it from)</span>}
+                      {!song.sourceId && <span className={styles.unfetchable}>{t('repertoire.noSourceToFetch')}</span>}
                     </li>
                   ))}
                 </ul>
 
                 {isAdmin && missingFetchable.length > 0 && (
                   <Button onClick={handleFetchMissing} disabled={isFetchingMissing}>
-                    {isFetchingMissing ? 'Starting…' : `Download the ${missingFetchable.length} that can be fetched`}
+                    {isFetchingMissing ? t('common.starting') : t('repertoire.downloadFetchable', { count: missingFetchable.length })}
                   </Button>
                 )}
               </details>
             )}
 
-            <a className={styles.dismiss} onClick={() => dispatch(clearImportReport())}>Dismiss</a>
+            <a className={styles.dismiss} onClick={() => dispatch(clearImportReport())}>{t('common.dismiss')}</a>
           </div>
         )}
       </>

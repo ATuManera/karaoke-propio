@@ -1,7 +1,9 @@
 import React, { useState } from 'react'
+import { useT } from 'lib/i18n'
 import Button from 'components/Button/Button'
 import Spinner from 'components/Spinner/Spinner'
 import HttpApi from 'lib/HttpApi'
+import { translateNoteName } from 'lib/noteNames'
 import styles from './SongInfo.css'
 
 const api = new HttpApi()
@@ -25,6 +27,7 @@ interface Key { tonic: string, tonicEs: string, mode: string, confidence: number
  * most people open a song to see.
  */
 const SongMusicInfo = ({ songId }: { songId: number }) => {
+  const t = useT()
   const [notes, setNotes] = useState<Note[] | null>(null)
   const [range, setRange] = useState<{ lowest: Note | null, highest: Note | null } | null>(null)
   const [songKey, setSongKey] = useState<Key | null>(null)
@@ -57,10 +60,10 @@ const SongMusicInfo = ({ songId }: { songId: number }) => {
 
   return (
     <div className={styles.musicBlock}>
-      <span className={styles.label}>Music:</span>
+      <span className={styles.label}>{t('music.label')}</span>
 
       {!loaded && !isLoading && (
-        <div><Button onClick={handleLoad}>Show notes & key</Button></div>
+        <div><Button onClick={handleLoad}>{t('music.showNotesAndKey')}</Button></div>
       )}
 
       {isLoading && <Spinner />}
@@ -69,35 +72,39 @@ const SongMusicInfo = ({ songId }: { songId: number }) => {
       {loaded && (
         <div className={styles.musicResult}>
           <div>
-            <span className={styles.label}>Key: </span>
+            <span className={styles.label}>{t('music.key')}</span>
+            {' '}
             {songKey
               ? (
                   <>
-                    {songKey.tonic}
+                    {translateNoteName(songKey.tonic)}
                     {' '}
-                    {songKey.mode}
+                    {songKey.mode === 'minor' ? t('music.mode.minor') : t('music.mode.major')}
                     <span className={styles.confidence}>
-                      {songKey.confidence >= 0.7 ? ' (estimated)' : ' (estimated, low confidence)'}
+                      {' '}
+                      {songKey.confidence >= 0.7 ? t('music.keyEstimated') : t('music.keyEstimatedLowConfidence')}
                     </span>
                   </>
                 )
-              : 'could not be estimated'}
+              : t('music.keyUnknown')}
           </div>
 
           {notes && range?.lowest && range?.highest
             ? (
                 <>
                   <div>
-                    <span className={styles.label}>Vocal range: </span>
-                    {range.lowest.name}
+                    <span className={styles.label}>{t('music.vocalRange')}</span>
+                    {' '}
+                    {translateNoteName(range.lowest.name)}
                     {' – '}
-                    {range.highest.name}
-                    {`  (${notes.length} notes)`}
+                    {translateNoteName(range.highest.name)}
+                    {'  '}
+                    {t('music.noteCount', { count: notes.length })}
                   </div>
                   <ul className={styles.noteList}>
                     {notes.map((n, i) => (
                       <li key={i} className={n.isGolden ? styles.goldenNote : undefined}>
-                        <span className={styles.noteName}>{n.name}</span>
+                        <span className={styles.noteName}>{translateNoteName(n.name)}</span>
                         <span className={styles.noteText}>{n.text.trim() || ' '}</span>
                       </li>
                     ))}
@@ -105,10 +112,7 @@ const SongMusicInfo = ({ songId }: { songId: number }) => {
                 </>
               )
             : (
-                <p className={styles.noNotes}>
-                  No notes: only songs acquired from UltraStar/USDB carry the melody.
-                  A YouTube karaoke is an instrumental track, so there is no vocal to extract it from.
-                </p>
+                <p className={styles.noNotes}>{t('music.noNotes')}</p>
               )}
         </div>
       )}

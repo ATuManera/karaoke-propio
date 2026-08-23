@@ -2,6 +2,7 @@ import React, { useEffect, useRef } from 'react'
 import clsx from 'clsx'
 import styles from './SelectRoom.css'
 import type { Room } from 'shared/types'
+import { useT } from 'lib/i18n'
 
 interface SelectRoomProps {
   className?: string
@@ -25,6 +26,7 @@ const SelectRoom = ({
   roomPassword,
   showAllRooms,
 }: SelectRoomProps) => {
+  const t = useT()
   const passwordRef = useRef<HTMLInputElement>(null)
   const selected = roomId === null ? undefined : rooms.entities[roomId]
   const hasPassword = !!selected?.hasPassword
@@ -39,8 +41,8 @@ const SelectRoom = ({
       type='password'
       autoComplete='off'
       onChange={(e) => { onRoomPasswordChange(e.target.value) }}
-      placeholder='room password (required)'
-      aria-label='room password (required)'
+      placeholder={t('signedOut.roomPasswordRequired')}
+      aria-label={t('signedOut.roomPasswordRequired')}
       ref={passwordRef}
       value={roomPassword}
     />
@@ -67,13 +69,13 @@ const SelectRoom = ({
         className={styles.select}
         value={roomId ?? ''}
         onChange={e => onRoomSelect(parseInt(e.target.value, 10))}
-        aria-label='room'
+        aria-label={t('signedOut.roomLabel')}
       >
-        <option value='' disabled>choose a room…</option>
+        <option value='' disabled>{t('signedOut.chooseARoom')}</option>
         {rooms.result.map(id => (
           <option key={`room-${id}`} value={id}>
             {rooms.entities[id].name}
-            {rooms.entities[id].isLive ? ' — someone here' : ' — free'}
+            {rooms.entities[id].isLive ? t('signedOut.roomSomeoneHere') : t('signedOut.roomFree')}
           </option>
         ))}
       </select>

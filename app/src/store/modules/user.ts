@@ -7,7 +7,9 @@ import { RootState } from 'store/store'
 import HttpApi from 'lib/HttpApi'
 import Persistor from 'store/Persistor'
 import { fetchPrefs } from './prefs'
+import { applyLocale, resolveLocale, setStoredLocale, translate } from 'lib/i18n'
 import {
+  ACCOUNT_LOCALE_SET,
   ACCOUNT_RECEIVE,
   ACCOUNT_REQUEST,
   ACCOUNT_CREATE,
@@ -125,7 +127,7 @@ export const updateAccount = createAsyncThunk<void, FormData, { state: RootState
     })
 
     thunkAPI.dispatch(receiveAccount(user))
-    alert('Account updated successfully.')
+    alert(translate('account.updated'))
   },
 )
 
@@ -141,6 +143,30 @@ export const fetchAccount = createAsyncThunk(
     } catch {
       // ignore errors
     }
+  },
+)
+
+// ------------------------------------
+// Language
+// ------------------------------------
+/**
+ * Choose the language, or hand the choice back to the phone by passing null.
+ *
+ * Applied here and now rather than waiting for the round trip: the point of
+ * tapping a language is to see it change. The request that follows is what
+ * makes it survive to the next phone, and the browser keeps a copy so the
+ * sign-in screen — which happens before any account is known — speaks it too.
+ */
+export const setLocale = createAsyncThunk<void, string | null, { state: RootState }>(
+  ACCOUNT_LOCALE_SET,
+  async (locale, thunkAPI) => {
+    setStoredLocale(locale)
+    applyLocale(resolveLocale(locale))
+
+    if (thunkAPI.getState().user.userId === null) return
+
+    const user = await api.put('user/locale', { body: { locale } })
+    thunkAPI.dispatch(receiveAccount(user))
   },
 )
 
@@ -174,6 +200,8 @@ interface UserState {
   isGuest: boolean
   dateCreated: number
   dateUpdated: number
+  /** the language they chose; null means "follow the phone" */
+  locale: string | null
 }
 
 const initialState: UserState = {
@@ -185,6 +213,7 @@ const initialState: UserState = {
   isGuest: false,
   dateCreated: 0,
   dateUpdated: 0,
+  locale: null,
 }
 
 const userReducer = createReducer(initialState, (builder) => {

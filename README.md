@@ -4,7 +4,7 @@
 [![Based on](https://img.shields.io/badge/based%20on-Karaoke%20Eternal-blue.svg)](https://github.com/bhj/KaraokeEternal)
 [![Docker](https://img.shields.io/badge/docker-compose-blue.svg)](docker-compose.yml)
 [![Platform](https://img.shields.io/badge/platform-Linux%20%7C%20Docker-lightgrey.svg)]()
-[![Version](https://img.shields.io/badge/version-2.0.0-blue.svg)]()
+[![Version](https://img.shields.io/badge/version-2.1.0-blue.svg)]()
 
 > **Built on [Karaoke Eternal](https://github.com/bhj/KaraokeEternal)** — © RadRoot LLC, ISC License.
 > Karaoke Propio is an independent project that vendors and extends it; it is **not** an official
@@ -18,7 +18,7 @@
 
 **AI Assistance / Asistencia de IA:** Developed with the support of GPT 5.6 Sol, Claude Opus 5, Claude Opus 4.8, and Claude Sonnet 5.
 
-**Version / Versión:** 2.0.0
+**Version / Versión:** 2.1.0
 
 ---
 
@@ -46,6 +46,7 @@ does well — library, queue, player, phone remote — and adds what a real part
 | **Choose your room** | Signing in never picks the room for you. Every open room says whether anyone is in it, so a singer joins the party already going or takes an empty one and starts their own — and hands out its invitation from their own screen, without walking to the television. |
 | **Public access** | Optional HTTPS exposure through an existing nginx-proxy + Let's Encrypt, configured with a single variable. |
 | **Notes & key** | Melody note by note for UltraStar songs, plus an estimated musical key for any track. |
+| **Speaks your language** | English and Spanish, chosen by the phone that arrives — a guest who scans the QR is greeted in their own language without setting anything. A language can be fixed in the account instead, and then it travels to any phone that account signs in from. Everything follows: dates and clocks in the local format, note names as letters or as *Do Re Mi*, and the errors the server sends back. More languages are a single message file away. |
 
 ### Requirements
 
@@ -172,6 +173,7 @@ fiesta real necesita.
 | **Elegir la sala** | Iniciar sesión ya no elige la sala por ti. Cada sala abierta dice si hay alguien adentro, así un cantante se suma a la fiesta que ya está o toma una vacía y arma la suya — y reparte su invitación desde su propia pantalla, sin caminar hasta el televisor. |
 | **Acceso público** | Exposición HTTPS opcional mediante un nginx-proxy + Let's Encrypt existente, con una sola variable. |
 | **Notas y tonalidad** | Melodía nota por nota en canciones UltraStar, y tonalidad estimada para cualquier pista. |
+| **Habla tu idioma** | Español e inglés, elegidos por el celular que llega — a un invitado que escanea el QR se le habla en su idioma sin que configure nada. También se puede fijar un idioma en la cuenta, y entonces viaja a cualquier celular desde el que esa cuenta entre. Todo lo sigue: fechas y horas en el formato local, los nombres de las notas en letras o en *Do Re Mi*, y los errores que devuelve el servidor. Agregar otro idioma es un solo archivo de mensajes. |
 
 ### Requisitos
 

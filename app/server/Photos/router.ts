@@ -2,6 +2,7 @@ import fs from 'node:fs'
 import fsPromises from 'node:fs/promises'
 import KoaRouter from '@koa/router'
 import * as Photos from './Photos.js'
+import { MessageError } from '../lib/i18n.js'
 
 const router = new KoaRouter({ prefix: '/api/photos' })
 
@@ -43,22 +44,19 @@ router.post('/', async (ctx) => {
   const file = Array.isArray(raw) ? raw[0] : raw as { filepath: string, mimetype?: string, size: number, originalFilename?: string } | undefined
 
   if (!file) {
-    ctx.throw(422, 'no photo attached')
-    return
+    throw new MessageError(422, 'server.photos.noneAttached')
   }
 
   const mimeType = file.mimetype ?? ''
 
   if (!ALLOWED_TYPES.has(mimeType)) {
     await fsPromises.unlink(file.filepath).catch(() => {})
-    ctx.throw(415, 'only JPEG, PNG or WebP images are accepted')
-    return
+    throw new MessageError(415, 'server.photos.typeNotAccepted')
   }
 
   if (file.size > MAX_BYTES) {
     await fsPromises.unlink(file.filepath).catch(() => {})
-    ctx.throw(413, `image must not exceed ${Math.round(MAX_BYTES / 1024 / 1024)}MB`)
-    return
+    throw new MessageError(413, 'server.photos.tooLarge', { max: Math.round(MAX_BYTES / 1024 / 1024) })
   }
 
   const body = (ctx.request as unknown as { body?: Record<string, string> }).body ?? {}
@@ -112,8 +110,7 @@ router.delete('/:photoId', async (ctx) => {
 
   // your own photo, or an admin cleaning up
   if (!ctx.user.isAdmin && photo.userId !== ctx.user.userId) {
-    ctx.throw(403, 'you can only delete your own photos')
-    return
+    throw new MessageError(403, 'server.photos.notYours')
   }
 
   await Photos.remove(photo)

@@ -1,15 +1,12 @@
 import React, { useState } from 'react'
+import { useT } from 'lib/i18n'
 import { useAppDispatch, useAppSelector } from 'store/hooks'
 import Button from 'components/Button/Button'
 import { addSongCategory, removeSongCategory, type CategoryType } from 'store/modules/categories'
+import { categoryLabel } from 'lib/categoryLabel'
 import styles from './SongInfo.css'
 
-const TYPES: { value: CategoryType, label: string }[] = [
-  { value: 'genre', label: 'Genre' },
-  { value: 'decade', label: 'Decade' },
-  { value: 'voice', label: 'Voice' },
-  { value: 'language', label: 'Language' },
-]
+const TYPES: CategoryType[] = ['genre', 'decade', 'voice', 'language']
 
 /**
  * Manual category edits for one song.
@@ -19,6 +16,7 @@ const TYPES: { value: CategoryType, label: string }[] = [
  * not undo the correction.
  */
 const SongCategories = ({ songId }: { songId: number }) => {
+  const t = useT()
   const dispatch = useAppDispatch()
   const { entities, songCategories } = useAppSelector(state => state.categories)
   const mine = songCategories[songId] ?? []
@@ -40,16 +38,16 @@ const SongCategories = ({ songId }: { songId: number }) => {
 
   return (
     <div className={styles.categoriesBlock}>
-      <span className={styles.label}>Categories:</span>
+      <span className={styles.label}>{t('categories.label')}</span>
 
       <div className={styles.chips}>
-        {mine.length === 0 && <span className={styles.noneYet}>none yet</span>}
+        {mine.length === 0 && <span className={styles.noneYet}>{t('categories.noneYet')}</span>}
         {mine.map(categoryId => entities[categoryId] && (
           <span key={categoryId} className={styles.chip}>
-            {entities[categoryId].name}
+            {categoryLabel(entities[categoryId].type, entities[categoryId].name)}
             <a
               className={styles.chipRemove}
-              title='Remove'
+              title={t('common.remove')}
               onClick={() => dispatch(removeSongCategory({ songId, categoryId }))}
             >
               ×
@@ -60,7 +58,7 @@ const SongCategories = ({ songId }: { songId: number }) => {
 
       <div className={styles.addRow}>
         <select className={styles.typeSelect} value={type} onChange={e => setType(e.target.value as CategoryType)}>
-          {TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
+          {TYPES.map(type => <option key={type} value={type}>{t(`categories.type.${type}`)}</option>)}
         </select>
         <input
           type='text'
@@ -69,12 +67,12 @@ const SongCategories = ({ songId }: { songId: number }) => {
           value={name}
           onChange={e => setName(e.target.value)}
           onKeyDown={(e) => { if (e.key === 'Enter') handleAdd() }}
-          placeholder='e.g. Bolero'
+          placeholder={t('categories.placeholder')}
         />
         <datalist id={`category-suggestions-${songId}`}>
           {suggestions.map(s => <option key={s} value={s} />)}
         </datalist>
-        <Button onClick={handleAdd} disabled={!name.trim()}>Add</Button>
+        <Button onClick={handleAdd} disabled={!name.trim()}>{t('common.add')}</Button>
       </div>
     </div>
   )

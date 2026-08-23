@@ -4,17 +4,13 @@ import { useAppDispatch, useAppSelector } from 'store/hooks'
 import { fetchCategories, startCategoryScan, toggleCategoryFilter, clearCategoryFilters, type CategoryType } from 'store/modules/categories'
 import { setLibrarySort } from 'routes/Library/modules/library'
 import HttpApi from 'lib/HttpApi'
+import { useT } from 'lib/i18n'
+import { categoryLabel } from 'lib/categoryLabel'
 import styles from './CategoryFilter.css'
 
 // order the groups the way someone narrows down a song: what kind of music
 // first, then when, then who, then language
 const TYPE_ORDER: CategoryType[] = ['genre', 'decade', 'voice', 'language']
-const TYPE_LABELS: Record<CategoryType, string> = {
-  genre: 'Genre',
-  decade: 'Decade',
-  voice: 'Voice',
-  language: 'Language',
-}
 
 /**
  * Chips to narrow the library by category. Hidden entirely until the library
@@ -24,6 +20,7 @@ const TYPE_LABELS: Record<CategoryType, string> = {
 const api = new HttpApi()
 
 const CategoryFilter = () => {
+  const t = useT()
   const dispatch = useAppDispatch()
   const sort = useAppSelector(state => state.library.sort)
   const { result, entities, selected, isScanning } = useAppSelector(state => state.categories)
@@ -41,39 +38,39 @@ const CategoryFilter = () => {
 
   const handleScan = () => {
     // minutes-long and rate-limited upstream, so say so rather than let it look frozen
-    if (window.confirm('Look up categories online for uncategorized songs?\n\nTakes ~1 second per song and continues in the background.')) {
+    if (window.confirm(t('categories.confirmCategorize'))) {
       dispatch(startCategoryScan(false))
     }
   }
 
   const sortControl = (
     <div className={styles.group}>
-      <span className={styles.groupLabel}>Sort</span>
+      <span className={styles.groupLabel}>{t('categories.sort')}</span>
       <button
         type='button'
         className={clsx(styles.chip, sort === 'name' && styles.selected)}
         onClick={() => dispatch(setLibrarySort('name'))}
       >
-        A-Z
+        {t('categories.sortAlphabetical')}
       </button>
       <button
         type='button'
         className={clsx(styles.chip, sort === 'popular' && styles.selected)}
         onClick={() => dispatch(setLibrarySort('popular'))}
       >
-        Most popular
+        {t('categories.mostPopular')}
       </button>
       {isAdmin && (
         <button
           type='button'
           className={styles.scan}
           onClick={() => {
-            if (window.confirm('Look up popularity for songs that don\'t have it yet?\n\nTakes ~2s per song and continues in the background.')) {
+            if (window.confirm(t('categories.confirmPopularity'))) {
               api.request('POST', 'popularity/backfill', { body: {} }).catch(() => undefined)
             }
           }}
         >
-          Update popularity
+          {t('categories.updatePopularity')}
         </button>
       )}
     </div>
@@ -81,7 +78,7 @@ const CategoryFilter = () => {
 
   const scanButton = isAdmin && (
     <button type='button' className={styles.scan} onClick={handleScan} disabled={isScanning}>
-      {isScanning ? 'Categorizing…' : 'Categorize library'}
+      {isScanning ? t('categories.categorizing') : t('categories.categorizeLibrary')}
     </button>
   )
 
@@ -110,7 +107,7 @@ const CategoryFilter = () => {
           onClick={() => setIsOpen(o => !o)}
           aria-expanded={isOpen}
         >
-          {`Filters${selected.length ? ` (${selected.length})` : ''}`}
+          {selected.length ? t('categories.filtersWithCount', { count: selected.length }) : t('categories.filters')}
           <span className={styles.caret}>{isOpen ? '▲' : '▼'}</span>
         </button>
       </div>
@@ -125,14 +122,14 @@ const CategoryFilter = () => {
               type='button'
               className={clsx(styles.chip, styles.selected)}
               onClick={() => dispatch(toggleCategoryFilter(id))}
-              title='Remove filter'
+              title={t('categories.removeFilter')}
             >
-              {entities[id].name}
+              {categoryLabel(entities[id].type, entities[id].name)}
               <span className={styles.count}>×</span>
             </button>
           ))}
           <button type='button' className={styles.clear} onClick={() => dispatch(clearCategoryFilters())}>
-            Clear
+            {t('common.clear')}
           </button>
         </div>
       )}
@@ -145,7 +142,7 @@ const CategoryFilter = () => {
 
             return (
               <div key={type} className={styles.group}>
-                <span className={styles.groupLabel}>{TYPE_LABELS[type]}</span>
+                <span className={styles.groupLabel}>{t(`categories.type.${type}`)}</span>
                 {ids.map(id => (
                   <button
                     key={id}
@@ -153,7 +150,7 @@ const CategoryFilter = () => {
                     className={clsx(styles.chip, selected.includes(id) && styles.selected)}
                     onClick={() => dispatch(toggleCategoryFilter(id))}
                   >
-                    {entities[id].name}
+                    {categoryLabel(entities[id].type, entities[id].name)}
                     <span className={styles.count}>{entities[id].songCount}</span>
                   </button>
                 ))}
@@ -164,7 +161,7 @@ const CategoryFilter = () => {
           <div className={styles.actions}>
             {!!selected.length && (
               <button type='button' className={styles.clear} onClick={() => dispatch(clearCategoryFilters())}>
-                Clear filters
+                {t('categories.clearFilters')}
               </button>
             )}
             {scanButton}

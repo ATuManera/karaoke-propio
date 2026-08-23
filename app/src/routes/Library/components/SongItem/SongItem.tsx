@@ -11,6 +11,7 @@ import { formatDuration } from 'lib/dateTime'
 import { formatPitch } from 'shared/pitch'
 import type { SongPitchPref } from 'shared/types'
 import styles from './SongItem.css'
+import { useT } from 'lib/i18n'
 
 let ignoreMouseup = false
 
@@ -50,6 +51,7 @@ const SongItem = ({
   filterKeywords,
   pitchPref,
 }: SongItemProps) => {
+  const t = useT()
   const [isExpanded, setExpanded] = useState(false)
 
   const handleClick = () => {
@@ -134,8 +136,8 @@ const SongItem = ({
           onClick={handleInfoClick}
           className={clsx(styles.btn, styles.info)}
           data-hide={!isAdmin}
-          title='Song info & edit'
-          aria-label='Song info and edit'
+          title={t('library.songInfoAndEdit')}
+          aria-label={t('library.songInfoAndEdit')}
         >
           <Icon icon='INFO_OUTLINE' />
         </Button>

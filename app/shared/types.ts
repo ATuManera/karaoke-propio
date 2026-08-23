@@ -118,6 +118,12 @@ export interface User {
   isGuest: boolean // todo: client and server ctx only
   dateCreated: number
   dateUpdated: number
+  /**
+   * The language this person chose to be spoken to in (see migration 015).
+   * null means they never chose, and the browser decides — which is not the
+   * same as choosing English.
+   */
+  locale?: string | null
 }
 
 export interface UserWithRole extends User {

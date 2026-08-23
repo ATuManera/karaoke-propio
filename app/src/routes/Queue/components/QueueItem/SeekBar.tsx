@@ -3,6 +3,7 @@ import { useAppDispatch } from 'store/hooks'
 import { requestSeek } from 'routes/Player/modules/player'
 import { formatDuration } from 'lib/dateTime'
 import styles from './SeekBar.css'
+import { useT } from 'lib/i18n'
 
 interface SeekBarProps {
   queueId: number
@@ -19,6 +20,7 @@ interface SeekBarProps {
  * locally so it still feels responsive.
  */
 const SeekBar = ({ queueId, duration, pctPlayed }: SeekBarProps) => {
+  const t = useT()
   const dispatch = useAppDispatch()
   const barRef = useRef<HTMLDivElement>(null)
   const [dragPct, setDragPct] = useState<number | null>(null)
@@ -60,7 +62,7 @@ const SeekBar = ({ queueId, duration, pctPlayed }: SeekBarProps) => {
       onPointerUp={handlePointerUp}
       onPointerCancel={() => setDragPct(null)}
       role='slider'
-      aria-label='Seek within song'
+      aria-label={t('queue.seekWithinSong')}
       aria-valuemin={0}
       aria-valuemax={Math.round(duration)}
       aria-valuenow={Math.round((shownPct / 100) * duration)}

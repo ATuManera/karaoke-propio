@@ -5,6 +5,7 @@ import InputCheckbox from 'components/InputCheckbox/InputCheckbox'
 import Slider from 'components/Slider/Slider'
 import { formatPitch, PITCH_DEFAULT, PITCH_MAX, PITCH_MIN, PITCH_STEP } from 'shared/pitch'
 import type { SongPitchPref } from 'shared/types'
+import { useT } from 'lib/i18n'
 import styles from './PitchModal.css'
 
 interface PitchModalProps {
@@ -33,6 +34,7 @@ interface PitchModalProps {
  * the same song is -4 for one person and +2 for another (see migration 012).
  */
 const PitchModal = ({ title, songTitle, initialPitch, savedPref, onConfirm, onClose }: PitchModalProps) => {
+  const t = useT()
   const [pitch, setPitch] = useState(initialPitch ?? savedPref?.pitchSemitones ?? PITCH_DEFAULT)
   // Pre-checked only when there is already a deliberate saved pitch: changing
   // the slider then means correcting it, and silently leaving the old value
@@ -51,8 +53,8 @@ const PitchModal = ({ title, songTitle, initialPitch, savedPref, onConfirm, onCl
       title={title}
       buttons={(
         <>
-          <Button onClick={onClose}>Cancel</Button>
-          <Button variant='primary' onClick={handleConfirm}>Add to queue</Button>
+          <Button onClick={onClose}>{t('common.cancel')}</Button>
+          <Button variant='primary' onClick={handleConfirm}>{t('pitch.addToQueue')}</Button>
         </>
       )}
     >
@@ -61,7 +63,7 @@ const PitchModal = ({ title, songTitle, initialPitch, savedPref, onConfirm, onCl
 
         <div className={styles.field}>
           <div className={styles.fieldHeading}>
-            <label id='label-pitch-semitones'>Pitch</label>
+            <label id='label-pitch-semitones'>{t('pitch.title')}</label>
             <output className={styles.value} aria-live='polite'>
               {formatPitch(pitch)}
             </output>
@@ -92,8 +94,8 @@ const PitchModal = ({ title, songTitle, initialPitch, savedPref, onConfirm, onCl
             checked={remember}
             onChange={handleRememberChange}
             label={remember || !savedPref || savedPref.source === 'inferred'
-              ? 'Remember this pitch for me'
-              : 'Forget my pitch for this song'}
+              ? t('pitch.rememberForMe')
+              : t('pitch.forgetMine')}
           />
         )}
       </div>

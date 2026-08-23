@@ -2,6 +2,7 @@ import React, { useRef, useState } from 'react'
 import Button from 'components/Button/Button'
 import InputImage from 'components/InputImage/InputImage'
 import styles from './Create.css'
+import { useT } from 'lib/i18n'
 
 export interface RepertoireChoice {
   file?: File | null
@@ -30,6 +31,7 @@ const Create = ({
   onSubmit,
   onFirstFieldRef,
 }: CreateProps) => {
+  const t = useT()
   const [name, setName] = useState('')
   const [passwordConfirm, setPasswordConfirm] = useState('')
   const [image, setImage] = useState<Blob | undefined>(undefined)
@@ -59,7 +61,7 @@ const Create = ({
             autoComplete='off'
             value={username}
             onChange={e => onUsernameChange(e.target.value)}
-            placeholder='username or email'
+            placeholder={t('account.form.username')}
             ref={onFirstFieldRef}
           />
           <input
@@ -67,12 +69,12 @@ const Create = ({
             autoComplete='new-password'
             value={password}
             onChange={e => onPasswordChange(e.target.value)}
-            placeholder='password'
+            placeholder={t('account.form.password')}
           />
           <input
             type='password'
             autoComplete='new-password'
-            placeholder='confirm password'
+            placeholder={t('account.form.confirmPassword')}
             value={passwordConfirm}
             onChange={e => setPasswordConfirm(e.target.value)}
           />
@@ -83,7 +85,7 @@ const Create = ({
         <InputImage onSelect={setImage} />
         <input
           type='text'
-          placeholder='display name'
+          placeholder={t('account.form.displayName')}
           value={name}
           onChange={e => setName(e.target.value)}
           ref={guest ? onFirstFieldRef : undefined}
@@ -95,13 +97,9 @@ const Create = ({
           form, rather than after joining and finding the right screen. */}
       {allowRepertoire && (
         <details className={styles.repertoire}>
-          <summary>I have my repertoire with me</summary>
+          <summary>{t('signedOut.haveMyRepertoire')}</summary>
 
-          <p className={styles.repertoireHint}>
-            A file from another Karaoke Propio, holding your songs and the pitch
-            you sing each of them in. Whatever this library already has, you get
-            back straight away.
-          </p>
+          <p className={styles.repertoireHint}>{t('signedOut.repertoireHint')}</p>
 
           <input
             type='file'
@@ -110,12 +108,12 @@ const Create = ({
             className={styles.repertoireFile}
           />
 
-          <div className={styles.repertoireOr}>or paste a link to it</div>
+          <div className={styles.repertoireOr}>{t('repertoire.orPasteALink')}</div>
 
           <input
             type='url'
             inputMode='url'
-            placeholder='https://…/my.karaoke-propio.json'
+            placeholder={t('signedOut.repertoireUrlPlaceholder')}
             value={repertoireUrl}
             onChange={e => setRepertoireUrl(e.target.value)}
           />
@@ -123,7 +121,7 @@ const Create = ({
       )}
 
       <Button type='submit' variant='primary'>
-        Join
+        {t('signedOut.join')}
       </Button>
     </form>
   )

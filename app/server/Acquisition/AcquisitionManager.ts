@@ -23,6 +23,7 @@ import { musicBrainz } from '../Categories/MusicBrainzClient.js'
 import { corroborate } from './corroborate.js'
 import { ACQUISITION_BULK_PUSH, ACQUISITION_PUSH, LIBRARY_PUSH, LIBRARY_PUSH_SONG, QUEUE_PUSH } from '../../shared/actionTypes.js'
 import type { AcquisitionRequest, AcquisitionSource, AcquisitionState, BulkAcquisition, BulkAcquisitionItem, PlaylistImport, PlaylistImportEntry } from '../../shared/types.js'
+import { MessageError } from '../lib/i18n.js'
 
 const log = getLogger('AcquisitionManager')
 
@@ -126,10 +127,10 @@ class AcquisitionManager {
    */
   static async fetchPlaylist (url: string): Promise<PlaylistImport> {
     const playlistId = parsePlaylistId(url)
-    if (!playlistId) throw new Error(`That doesn't look like a link to a YouTube playlist.`)
+    if (!playlistId) throw new MessageError(422, 'server.acquisition.notAPlaylistLink')
 
     if (isPrivatePlaylistId(playlistId)) {
-      throw new Error(`YouTube keeps Liked songs and Watch later private, so nothing can read them from here. Copy them into a playlist and set it to public or unlisted.`)
+      throw new MessageError(422, 'server.acquisition.privatePlaylist')
     }
 
     const { title, total, read, entries } = await this.worker.fetchPlaylist(playlistUrl(playlistId))
@@ -167,7 +168,7 @@ class AcquisitionManager {
 
     if (!/^\d+$/.test(resultId)) throw new Error('invalid USDB song id')
     const links = await this.usdb.fetchYoutubeLinks(resultId)
-    if (!links.length) throw new Error('no YouTube link found in USDB comments for this song')
+    if (!links.length) throw new MessageError(422, 'server.acquisition.noUsdbLink')
     return { videoId: links[0].videoId }
   }
 
@@ -321,7 +322,7 @@ class AcquisitionManager {
     }
 
     if (!items.length) {
-      throw new Error('None of those songs can be fetched: they came from files with no source of their own.')
+      throw new MessageError(422, 'server.acquisition.nothingFetchable')
     }
 
     return this.startBulkJob({ roomId, playlistId: '', playlistTitle: title, items, entries })
@@ -335,7 +336,7 @@ class AcquisitionManager {
     entries: Map<string, PlaylistImportEntry>
   }): BulkAcquisition {
     if (this.bulk?.isRunning) {
-      throw new Error('A bulk import is already running. Wait for it to finish, or stop it.')
+      throw new MessageError(409, 'server.acquisition.bulkAlreadyRunning')
     }
 
     const job: BulkAcquisition = {

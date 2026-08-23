@@ -16,6 +16,7 @@ import SeekBar from './SeekBar'
 import { formatPitch } from 'shared/pitch'
 import type { PitchStatus } from 'shared/types'
 import styles from './QueueItem.css'
+import { useT } from 'lib/i18n'
 
 const LONG_PRESS_THRESHOLD_MS = 700
 
@@ -85,6 +86,7 @@ const QueueItem = ({
   userId,
   wait,
 }: QueueItemProps) => {
+  const t = useT()
   const [isExpanded, setExpanded] = useState(false)
   const longPressActiveRef = useRef(false)
   const dispatch = useAppDispatch()
@@ -121,7 +123,9 @@ const QueueItem = ({
   })
 
   const bindRemovePressHandlers = useLongPress(() => {
-    const confirmText = isOwner ? 'Remove all your upcoming songs?' : `Remove all upcoming songs for "${userDisplayName}"?`
+    const confirmText = isOwner
+      ? t('queue.confirmRemoveAllMine')
+      : t('queue.confirmRemoveAllFor', { name: userDisplayName })
     longPressActiveRef.current = true
 
     if (confirm(confirmText)) {
@@ -130,7 +134,9 @@ const QueueItem = ({
   }, { threshold: LONG_PRESS_THRESHOLD_MS, cancelOnMovement: true })
 
   const bindSkipPressHandlers = useLongPress(() => {
-    const confirmText = isOwner ? 'Skip and remove all your upcoming songs?' : `Skip and remove all upcoming songs for "${userDisplayName}"?`
+    const confirmText = isOwner
+      ? t('queue.confirmSkipAndRemoveAllMine')
+      : t('queue.confirmSkipAndRemoveAllFor', { name: userDisplayName })
     longPressActiveRef.current = true
 
     if (confirm(confirmText)) {
@@ -181,16 +187,12 @@ const QueueItem = ({
             <div className={styles.artist}>{artist}</div>
             {pitchStatus === 'preparing' && (
               <div className={styles.pitchStatus}>
-                Preparando tono
-                {' '}
-                {formatPitch(pitchSemitones)}
-                …
+                {t('queue.pitchPreparing', { pitch: formatPitch(pitchSemitones) })}
               </div>
             )}
             {pitchStatus === 'error' && (
               <div className={clsx(styles.pitchStatus, styles.danger)}>
-                {'Error preparando tono '}
-                {formatPitch(pitchSemitones)}
+                {t('queue.pitchFailed', { pitch: formatPitch(pitchSemitones) })}
                 {pitchError ? `: ${pitchError}` : ''}
               </div>
             )}

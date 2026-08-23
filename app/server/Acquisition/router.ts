@@ -4,6 +4,7 @@ import getLogger from '../lib/Log.js'
 import Rooms from '../Rooms/Rooms.js'
 import AcquisitionManager from './AcquisitionManager.js'
 import type { AcquisitionSource } from '../../shared/types.js'
+import { MessageError } from '../lib/i18n.js'
 
 const log = getLogger('Acquisition')
 const router = new KoaRouter({ prefix: '/api/acquisition' })
@@ -107,7 +108,7 @@ router.get('/preview-stream', async (ctx) => {
   }
 
   if (!upstream || !upstream.body) {
-    ctx.throw(502, `could not fetch a playable preview: ${lastError}`)
+    throw new MessageError(502, 'server.acquisition.previewUnavailable', { detail: lastError })
     return
   }
 
