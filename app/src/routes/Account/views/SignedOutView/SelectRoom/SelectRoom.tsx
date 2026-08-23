@@ -69,7 +69,7 @@ const SelectRoom = ({
                 these rooms may have a party going, and the rest are somewhere
                 to start one. */}
             <div className={styles.state}>
-              {rooms.entities[id].isLive ? 'someone is in here' : 'nobody here yet'}
+              {rooms.entities[id]?.isLive ? 'someone is in here' : 'nobody here yet'}
             </div>
 
             {rooms.entities[id]?.hasPassword && (

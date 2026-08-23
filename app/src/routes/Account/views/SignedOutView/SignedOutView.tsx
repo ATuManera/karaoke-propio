@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 import clsx from 'clsx'
 import { useAppDispatch, useAppSelector } from 'store/hooks'
 import { fetchRooms } from 'store/modules/rooms'
@@ -9,6 +9,8 @@ import SelectRoom from './SelectRoom/SelectRoom'
 import InputRadio from 'components/InputRadio/InputRadio'
 import Create, { type RepertoireChoice } from './Create/Create'
 import SignIn from './SignIn/SignIn'
+import Button from 'components/Button/Button'
+import { ROOM_CODE_LENGTH, normalizeRoomCode } from 'shared/roomCode'
 import styles from './SignedOutView.css'
 
 const SignedOutView = () => {
@@ -38,34 +40,58 @@ const SignedOutView = () => {
   // An invite code says nothing about which room it opens, so it has to be
   // resolved server-side; the mapping is deliberately not published anywhere.
   const [invitedRoomId, setInvitedRoomId] = useState<number | null>(null)
+  const [prevInvitedRoomId, setPrevInvitedRoomId] = useState<number | null>(null)
   const [inviteCode, setInviteCode] = useState<string | null>(null)
   const [inviteError, setInviteError] = useState<string | null>(null)
+  const [codeEntry, setCodeEntry] = useState('')
+  const [isCheckingCode, setIsCheckingCode] = useState(false)
+
+  const resolveInvite = useCallback((code: string) => fetch(`${document.baseURI}api/rooms/code/${encodeURIComponent(code)}`, { credentials: 'same-origin' })
+    .then((res): Promise<{ roomId: number }> => res.ok
+      ? res.json()
+      : Promise.reject(new Error(res.status === 429
+          ? 'Too many attempts. Wait a minute and try again.'
+          : 'This invite is not valid. Ask the host for a new one.')))
+    .then((data): undefined => {
+      setInvitedRoomId(data.roomId)
+      setInviteCode(code)
+      setIsCheckingCode(false)
+      return undefined
+    })
+    .catch((err: Error): undefined => {
+      setInviteError(err.message)
+      setIsCheckingCode(false)
+      return undefined
+    }), [])
 
   useEffect(() => {
     const code = new URLSearchParams(location.search).get('room')
-    if (!code) return
+    if (code) resolveInvite(code)
+  }, [resolveInvite])
 
-    fetch(`${document.baseURI}api/rooms/code/${encodeURIComponent(code)}`, { credentials: 'same-origin' })
-      .then((res): Promise<{ roomId: number }> => res.ok
-        ? res.json()
-        : Promise.reject(new Error(res.status === 429
-            ? 'Too many attempts. Wait a minute and try again.'
-            : 'This invite is not valid. Ask the host for a new one.')))
-      .then((data): undefined => {
-        setInvitedRoomId(data.roomId)
-        setInviteCode(code)
-        return undefined
-      })
-      .catch((err: Error): undefined => {
-        setInviteError(err.message)
-        return undefined
-      })
-  }, [])
+  // The code is meant to survive being dictated — that is why its alphabet
+  // leaves out the characters people mishear — so there has to be somewhere to
+  // type it. A scanned QR fills it in through the URL; a code read out over
+  // the phone arrives here.
+  const handleCodeSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    const code = normalizeRoomCode(codeEntry)
+
+    if (code.length !== ROOM_CODE_LENGTH) {
+      setInviteError(`An invite code is ${ROOM_CODE_LENGTH} characters.`)
+      return
+    }
+
+    setInviteError(null)
+    setIsCheckingCode(true)
+    resolveInvite(code)
+  }
 
   // room selection visibility/defaults
   // https://react.dev/reference/react/useState#storing-information-from-previous-renders
-  if (rooms !== prevRooms) {
+  if (rooms !== prevRooms || invitedRoomId !== prevInvitedRoomId) {
     setPrevRooms(rooms)
+    setPrevInvitedRoomId(invitedRoomId)
     const searchParams = new URLSearchParams(location.search)
     // ?room=CODE is the invite form; ?roomId=N is kept so links handed out
     // before invite codes existed still work on a LAN
@@ -212,6 +238,25 @@ const SignedOutView = () => {
             onRoomSelect={handleRoomSelect}
             onRoomPasswordChange={setRoomPassword}
           />
+
+          {!hasInvite && (
+            <form className={styles.codeForm} onSubmit={handleCodeSubmit}>
+              <input
+                type='text'
+                autoComplete='off'
+                autoCapitalize='characters'
+                spellCheck={false}
+                maxLength={ROOM_CODE_LENGTH}
+                value={codeEntry}
+                onChange={e => setCodeEntry(e.target.value.toUpperCase())}
+                placeholder='invite code'
+                aria-label='invite code'
+              />
+              <Button type='submit' disabled={isCheckingCode}>
+                {isCheckingCode ? 'Checking…' : 'Use invite'}
+              </Button>
+            </form>
+          )}
         </>
       )}
 
@@ -242,8 +287,8 @@ const SignedOutView = () => {
 
         {(mode === 'returning' || !allowNew) && !hasInvite && roomId !== null && (
           <p className={styles.inviteHint}>
-            New here? A room is joined by invitation — ask the host to show you
-            its QR code.
+            New here? A room is joined by invitation — scan the QR code your
+            host is showing, or enter the code they read out to you above.
           </p>
         )}
 

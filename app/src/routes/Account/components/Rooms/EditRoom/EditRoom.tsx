@@ -34,6 +34,7 @@ const EditRoom = ({ onClose, room }: EditRoomProps) => {
   }, [room])
 
   const handleRegenerateCode = () => {
+    if (!room) return
     if (!window.confirm('Generate a new invite code?\n\nEvery QR and link already shared stops working. People already in the room are unaffected.')) return
 
     setIsRegenerating(true)

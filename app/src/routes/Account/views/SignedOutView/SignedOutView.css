@@ -39,6 +39,20 @@
   text-align: center;
 }
 
+.codeForm {
+  display: flex;
+  gap: var(--space-s);
+  align-items: center;
+  margin-top: var(--space-m);
+
+  input[type="text"] {
+    flex: 1;
+    min-width: 0;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+}
+
 .roomHint {
   margin-bottom: var(--space-m);
   font-size: var(--font-size-s);
