@@ -4,7 +4,9 @@
   padding: var(--container-padding);
 
   h1 {
-    margin: var(--space-l) 0 var(--space-m) 0;
+    /* the same reasoning as .logo below: on a short screen these headings
+       were the second biggest consumer of the room the form needed */
+    margin: clamp(var(--space-s), 2.5vh, var(--space-l)) 0 var(--space-m) 0;
     font-family: var(--font-family-custom);
     font-size: var(--font-size-l);
     color: hsl(var(--hue-blue), 10%, 60%);
@@ -12,14 +14,28 @@
 }
 
 .logo {
-  margin-bottom: var(--space-xl);
   text-align: center;
-  font-size: 30px;
 
-  @media (min-width: 42em) {
+  /*
+   * The big logo is a reward for having room, and room here is vertical.
+   * Keyed on WIDTH alone, a desktop window dragged short — or a television
+   * browser, which is wide and short by nature — got the largest logo and
+   * doubled margins at exactly the moment the sign-in form had nowhere left
+   * to appear, so reaching the password field meant scrolling a page that
+   * barely scrolled.
+   *
+   * Below that, it is sized fluidly rather than at another breakpoint: a TV
+   * browser reports whatever viewport it likes, and there is no useful
+   * "phone or desktop" to guess at.
+   */
+  font-size: clamp(20px, 4vh, 30px);
+  margin-top: clamp(0px, 1.5vh, var(--space-m));
+  margin-bottom: clamp(var(--space-m), 4vh, var(--space-xl));
+
+  @media (min-width: 42em) and (min-height: 60em) {
+    font-size: 36px;
     margin-top: var(--space-xl);
     margin-bottom: calc(var(--space-xl) * 2);
-    font-size: 36px;
   }
 }
 
@@ -45,11 +61,32 @@
   align-items: center;
   margin-top: var(--space-m);
 
+  flex-wrap: wrap;
+
   input[type="text"] {
-    flex: 1;
+    flex: 1 1 12ch;
     min-width: 0;
     text-transform: uppercase;
     letter-spacing: 0.1em;
+  }
+
+  /* Buttons are 100% wide by default (see Button.css), which in a flex row
+     makes them fight the input for the space. "Use invite" happened to fit;
+     "Usar la invitación" did not, and overflowed across the field next to
+     it. Sized to its own words instead, whatever those turn out to be. */
+  button {
+    flex: 0 0 auto;
+    width: auto;
+    padding-inline: var(--space-m);
+    white-space: nowrap;
+  }
+
+  /* On a phone the button's own label leaves the field too narrow to read
+     its placeholder, so it takes the next row instead. */
+  @media (max-width: 30em) {
+    button {
+      flex: 1 0 100%;
+    }
   }
 }
 
@@ -66,6 +103,5 @@
 }
 
 .language {
-  margin-bottom: 12px;
-  text-align: right;
+  margin-bottom: var(--space-s);
 }

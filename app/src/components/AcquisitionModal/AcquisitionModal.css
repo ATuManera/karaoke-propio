@@ -27,6 +27,16 @@
   display: flex;
   gap: var(--space-s);
   margin-bottom: var(--space-m);
+
+  /* not stretched and not squeezed: Button is 100% wide by default, which in
+     a row makes it fight the field beside it and spill its label across it as
+     soon as a translation is longer than the English was */
+  button {
+    flex: 0 0 auto;
+    width: auto;
+    padding-inline: var(--space-m);
+    white-space: nowrap;
+  }
 }
 
 .searchInput {

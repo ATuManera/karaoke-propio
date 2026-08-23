@@ -22,3 +22,6 @@ backups/
 # uploaded event photos. Publishing it would hand out the invite code.
 ke-config/
 pitch-cache/
+
+# scratch files while working on the repo, not part of it
+tmp/

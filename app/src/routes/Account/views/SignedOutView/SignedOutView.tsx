@@ -274,7 +274,10 @@ const SignedOutView = () => {
             placeholder={t('signedOut.inviteCode')}
             aria-label={t('signedOut.inviteCode')}
           />
-          <Button type='submit' disabled={isCheckingCode}>
+          {/* variant matters: without one a Button renders as bare
+              transparent text, which beside a filled input read as a broken
+              overlap rather than as something to press */}
+          <Button type='submit' variant='default' disabled={isCheckingCode}>
             {isCheckingCode ? t('signedOut.checking') : t('signedOut.useInvite')}
           </Button>
         </form>

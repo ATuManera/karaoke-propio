@@ -1,4 +1,5 @@
 import React from 'react'
+import clsx from 'clsx'
 import { useAppDispatch, useAppSelector } from 'store/hooks'
 import { setLocale } from 'store/modules/user'
 import { getDeviceLocale, getStoredLocale, useT } from 'lib/i18n'
@@ -37,12 +38,12 @@ const LanguagePicker = ({ showHint = true, className }: LanguagePickerProps) => 
   }
 
   return (
-    <div className={className}>
+    <div className={clsx(styles.container, className)}>
       <label className={styles.label} htmlFor='account-language'>
         {t('account.language.label')}
       </label>
 
-      <select id='account-language' value={chosen} onChange={handleChange}>
+      <select id='account-language' className={styles.select} value={chosen} onChange={handleChange}>
         <option value=''>{t('account.language.auto', { name: deviceName })}</option>
         {LOCALES.map(locale => (
           <option key={locale.code} value={locale.code}>{locale.nativeName}</option>
