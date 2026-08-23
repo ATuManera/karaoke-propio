@@ -7,10 +7,13 @@ import EditRoom from './EditRoom/EditRoom'
 import { closeRoomEditor, fetchRooms, filterByStatus, openRoomEditor } from 'store/modules/rooms'
 import { filterByRoom } from '../../modules/users'
 import getRoomList from '../../selectors/getRoomList'
+import type { Room } from 'shared/types'
 import styles from './Rooms.css'
 
 const Rooms = () => {
-  const [editorRoom, setEditorRoom] = useState(null)
+  // undefined, not null: EditRoom tells "create" from "edit" by the absence of
+  // a room, and null is a room it would try to read fields off
+  const [editorRoom, setEditorRoom] = useState<Room | undefined>(undefined)
 
   const { isEditorOpen, filterStatus } = useAppSelector(state => state.rooms)
   const rooms = useAppSelector(getRoomList)
@@ -23,7 +26,11 @@ const Rooms = () => {
   }
   const handleFilterUsers = (e: React.MouseEvent<HTMLElement>) => dispatch(filterByRoom(parseInt(e.currentTarget.dataset.roomId)))
   const handleOpen = (e: React.MouseEvent<HTMLElement>) => {
-    setEditorRoom(rooms.entities[parseInt(e.currentTarget.dataset.roomId || '0')])
+    setEditorRoom(rooms.entities[parseInt(e.currentTarget.dataset.roomId, 10)])
+    dispatch(openRoomEditor())
+  }
+  const handleCreate = () => {
+    setEditorRoom(undefined)
     dispatch(openRoomEditor())
   }
 
@@ -80,7 +87,7 @@ const Rooms = () => {
         </table>
 
         <br />
-        <Button onClick={handleOpen} variant='primary'>
+        <Button onClick={handleCreate} variant='primary'>
           Create Room
         </Button>
 

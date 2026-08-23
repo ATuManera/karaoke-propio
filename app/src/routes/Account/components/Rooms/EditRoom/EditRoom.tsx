@@ -18,7 +18,12 @@ const EditRoom = ({ onClose, room }: EditRoomProps) => {
   const [inviteCode, setInviteCode] = useState<string | null>(null)
   const [isRegenerating, setIsRegenerating] = useState(false)
 
+  // A room being created has no id yet, and no code to show: the dependency
+  // array is read on every render, so reaching into `room` here at all is what
+  // took the whole screen down when the editor was opened empty.
   useEffect(() => {
+    if (!room) return
+
     fetch(`${document.baseURI}api/rooms/${room.roomId}/code`, { credentials: 'same-origin' })
       .then((res): Promise<{ code: string }> => res.ok ? res.json() : Promise.reject(new Error(String(res.status))))
       .then((data): undefined => {
@@ -26,7 +31,7 @@ const EditRoom = ({ onClose, room }: EditRoomProps) => {
         return undefined
       })
       .catch((): undefined => undefined)
-  }, [room.roomId])
+  }, [room])
 
   const handleRegenerateCode = () => {
     if (!window.confirm('Generate a new invite code?\n\nEvery QR and link already shared stops working. People already in the room are unaffected.')) return
@@ -129,16 +134,18 @@ const EditRoom = ({ onClose, room }: EditRoomProps) => {
           {/* Regenerating invalidates every invite already handed out — the
               way to shut out a link that leaked or a guest who should no
               longer have access, without disturbing anyone already in. */}
-          <div className={styles.inviteRow}>
-            <span>
-              Invite code:
-              {' '}
-              <strong>{inviteCode ?? '…'}</strong>
-            </span>
-            <Button onClick={handleRegenerateCode} disabled={isRegenerating}>
-              {isRegenerating ? 'Generating…' : 'New code'}
-            </Button>
-          </div>
+          {room && (
+            <div className={styles.inviteRow}>
+              <span>
+                Invite code:
+                {' '}
+                <strong>{inviteCode ?? '…'}</strong>
+              </span>
+              <Button onClick={handleRegenerateCode} disabled={isRegenerating}>
+                {isRegenerating ? 'Generating…' : 'New code'}
+              </Button>
+            </div>
+          )}
 
           <select
             name='status'
