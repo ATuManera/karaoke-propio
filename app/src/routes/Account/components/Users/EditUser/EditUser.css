@@ -12,3 +12,15 @@
 .field {
   margin-bottom: var(--input-margin);
 }
+
+/* below the form rather than inside it: this applies immediately and on its
+   own, and pressing Enter in the form must never trigger it */
+.repertoire {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  margin-top: var(--space-s);
+  padding-top: var(--space-s);
+  border-top: 1px solid hsl(var(--hue-blue), 20%, 18%);
+  font-size: var(--font-size-s);
+}

@@ -1,6 +1,7 @@
-import React from 'react'
-import { useAppDispatch } from 'store/hooks'
+import React, { useRef } from 'react'
+import { useAppDispatch, useAppSelector } from 'store/hooks'
 import { createUser, removeUser, updateUser } from '../../../modules/users'
+import { importRepertoire } from 'store/modules/repertoire'
 import Button from 'components/Button/Button'
 import Modal from 'components/Modal/Modal'
 import AccountForm from '../../AccountForm/AccountForm'
@@ -14,10 +15,35 @@ interface EditUserProps {
 
 const EditUser = ({ user, onClose }: EditUserProps) => {
   const dispatch = useAppDispatch()
+  const isImporting = useAppSelector(state => state.repertoire.isImporting)
+  const repertoireFile = useRef<HTMLInputElement>(null)
 
   const handleSubmit = (data: FormData) => {
     if (user) dispatch(updateUser({ userId: user.userId, data }))
     else dispatch(createUser(data))
+  }
+
+  // An admin applying somebody else's file for them: the singer who is not
+  // going to work out the file picker on their own phone, and the account that
+  // is going to keep this repertoire between parties.
+  const handleImport = async () => {
+    const file = repertoireFile.current?.files?.[0]
+
+    if (!user || !file) {
+      alert('Choose a repertoire file first.')
+      return
+    }
+
+    const imported = await dispatch(importRepertoire({ file, userId: user.userId }))
+
+    if (importRepertoire.fulfilled.match(imported)) {
+      const { songs, pitches } = imported.payload
+
+      alert(`${songs.matched} of ${songs.total} songs are in this library`
+        + (pitches.applied ? `, and ${pitches.applied} pitches were saved for ${user.name}.` : '.'))
+    } else {
+      alert(imported.error.message)
+    }
   }
 
   const handleRemoveClick = () => {
@@ -57,6 +83,23 @@ const EditUser = ({ user, onClose }: EditUserProps) => {
           </Button>
         </div>
       </AccountForm>
+
+      {user && (
+        <div className={styles.repertoire}>
+          <label htmlFor='user-repertoire'>Repertoire from another Karaoke Propio</label>
+
+          <input
+            id='user-repertoire'
+            type='file'
+            accept='application/json,.json'
+            ref={repertoireFile}
+          />
+
+          <Button onClick={handleImport} disabled={isImporting}>
+            {isImporting ? 'Reading…' : `Import for ${user.name}`}
+          </Button>
+        </div>
+      )}
     </Modal>
   )
 }

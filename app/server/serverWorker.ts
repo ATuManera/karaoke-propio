@@ -25,6 +25,7 @@ import libraryRouter from './Library/router.js'
 import mediaRouter from './Media/router.js'
 import photosRouter from './Photos/router.js'
 import prefsRouter from './Prefs/router.js'
+import repertoireRouter from './Repertoire/router.js'
 import roomsRouter from './Rooms/router.js'
 import userRouter from './User/router.js'
 import pushQueuesAndLibrary from './lib/pushQueuesAndLibrary.js'
@@ -225,6 +226,7 @@ async function serverWorker ({ env, startScanner, stopScanner, shutdownHandlers 
   baseRouter.use(mediaRouter.routes())
   baseRouter.use(photosRouter.routes())
   baseRouter.use(prefsRouter.routes())
+  baseRouter.use(repertoireRouter.routes())
   baseRouter.use(roomsRouter.routes())
   baseRouter.use(userRouter.routes())
   app.use(baseRouter.routes())

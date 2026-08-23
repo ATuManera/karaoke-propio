@@ -3,10 +3,11 @@ import clsx from 'clsx'
 import { useAppDispatch, useAppSelector } from 'store/hooks'
 import { fetchRooms } from 'store/modules/rooms'
 import { createAccount, login } from 'store/modules/user'
+import { importRepertoire } from 'store/modules/repertoire'
 import Logo from 'components/Logo/Logo'
 import SelectRoom from './SelectRoom/SelectRoom'
 import InputRadio from 'components/InputRadio/InputRadio'
-import Create from './Create/Create'
+import Create, { type RepertoireChoice } from './Create/Create'
 import SignIn from './SignIn/SignIn'
 import styles from './SignedOutView.css'
 
@@ -118,7 +119,12 @@ const SignedOutView = () => {
     }))
   }
 
-  const handleCreate = ({ name, image, passwordConfirm }: { name: string, image: Blob | undefined, passwordConfirm: string }) => {
+  const handleCreate = async ({ name, image, passwordConfirm, repertoire }: {
+    name: string
+    image: Blob | undefined
+    passwordConfirm: string
+    repertoire: RepertoireChoice
+  }) => {
     const data = new FormData()
 
     data.append('username', username.trim())
@@ -136,7 +142,24 @@ const SignedOutView = () => {
       data.append('role', mode)
     }
 
-    dispatch(createAccount(data))
+    const created = await dispatch(createAccount(data))
+
+    if (!createAccount.fulfilled.match(created)) return
+    if (!repertoire.file && !repertoire.url.trim()) return
+
+    // Applied after the account exists rather than as part of creating it: the
+    // person is in either way, and a repertoire that could not be read is a
+    // thing to tell them about, not a reason to refuse them the room.
+    const imported = await dispatch(importRepertoire({ file: repertoire.file, url: repertoire.url }))
+
+    if (importRepertoire.fulfilled.match(imported)) {
+      const { songs, pitches } = imported.payload
+
+      alert(`${songs.matched} of your ${songs.total} songs are in this library`
+        + (pitches.applied ? `, and ${pitches.applied} of your pitches are saved.` : '.'))
+    } else {
+      alert(`You're in, but your repertoire could not be read: ${imported.error.message}`)
+    }
   }
 
   const getAllowed = (roleName: string) => {
@@ -202,6 +225,7 @@ const SignedOutView = () => {
         {mode !== 'returning' && allowNew && (
           <Create
             guest={mode === 'guest'}
+            allowRepertoire={prefs.isRepertoireImportEnabled !== false}
             username={username}
             password={password}
             onUsernameChange={setUsername}

@@ -282,17 +282,66 @@ class AcquisitionManager {
    * asks have no answer without a singer.
    */
   static startBulk ({ roomId, playlist }: { roomId: number, playlist: PlaylistImport }): BulkAcquisition {
+    return this.startBulkJob({
+      roomId,
+      playlistId: playlist.playlistId,
+      playlistTitle: playlist.title,
+      items: AcquisitionManager.planBulk(playlist, this.matchIndex()),
+      entries: new Map(playlist.entries.map(entry => [entry.id, entry])),
+    })
+  }
+
+  /**
+   * Download the songs an imported repertoire named that this library does
+   * not have.
+   *
+   * The same job as a playlist import, from a different list. It deliberately
+   * does NOT go through planBulk: that filter asks whether a YouTube entry
+   * looks like a karaoke upload, which is the right question for a stranger's
+   * playlist and the wrong one here — every song on this list is already a
+   * karaoke file sitting in somebody's library, and its artist and title were
+   * read there rather than guessed from an uploader's title. So they arrive
+   * un-ambiguous and skip the MusicBrainz corroboration too.
+   */
+  static startBulkFromSongs ({ roomId, title, songs }: {
+    roomId: number
+    title: string
+    songs: { sourceId: string, artist: string, title: string }[]
+  }): BulkAcquisition {
+    const seen = new Set<string>()
+    const items: BulkAcquisitionItem[] = []
+    const entries = new Map<string, PlaylistImportEntry>()
+
+    for (const song of songs) {
+      if (!YOUTUBE_ID_RE.test(song.sourceId) || seen.has(song.sourceId)) continue
+      seen.add(song.sourceId)
+
+      items.push({ id: song.sourceId, artist: song.artist, title: song.title, state: 'waiting', isAmbiguous: false })
+      entries.set(song.sourceId, { id: song.sourceId, title: [song.artist, song.title].filter(Boolean).join(' - ') })
+    }
+
+    if (!items.length) {
+      throw new Error('None of those songs can be fetched: they came from files with no source of their own.')
+    }
+
+    return this.startBulkJob({ roomId, playlistId: '', playlistTitle: title, items, entries })
+  }
+
+  private static startBulkJob ({ roomId, playlistId, playlistTitle, items, entries }: {
+    roomId: number
+    playlistId: string
+    playlistTitle: string
+    items: BulkAcquisitionItem[]
+    entries: Map<string, PlaylistImportEntry>
+  }): BulkAcquisition {
     if (this.bulk?.isRunning) {
       throw new Error('A bulk import is already running. Wait for it to finish, or stop it.')
     }
 
-    const items = AcquisitionManager.planBulk(playlist, this.matchIndex())
-    const entries = new Map(playlist.entries.map(entry => [entry.id, entry]))
-
     const job: BulkAcquisition = {
       jobId: crypto.randomUUID(),
-      playlistId: playlist.playlistId,
-      playlistTitle: playlist.title,
+      playlistId,
+      playlistTitle,
       items,
       isRunning: items.some(item => item.state === 'waiting'),
       isStopping: false,
@@ -378,7 +427,9 @@ class AcquisitionManager {
 
         SongReview.markPending(reg.songId, {
           sourceTitle: entry?.title ?? item.title,
-          playlistId: job.playlistId,
+          // an import job is not a playlist, and its rows should say so rather
+          // than claiming an empty one
+          playlistId: job.playlistId || null,
           isAmbiguous: item.isAmbiguous,
         })
 

@@ -393,6 +393,87 @@ like any other saved pitch — hence no new table.
 
 Full design and the roadmap beyond this phase: `docs/PERSONAL_PITCH.md`.
 
+## Portable repertoire (export / import between installations)
+
+What a singer carries to a friend's Karaoke Propio: their songs, their saved
+pitches and their stars, as a JSON file of a few kilobytes
+(`fernando.karaoke-propio.json`). Deliberately no audio. The songs already exist
+at the other end, or can be fetched there the same way they were fetched here;
+the pitch cannot, because it took a party and a pitch assistant to learn.
+
+**The join key is the source upload's id.** `songId`, `mediaId` and `artistId`
+are local numbers that mean something else on the other machine. The only thing
+two libraries can agree on is the `---<id>` suffix acquisition writes into every
+filename (`sourceIdFromPath`, `server/lib/util.ts`). Artist and title travel too,
+and carry the songs that never had a source id at all.
+
+**Two matches, and the difference decides what a pitch is worth.** The same
+source id is the same upload: the number means exactly what it meant at the
+origin, and arrives with its `source` intact. The same artist and title is only
+the same *song* — karaoke uploads are transposed against each other constantly —
+so that pitch arrives as `inferred`, losing to any decision made here and
+corrected by the pitch assistant the first time they sing it. Migration 012
+spells out why: a pitch against another recording is a wrong number, not an
+approximate one.
+
+**Each pitch names its own recording**, not just its song: a library can hold
+two uploads of one song, and the singer learned their number on one of them
+(`RepertoirePitch.sourceId`). A pitch that names none — the common case, since
+`PitchPrefs.set` defaults `mediaId` to null — inherits its song's answer rather
+than being downgraded on principle, which would throw away the case the feature
+exists for.
+
+**An import never undoes a correction made here.** The file carries the origin's
+`dateUpdated` and `PitchPrefs.set` writes it through unchanged (that parameter
+exists for this), so a row changed at the destination after the file was written
+wins, and re-importing the same file is idempotent.
+
+**Bringing one in happens at the join form.** Someone arriving with their
+repertoire is arriving to sing, and the form is the one moment they are already
+filling something in — a file from the phone, or a link to one. The account is
+created first and the repertoire applied after: a file that cannot be read is
+something to tell them about, not a reason to refuse them the room. It is also
+in Account (`My Repertoire`) for later, and in the admin's user editor for
+applying somebody else's file on their behalf.
+
+**A link is fetched by this server**, which is the whole reason
+`Repertoire/fetchRemote.ts` exists: the field is filled in by someone who has
+not signed in yet, and without a check "paste a link" would also mean "make the
+host's server connect to anything on the host's LAN and tell me how it went".
+Every hop is resolved and every address checked against loopback, the private
+ranges, CGNAT, link-local (including `169.254.169.254`) and their IPv6
+equivalents; three redirects, 1 MB, ten seconds, ten attempts a minute per IP.
+The residual gap — a name that resolves publicly here and internally a
+millisecond later — is documented in that file rather than pretended away.
+
+**Nothing about an import downloads anything.** It writes to exactly two places,
+both belonging to the person importing: their saved pitches and their stars.
+Songs this library does not have are listed, with the upload each came from, and
+fetching them is a separate admin action that reuses the bulk import
+(`startBulkFromSongs`) — one at a time, nothing queued, everything held in
+`songsPendingReview` like any other unattended download. That path skips
+`planBulk` on purpose: its `isKaraokeUpload` filter is the right question for a
+stranger's playlist and the wrong one for songs already sitting in a library.
+
+**Guests are deliberately ephemeral.** A guest who brings their repertoire keeps
+it as long as the party lasts, and the nightly sweep takes it with the account —
+the file at home is the durable copy. Persisting between parties is what the
+`standard` role is for; an admin can import the same file onto a real account.
+
+**The password never travels.** Carrying the hash would make the export file a
+credential that works on any installation the person has ever visited, and
+recovering "sign in with the same password at a friend's house" is not worth
+that.
+
+**The same format with nobody in it** is a library export
+(`GET /api/repertoire/library`, admin): every song and the upload it came from,
+no personal data. That is what one installation hands another so it can fetch
+the same catalogue.
+
+Admins can turn importing off entirely (`isRepertoireImportEnabled`, migration
+014); the flag reaches signed-out clients, unlike the rest of the preferences,
+because the join form has to know whether to offer the field.
+
 ## Categories
 
 Genre, decade, voice and language, derived from MusicBrainz.

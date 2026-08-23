@@ -54,12 +54,19 @@ class PitchPrefs {
    * erased by the next performance. Callers treat false as "nothing changed",
    * never as an error.
    */
-  static set ({ userId, songId, pitchSemitones, source, mediaId = null }: {
+  static set ({ userId, songId, pitchSemitones, source, mediaId = null, dateUpdated }: {
     userId: number
     songId: number
     pitchSemitones: number
     source: PitchPrefSource
     mediaId?: number | null
+    /**
+     * When the decision was made, if that is not now. Only an import passes
+     * this, and it has to: the file carries the origin's timestamp, and
+     * stamping it with the moment it arrived would make every imported row
+     * look newer than the corrections it is supposed to lose to.
+     */
+    dateUpdated?: number
   }): boolean {
     if (!isValidPitch(pitchSemitones)) {
       throw new Error(`invalid pitchSemitones: ${pitchSemitones}`)
@@ -75,7 +82,7 @@ class PitchPrefs {
     // overwrite a decision made a moment earlier.
     const query = sql`
       INSERT INTO songPitchPrefs (userId, songId, pitchSemitones, source, mediaId, dateUpdated)
-      VALUES (${userId}, ${songId}, ${pitchSemitones}, ${source}, ${mediaId}, ${Math.floor(Date.now() / 1000)})
+      VALUES (${userId}, ${songId}, ${pitchSemitones}, ${source}, ${mediaId}, ${dateUpdated ?? Math.floor(Date.now() / 1000)})
       ON CONFLICT (userId, songId) DO UPDATE SET
         pitchSemitones = excluded.pitchSemitones,
         source = excluded.source,

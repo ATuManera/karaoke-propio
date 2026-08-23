@@ -1,0 +1,70 @@
+.content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-s);
+}
+
+.hint,
+.reportNote {
+  margin: 0;
+  color: var(--color-gray-6);
+  font-size: var(--font-size-s);
+}
+
+.download {
+  align-self: flex-start;
+}
+
+.import {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.label {
+  font-size: var(--font-size-s);
+  color: var(--color-gray-6);
+}
+
+/* a file input on a phone is a tap target, so it gets room to be one */
+.file {
+  padding: var(--space-xs) 0;
+}
+
+.or {
+  font-size: var(--font-size-s);
+  color: var(--color-gray-6);
+}
+
+.error {
+  margin: 0;
+  color: var(--btn-danger-bg-color);
+  font-size: var(--font-size-s);
+}
+
+.report {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  padding-top: var(--space-s);
+  border-top: 1px solid hsl(var(--hue-blue), 20%, 18%);
+}
+
+.reportLine {
+  margin: 0;
+}
+
+.missing ul {
+  margin: var(--space-xs) 0;
+  padding-left: 1.2em;
+  font-size: var(--font-size-s);
+}
+
+.unfetchable {
+  color: var(--color-gray-6);
+}
+
+.dismiss {
+  align-self: flex-start;
+  font-size: var(--font-size-s);
+}

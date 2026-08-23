@@ -60,3 +60,14 @@ const SOURCE_ID_SUFFIX_RE = /---[\w-]{11}$/
 export const withSourceIdSuffix = (base: string, sourceId: string): string => `${base}---${sourceId}`
 
 export const stripSourceIdSuffix = (name: string): string => name.replace(SOURCE_ID_SUFFIX_RE, '').trimEnd()
+
+/**
+ * The source upload's id, read back out of a stored file's path.
+ *
+ * The only link a stored file keeps to where it came from, which makes it the
+ * only identifier two separate installations can agree on: songId and mediaId
+ * are local numbers. Null for anything scanned from disk or paired from
+ * UltraStar, which never had one.
+ */
+export const sourceIdFromPath = (relPath: string): string | null =>
+  /---([\w-]{11})\.[^.]+$/.exec(relPath ?? '')?.[1] ?? null

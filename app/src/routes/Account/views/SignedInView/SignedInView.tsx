@@ -6,6 +6,7 @@ import usersReducer, { sliceInjectNoOp } from '../../modules/users'
 import About from '../../components/About/About'
 import Account from '../../components/Account/Account'
 import MyPitches from '../../components/MyPitches/MyPitches'
+import MyRepertoire from '../../components/MyRepertoire/MyRepertoire'
 import Prefs from '../../components/Prefs/Prefs'
 import Rooms from '../../components/Rooms/Rooms'
 import Users from '../../components/Users/Users'
@@ -39,6 +40,8 @@ const SignedInView = () => {
       <Account />
 
       <MyPitches />
+
+      <MyRepertoire />
 
       <About />
     </>

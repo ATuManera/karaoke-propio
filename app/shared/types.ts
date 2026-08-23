@@ -248,6 +248,12 @@ export interface Prefs {
   isFirstRun?: boolean
   isScanning: boolean
   isReplayGainEnabled: boolean
+  /**
+   * Whether a singer may bring a repertoire file from another installation
+   * and apply it to their own account. Reaches signed-out clients too (the
+   * guest join form offers it), unlike the rest of these.
+   */
+  isRepertoireImportEnabled?: boolean
   paths: {
     result: number[]
     entities: Record<number, Path>

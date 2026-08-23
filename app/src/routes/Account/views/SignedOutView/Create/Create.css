@@ -12,3 +12,27 @@
   display: flex;
   gap: var(--space-s);
 }
+
+/* folded away by default: most people joining have nothing to bring, and the
+   join form is the last place to add a field everyone must read past */
+.repertoire {
+  margin-bottom: 12px;
+  color: var(--color-gray-7);
+}
+
+.repertoireHint {
+  margin: 8px 0;
+  font-size: var(--font-size-s);
+  color: var(--color-gray-6);
+}
+
+.repertoireFile {
+  padding: 4px 0;
+  width: 100%;
+}
+
+.repertoireOr {
+  margin: 8px 0 4px;
+  font-size: var(--font-size-s);
+  color: var(--color-gray-6);
+}

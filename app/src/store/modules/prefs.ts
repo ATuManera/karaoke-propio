@@ -82,6 +82,12 @@ interface PrefsState {
   publicUrl?: string
   isScanning: boolean
   isReplayGainEnabled: boolean
+  /**
+   * Whether a singer may bring a repertoire from another installation. Unlike
+   * the rest of these it reaches signed-out clients, because the join form
+   * offers the file to whoever is arriving.
+   */
+  isRepertoireImportEnabled?: boolean
   paths: {
     result: number[]
     entities: Record<number, Path>

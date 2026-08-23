@@ -1,0 +1,30 @@
+.heading  {
+  button {
+    display: flex;
+    align-items: center;
+    gap: var(--space-s);
+    padding: var(--space-s);
+    font-size: var(--font-size-m);
+  }
+
+  svg {
+    height: var(--icon-size-l);
+  }
+}
+
+.content {
+  padding: var(--container-padding);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.content label {
+  cursor: pointer;
+}
+
+.hint {
+  margin: 0;
+  color: var(--color-gray-6);
+  font-size: var(--font-size-s);
+}

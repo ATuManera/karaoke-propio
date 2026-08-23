@@ -7,6 +7,7 @@ import categories from './modules/categories'
 import library from 'routes/Library/modules/library'
 import prefs from './modules/prefs'
 import queue from 'routes/Queue/modules/queue'
+import repertoire from './modules/repertoire'
 import rooms from './modules/rooms'
 import songs from 'routes/Library/modules/songs'
 import songInfo from './modules/songInfo'
@@ -28,6 +29,7 @@ const combinedReducer = combineSlices({
   library,
   prefs,
   queue: optimistic(queue),
+  repertoire,
   rooms,
   songs,
   songInfo,

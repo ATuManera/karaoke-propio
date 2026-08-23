@@ -28,8 +28,12 @@ router.get('/', (ctx) => {
     return
   }
 
-  // non-admins only get roles
-  ctx.body = { roles: prefs.roles }
+  // non-admins only get roles, plus the one flag the join form needs: the
+  // guest deciding whether to bring their repertoire has not signed in yet
+  ctx.body = {
+    roles: prefs.roles,
+    isRepertoireImportEnabled: prefs.isRepertoireImportEnabled !== false,
+  }
 })
 
 // add a media path
