@@ -239,25 +239,29 @@ const SignedOutView = () => {
             onRoomPasswordChange={setRoomPassword}
           />
 
-          {!hasInvite && (
-            <form className={styles.codeForm} onSubmit={handleCodeSubmit}>
-              <input
-                type='text'
-                autoComplete='off'
-                autoCapitalize='characters'
-                spellCheck={false}
-                maxLength={ROOM_CODE_LENGTH}
-                value={codeEntry}
-                onChange={e => setCodeEntry(e.target.value.toUpperCase())}
-                placeholder='invite code'
-                aria-label='invite code'
-              />
-              <Button type='submit' disabled={isCheckingCode}>
-                {isCheckingCode ? 'Checking…' : 'Use invite'}
-              </Button>
-            </form>
-          )}
         </>
+      )}
+
+      {/* Outside the room picker, which a link carrying a room id hides: the
+          sign-in form tells someone new to type the code they were read, so
+          the field has to be there whenever they have not used one yet. */}
+      {!hasInvite && rooms.result.length > 0 && (
+        <form className={styles.codeForm} onSubmit={handleCodeSubmit}>
+          <input
+            type='text'
+            autoComplete='off'
+            autoCapitalize='characters'
+            spellCheck={false}
+            maxLength={ROOM_CODE_LENGTH}
+            value={codeEntry}
+            onChange={e => setCodeEntry(e.target.value.toUpperCase())}
+            placeholder='invite code'
+            aria-label='invite code'
+          />
+          <Button type='submit' disabled={isCheckingCode}>
+            {isCheckingCode ? 'Checking…' : 'Use invite'}
+          </Button>
+        </form>
       )}
 
       <div ref={userSectionRef} className={clsx(rooms.result.length > 0 && roomId === null && styles.hidden)}>
