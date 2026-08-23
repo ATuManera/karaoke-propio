@@ -254,6 +254,12 @@ export interface Prefs {
    * guest join form offers it), unlike the rest of these.
    */
   isRepertoireImportEnabled?: boolean
+  /**
+   * Whether a signed-in singer who isn't an admin may open the Player. Off
+   * unless an admin says otherwise; reaches every client, since the ones it
+   * concerns are exactly the ones who don't get the rest of these.
+   */
+  isPlayerLaunchEnabled?: boolean
   paths: {
     result: number[]
     entities: Record<number, Path>

@@ -14,9 +14,18 @@
 
 .content {
   padding: var(--container-padding);
+  display: flex;
+  flex-direction: column;
 }
 
 .content label {
   padding: var(--container-padding);
   cursor: pointer;
+}
+
+.hint {
+  margin: 0;
+  padding: 0 var(--container-padding) var(--container-padding);
+  color: var(--color-gray-6);
+  font-size: var(--font-size-s);
 }

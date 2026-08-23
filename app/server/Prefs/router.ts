@@ -28,11 +28,24 @@ router.get('/', (ctx) => {
     return
   }
 
-  // non-admins only get roles, plus the one flag the join form needs: the
-  // guest deciding whether to bring their repertoire has not signed in yet
+  const isPlayerLaunchEnabled = prefs.isPlayerLaunchEnabled === true
+
+  // Non-admins get roles and the two flags that decide what they're offered:
+  // whether the join form takes a repertoire file (the guest deciding that has
+  // not signed in yet), and whether the Player is theirs to open.
   ctx.body = {
     roles: prefs.roles,
     isRepertoireImportEnabled: prefs.isRepertoireImportEnabled !== false,
+    isPlayerLaunchEnabled,
+    // ...and, once it is, what a Player needs to behave the same whoever
+    // opened it: how loud to play, and which name to put in the invite it
+    // shows. Withheld until then, like the rest of the admin's settings.
+    ...(isPlayerLaunchEnabled
+      ? {
+          isReplayGainEnabled: prefs.isReplayGainEnabled,
+          publicUrl: prefs.publicUrl,
+        }
+      : {}),
   }
 })
 

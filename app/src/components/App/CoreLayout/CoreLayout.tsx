@@ -1,4 +1,4 @@
-import React, { useRef } from 'react'
+import React, { useEffect, useRef } from 'react'
 import { useMatch } from 'react-router'
 import { useAppDispatch, useAppSelector } from 'store/hooks'
 import useResizeObserver from 'use-resize-observer'
@@ -12,6 +12,7 @@ import Modal from 'components/Modal/Modal'
 import PitchFeedbackPrompt from 'components/PitchFeedbackPrompt/PitchFeedbackPrompt'
 import SongInfo from 'components/SongInfo/SongInfo'
 import Routes from '../Routes/Routes'
+import { fetchPrefs } from 'store/modules/prefs'
 import { clearErrorMessage, setFooterHeight, setHeaderHeight } from 'store/modules/ui'
 
 const CoreLayout = () => {
@@ -19,6 +20,16 @@ const CoreLayout = () => {
   const dispatch = useAppDispatch()
   const headerRef = useRef<HTMLDivElement>(null)
   const navRef = useRef<HTMLDivElement>(null)
+  const isSignedIn = useAppSelector(state => state.user.userId !== null)
+  const isAdmin = useAppSelector(state => state.user.isAdmin)
+
+  // An admin is handed prefs over the socket the moment it connects; everyone
+  // else has to ask, and until they do the app can't know whether this person
+  // is allowed to open the Player. Asking here rather than from the account
+  // screen means a TV reopened straight at /player finds out too.
+  useEffect(() => {
+    if (isSignedIn && !isAdmin) dispatch(fetchPrefs())
+  }, [dispatch, isAdmin, isSignedIn])
 
   useResizeObserver({
     onResize: ({ height }) => { dispatch(setHeaderHeight(height)) },

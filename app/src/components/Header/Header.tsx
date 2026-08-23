@@ -8,6 +8,7 @@ import { createSelector } from '@reduxjs/toolkit'
 import { requestScanStop } from 'store/modules/prefs'
 import getRoundRobinQueue from 'routes/Queue/selectors/getRoundRobinQueue'
 import getWaits from 'routes/Queue/selectors/getWaits'
+import getCanLaunchPlayer from 'routes/Player/selectors/getCanLaunchPlayer'
 import LibraryHeader from 'routes/Library/components/LibraryHeader/LibraryHeader'
 import PlaybackCtrl from './PlaybackCtrl/PlaybackCtrl'
 import ProgressBar from './ProgressBar/ProgressBar'
@@ -49,6 +50,7 @@ const getStatusProps = createSelector(
 // component
 const Header = React.forwardRef<HTMLDivElement>((_, ref) => {
   const isAdmin = useAppSelector(state => state.user.isAdmin)
+  const canLaunchPlayer = useAppSelector(getCanLaunchPlayer)
   const isPlayerPresent = useAppSelector(state => state.status.isPlayerPresent)
   const isScanning = useAppSelector(state => state.prefs.isScanning)
   const scannerText = useAppSelector(state => state.prefs.scannerText)
@@ -67,7 +69,11 @@ const Header = React.forwardRef<HTMLDivElement>((_, ref) => {
       {!isPlayer && isPlayerPresent
         && <UpNext isUpNext={isUpNext} isUpNow={isUpNow} wait={wait} />}
 
-      {(isUpNow || isAdmin)
+      {/* A standard user allowed to open the Player gets the controls in the
+          two places they're the point: the invitation to start one when the
+          room has none, and the Player's own screen once it's running. Away
+          from those, playback still belongs to the admin and whoever is up. */}
+      {(isUpNow || isAdmin || (canLaunchPlayer && (isPlayer || !isPlayerPresent)))
         && <PlaybackCtrl />}
 
       {isAdmin && !isPlayer

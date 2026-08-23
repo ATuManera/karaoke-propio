@@ -7,6 +7,7 @@ import { requestOptions, requestPause, requestPlay, requestPlayNext, requestVolu
 import Button from 'components/Button/Button'
 import VolumeSlider from './VolumeSlider/VolumeSlider'
 import NoPlayer from './NoPlayer/NoPlayer'
+import getCanLaunchPlayer from 'routes/Player/selectors/getCanLaunchPlayer'
 import DisplayCtrl from './DisplayCtrl/DisplayCtrl'
 import styles from './PlaybackCtrl.css'
 import { PlaybackOptions } from 'shared/types'
@@ -23,7 +24,7 @@ const PlaybackCtrl = () => {
   const location = useLocation()
   const isPlayer = location.pathname.replace(/\/$/, '').endsWith('/player')
 
-  const isAdmin = useAppSelector(state => state.user.isAdmin)
+  const canLaunchPlayer = useAppSelector(getCanLaunchPlayer)
   const isInRoom = useAppSelector(state => state.user.roomId !== null)
   const status = useAppSelector(state => state.status)
 
@@ -39,7 +40,7 @@ const PlaybackCtrl = () => {
   }
 
   if (!status.isPlayerPresent) {
-    return (isAdmin && isInRoom && screenfull.isEnabled) ? <NoPlayer /> : null
+    return (canLaunchPlayer && isInRoom && screenfull.isEnabled) ? <NoPlayer /> : null
   }
 
   return (

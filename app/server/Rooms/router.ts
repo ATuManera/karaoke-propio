@@ -2,8 +2,10 @@ import KoaRouter from '@koa/router'
 import sql from 'sqlate'
 import { db } from '../lib/Database.js'
 import getLogger from '../lib/Log.js'
+import Prefs from '../Prefs/Prefs.js'
 import Rooms, { STATUSES, getRoomIdByCode, newUniqueCode } from '../Rooms/Rooms.js'
 import { ValidationError } from '../lib/Errors.js'
+import type { Prefs as PrefsType } from '../../shared/types.js'
 
 interface RequestWithBody {
   body: Record<string, unknown>
@@ -20,13 +22,29 @@ router.get(['/', '/:roomId'], (ctx) => {
   const status = ctx.user.isAdmin ? STATUSES : undefined
   const res = Rooms.get(roomId, { status })
 
+  // The QR overlay is part of the Player, so a non-admin running one needs
+  // that room's qr prefs — but only ever for the room they are in, and only
+  // when an admin has opened the Player to them. The password those prefs
+  // carry is already on screen for the whole room the moment any Player shows
+  // the invite; a member reading it here learns nothing new.
+  const isPlayerLaunchEnabled = !ctx.user.isAdmin
+    && typeof roomId === 'number'
+    && ctx.user.roomId === roomId
+    && (Prefs.get() as unknown as PrefsType).isPlayerLaunchEnabled === true
+
   res.result.forEach((roomId) => {
     if (ctx.user.isAdmin) {
       const room = ctx.io.sockets.adapter.rooms.get(Rooms.prefix(roomId))
       res.entities[roomId].numUsers = room ? room.size : 0
     } else {
-      // only pass the 'roles' prefs key
-      res.entities[roomId].prefs = res.entities[roomId].prefs?.roles ? { roles: res.entities[roomId].prefs.roles } : {}
+      // only pass the 'roles' prefs key (plus 'qr' for a Player they may run)
+      const prefs = res.entities[roomId].prefs
+      const passed: Record<string, unknown> = {}
+
+      if (prefs?.roles) passed.roles = prefs.roles
+      if (isPlayerLaunchEnabled && prefs?.qr) passed.qr = prefs.qr
+
+      res.entities[roomId].prefs = passed
     }
   })
 

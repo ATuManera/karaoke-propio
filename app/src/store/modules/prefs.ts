@@ -88,6 +88,16 @@ interface PrefsState {
    * offers the file to whoever is arriving.
    */
   isRepertoireImportEnabled?: boolean
+  /**
+   * Whether a signed-in singer may open the Player. Reaches non-admins, who
+   * are the only ones it says anything new to.
+   */
+  isPlayerLaunchEnabled?: boolean
+  /**
+   * Whether the server has answered yet. Distinguishes "not allowed" from
+   * "don't know", which the Player route has to wait for rather than guess.
+   */
+  isFetched?: boolean
   paths: {
     result: number[]
     entities: Record<number, Path>
@@ -120,6 +130,13 @@ const prefsReducer = createReducer(initialState, (builder) => {
     .addCase(fetchPrefs.fulfilled, (state, { payload }) => ({
       ...state,
       ...payload,
+      isFetched: true,
+    }))
+    // a failed ask is still an answer: waiting forever would leave the Player
+    // route on a blank screen
+    .addCase(fetchPrefs.rejected, state => ({
+      ...state,
+      isFetched: true,
     }))
     .addCase(receivePrefs, (state, { payload }) => ({
       ...state,

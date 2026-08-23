@@ -517,3 +517,57 @@ Created automatically by scanning the QR, and swept after 24 hours. The sweep
 reuses the normal user-removal path so queued songs and stars are cleaned up
 too; deleting rows directly would leave the queue pointing at users that no
 longer exist.
+
+## Letting a singer start the Player
+
+Off by default; an admin turns it on under Account → Preferences → Player. With
+it on, any signed-in account that is not a guest can open `/player`, and gets
+the playback controls in the two places they mean something: the "no player in
+room" invitation, and the Player's own screen. Everywhere else, playback still
+belongs to the admin and to whoever is up.
+
+The point is the TV. The screen the room watches is rarely next to whoever owns
+the library, and requiring that one account be signed in on it is how parties
+start twenty minutes late.
+
+**This was never a security boundary, and turning it on doesn't remove one.**
+Every command the Player sends (`PLAYER_REQ_*`) was already accepted from any
+member of the room, and media is authorized by queueId rather than by role, so
+the admin-only route hid a button and nothing more. The pref decides what is
+offered, not what is reachable.
+
+**Constraints found the hard way:**
+
+- The permission lives in prefs, not on the signed-in user, so it is *unknown*
+  on the first render of a TV reopened straight at `/player` — the persisted
+  session says who they are, but nothing yet says what they may do. Treating
+  unknown as "no" bounces them to the library on every reload. The route waits
+  on `prefs.isFetched` instead, which is set whether the fetch succeeds or
+  fails so a dead server can't leave a blank screen.
+- Nothing fetched prefs for a non-admin except the account screen, so the
+  launch link never appeared for someone who went straight to the library.
+  `CoreLayout` now asks on mount for anyone signed in and not an admin (an
+  admin is handed prefs over the socket on connect).
+- A Player run by a non-admin was a half-Player until its two admin-only inputs
+  followed it: `isReplayGainEnabled` and `publicUrl` (both added to the
+  non-admin prefs response, only while the pref is on), and the room's `qr`
+  prefs, which `/api/rooms/:roomId` strips for non-admins — without them
+  `getRoomPrefs` returns `{}`, which is truthy, so the default is skipped and
+  the QR overlay silently never mounts. They are passed only for the room the
+  caller is actually in, the same predicate `/:roomId/code` already uses.
+- Those `qr` prefs include the room password in cleartext. It is passed anyway:
+  any Player showing the invite already puts that password on a screen the
+  whole room can scan, so a member reading it here learns nothing new. Strip it
+  and one-scan joining breaks for exactly the rooms that need it.
+- `pushPrefs` (server/Prefs/socket.ts) claimed to push prefs to admins and
+  actually broadcast them to every connected client: it collected socket ids
+  with `.to(id)`, threw the operators away, and then called `.emit()`. Two
+  problems at once — every media path and setting went to guests, and once
+  prefs carried this flag, an admin saving anything at all could have
+  navigated a running Player away from the song a room was watching. Fixed by
+  addressing each admin socket. It also means a non-admin's prefs are settled
+  at page load, which is what makes opening the Player an entry check rather
+  than a leash.
+- Known limitation: `ROOM_PREFS_PUSH` still only reaches admins, so QR settings
+  changed while a non-admin's Player is running apply on its next load rather
+  than live.

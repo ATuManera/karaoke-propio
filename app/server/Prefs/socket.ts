@@ -41,22 +41,31 @@ const ACTION_HANDLERS = {
   },
 }
 
-// helper to push prefs to admins
+/**
+ * Push prefs to admins.
+ *
+ * Addressed one socket at a time. The room-building form of this — collecting
+ * ids with `.to(id)` and then calling `.emit()` — reads like it narrows the
+ * audience but doesn't: those operators are discarded and the emit goes to
+ * everyone. That sent every media path and every setting to every connected
+ * client, guests included, each time an admin saved anything.
+ *
+ * It also decided things it had no business deciding. Prefs now carry whether
+ * a singer may open the Player (see Prefs/router.ts), and a Player is a screen
+ * a room is watching: pushing that flag to the client showing it means any
+ * admin saving any unrelated setting could navigate the TV away mid-song.
+ * Whoever was let in stays in until they reload.
+ */
 const pushPrefs = (sock) => {
-  const admins = []
+  const payload = Prefs.get()
 
   for (const s of sock.server.sockets.sockets.values()) {
     if (s.user && s.user.isAdmin) {
-      admins.push(s.id)
-      sock.server.to(s.id)
+      sock.server.to(s.id).emit('action', {
+        type: PREFS_PUSH,
+        payload,
+      })
     }
-  }
-
-  if (admins.length) {
-    sock.server.emit('action', {
-      type: PREFS_PUSH,
-      payload: Prefs.get(),
-    })
   }
 }
 

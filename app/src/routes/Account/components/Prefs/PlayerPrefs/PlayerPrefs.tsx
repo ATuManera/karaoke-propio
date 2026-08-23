@@ -7,6 +7,7 @@ import styles from './PlayerPrefs.css'
 
 const PlayerPrefs = () => {
   const isReplayGainEnabled = useAppSelector(state => state.prefs.isReplayGainEnabled)
+  const isPlayerLaunchEnabled = useAppSelector(state => state.prefs.isPlayerLaunchEnabled === true)
   const dispatch = useAppDispatch()
 
   const toggleCheckbox = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -34,6 +35,21 @@ const PlayerPrefs = () => {
           {' '}
           ReplayGain (clip-safe)
         </label>
+
+        <label>
+          <input
+            type='checkbox'
+            checked={isPlayerLaunchEnabled}
+            onChange={toggleCheckbox}
+            name='isPlayerLaunchEnabled'
+          />
+          {' '}
+          Let signed-in singers start the player
+        </label>
+        <p className={styles.hint}>
+          Anyone with an account (not guests) can open the player on a screen
+          and control playback from it. Off by default.
+        </p>
       </div>
     </Accordion>
   )
