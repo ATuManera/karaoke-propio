@@ -41,6 +41,12 @@ const CoreLayout = () => {
     ref: navRef,
   })
 
+  // the observer cannot report a bar that is no longer rendered, and the
+  // padding it asked for would otherwise outlive it
+  useEffect(() => {
+    if (!isSignedIn) dispatch(setFooterHeight(0))
+  }, [dispatch, isSignedIn])
+
   const ui = useAppSelector(state => state.ui)
   const closeError = () => dispatch(clearErrorMessage())
 
@@ -50,7 +56,10 @@ const CoreLayout = () => {
 
       <Routes />
 
-      {!isPlayerRoute && <Navigation ref={navRef} />}
+      {/* Nothing behind those icons until someone is signed in: every one of
+          them bounces back to this screen, so they are four ways to go nowhere
+          sitting on top of the form. */}
+      {!isPlayerRoute && isSignedIn && <Navigation ref={navRef} />}
 
       {/* Everywhere the singer might be — library, queue, photos, account —
           but never on the Player: that screen belongs to the whole room, and

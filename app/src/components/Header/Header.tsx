@@ -50,6 +50,7 @@ const getStatusProps = createSelector(
 // component
 const Header = React.forwardRef<HTMLDivElement>((_, ref) => {
   const isAdmin = useAppSelector(state => state.user.isAdmin)
+  const isSignedIn = useAppSelector(state => state.user.userId !== null)
   const canLaunchPlayer = useAppSelector(getCanLaunchPlayer)
   const isPlayerPresent = useAppSelector(state => state.status.isPlayerPresent)
   const isScanning = useAppSelector(state => state.prefs.isScanning)
@@ -86,8 +87,13 @@ const Header = React.forwardRef<HTMLDivElement>((_, ref) => {
           />
         )}
 
+      {/* Only once they are in. A visitor asking for / is sent to the library
+          and bounced to the sign-in screen, but this header keeps its own
+          routes and matched /library on the way through — long enough for the
+          category filter to ask the server for categories, be told 401, and
+          put "Oops..." over the sign-in form. */}
       <Routes>
-        <Route path='/library' element={<LibraryHeader />} />
+        <Route path='/library' element={isSignedIn ? <LibraryHeader /> : null} />
       </Routes>
     </div>
   )
