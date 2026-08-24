@@ -150,11 +150,31 @@ describe('Dedications (integration, real SQLite)', () => {
     expect(Rooms.areDedicationsEnabled(roomId)).toBe(true)
   })
 
-  it('stops taking them once an admin turns them off, and takes them again after', () => {
-    Rooms.set(roomId, { name: 'Test Room', status: 'open', prefs: { dedications: { isEnabled: false } } })
+  it('stops taking them once an admin turns them off, and takes them again after', async () => {
+    await Rooms.set(roomId, { name: 'Test Room', status: 'open', prefs: { dedications: { isEnabled: false } } })
     expect(Rooms.areDedicationsEnabled(roomId)).toBe(false)
 
-    Rooms.set(roomId, { name: 'Test Room', status: 'open', prefs: { dedications: { isEnabled: true } } })
+    await Rooms.set(roomId, { name: 'Test Room', status: 'open', prefs: { dedications: { isEnabled: true } } })
+    expect(Rooms.areDedicationsEnabled(roomId)).toBe(true)
+  })
+
+  it('flips the switch on its own without disturbing the room\'s other prefs', async () => {
+    // the playback menu knows the boolean and nothing else; a room name sent
+    // back to change it is a room name that can be sent back wrong
+    await Rooms.set(roomId, {
+      name: 'Test Room',
+      status: 'open',
+      prefs: { qr: { isEnabled: true, opacity: 0.5, password: '', size: 0.75 } },
+    })
+
+    Rooms.setDedicationsEnabled(roomId, false)
+
+    const prefs = Rooms.get(roomId).entities[roomId].prefs
+    expect(prefs.dedications).toEqual({ isEnabled: false })
+    expect(prefs.qr).toEqual({ isEnabled: true, opacity: 0.5, password: '', size: 0.75 })
+    expect(Rooms.get(roomId).entities[roomId].name).toBe('Test Room')
+
+    Rooms.setDedicationsEnabled(roomId, true)
     expect(Rooms.areDedicationsEnabled(roomId)).toBe(true)
   })
 
@@ -162,8 +182,8 @@ describe('Dedications (integration, real SQLite)', () => {
     const queueId = Queue.add({ roomId, songId, userId: singerId })
     Dedications.set({ queueId, userId: singerId, text: 'Para Luis' })
 
-    Rooms.set(roomId, { name: 'Test Room', status: 'open', prefs: { dedications: { isEnabled: false } } })
-    Rooms.set(roomId, { name: 'Test Room', status: 'open', prefs: { dedications: { isEnabled: true } } })
+    Rooms.setDedicationsEnabled(roomId, false)
+    Rooms.setDedicationsEnabled(roomId, true)
 
     // the switch decides what is shown and who may write, never what is kept
     expect(Dedications.getForRoom(roomId)[queueId][0].text).toBe('Para Luis')

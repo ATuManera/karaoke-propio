@@ -11,6 +11,7 @@ import {
   ROOM_CREATE,
   ROOM_REMOVE,
   ROOM_DEDICATIONS_PUSH,
+  ROOM_DEDICATIONS_SET,
   ROOM_PREFS_PUSH,
   ROOM_PREFS_PUSH_REQUEST,
   LOGOUT,
@@ -88,6 +89,16 @@ export const closeRoomEditor = createAction(ROOM_EDITOR_CLOSE)
 export const filterByStatus = createAction<boolean | string>(ROOM_FILTER_STATUS)
 const roomPrefsPush = createAction<{ roomId: number, prefs: IRoomPrefs }>(ROOM_PREFS_PUSH)
 const roomDedicationsPush = createAction<{ isEnabled: boolean }>(ROOM_DEDICATIONS_PUSH)
+
+/**
+ * Flip the dedication switch for the room this admin is in — the same room
+ * pref the Edit Room form writes, reached from the playback menu instead.
+ *
+ * Not optimistic: the server answers with a push to the whole room, and the
+ * checkbox showing "off" on one phone while everyone else's still offers to
+ * write would be worse than a moment's delay.
+ */
+export const setRoomDedications = createAction<{ isEnabled: boolean }>(ROOM_DEDICATIONS_SET)
 
 export function requestPrefsPush (roomId: number, prefs: IRoomPrefs): AppThunk {
   return (dispatch) => {

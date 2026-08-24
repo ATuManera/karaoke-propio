@@ -92,6 +92,8 @@ export const ROOM_PREFS_PUSH = 'rooms/ROOM_PREFS_PUSH'
  * the answer and only the Player ever fetches those.
  */
 export const ROOM_DEDICATIONS_PUSH = 'rooms/DEDICATIONS_PUSH'
+/** an admin flipping that switch from the playback menu, mid-party */
+export const ROOM_DEDICATIONS_SET = 'server/ROOM_DEDICATIONS_SET'
 export const ROOM_PREFS_PUSH_REQUEST = 'server/ROOM_PREFS_PUSH_REQUEST'
 
 // Pitch preferences (the pitch a given user sings a given song best in)

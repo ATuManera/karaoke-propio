@@ -5,6 +5,7 @@ import { useT } from 'lib/i18n'
 import clsx from 'clsx'
 import screenfull from 'screenfull'
 import { requestOptions, requestPause, requestPlay, requestPlayNext, requestVolume } from 'store/modules/status'
+import { setRoomDedications } from 'store/modules/rooms'
 import Button from 'components/Button/Button'
 import VolumeSlider from './VolumeSlider/VolumeSlider'
 import NoPlayer from './NoPlayer/NoPlayer'
@@ -29,6 +30,8 @@ const PlaybackCtrl = () => {
   const canLaunchPlayer = useAppSelector(getCanLaunchPlayer)
   const isInRoom = useAppSelector(state => state.user.roomId !== null)
   const status = useAppSelector(state => state.status)
+  const isAdmin = useAppSelector(state => state.user.isAdmin)
+  const areDedicationsEnabled = useAppSelector(state => state.rooms.areDedicationsEnabled)
 
   const dispatch = useAppDispatch()
   const handleOptions = (opts: PlaybackOptions) => dispatch(requestOptions(opts))
@@ -36,6 +39,7 @@ const PlaybackCtrl = () => {
   const handlePlay = () => dispatch(requestPlay())
   const handlePlayNext = () => dispatch(requestPlayNext())
   const handleVolume = (val: number) => dispatch(requestVolume(val))
+  const handleDedications = (isEnabled: boolean) => dispatch(setRoomDedications({ isEnabled }))
 
   const toggleDisplayCtrl = () => {
     setDisplayCtrlVisible(!isDisplayCtrlVisible)
@@ -94,7 +98,10 @@ const PlaybackCtrl = () => {
           isWebGLSupported={status.isWebGLSupported}
           mediaType={status.mediaType}
           mp4Alpha={status.mp4Alpha}
+          areDedicationsEnabled={areDedicationsEnabled}
+          isAdmin={isAdmin}
           onClose={toggleDisplayCtrl}
+          onRequestDedications={handleDedications}
           onRequestOptions={handleOptions}
           sensitivity={status.visualizer.sensitivity}
           visualizerPresetName={status.visualizer.presetName}

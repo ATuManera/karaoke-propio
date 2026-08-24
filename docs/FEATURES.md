@@ -605,9 +605,21 @@ saving is the obvious gesture for taking something down.
 
 ### Turning it off
 
-A room pref (`prefs.dedications.isEnabled`), edited by an admin from *Edit
-Room* alongside the QR overlay, which is the closest thing to it: both are
-decisions about what happens in a room.
+A room pref (`prefs.dedications.isEnabled`), reachable in two places for two
+different moments. In *Edit Room*, alongside the QR overlay — the closest thing
+to it, both being decisions about what happens in a room — and again in the
+playback menu behind the tuner icon in the header, which is where an admin's
+thumb already is when the room wants the messages to stop. One setting shown
+twice, never two settings: the playback menu writes the same pref through
+`Rooms.setDedicationsEnabled()`, which merges the one boolean and leaves the
+rest of the room alone. Going through `Rooms.set()` instead would mean sending
+a room name back to the server to change a checkbox, and a room name sent back
+wrong renames the room.
+
+Everything else in that playback menu is a transient playback option for the
+screen in front of you; this one outlives the session, which is the reason it
+is the only entry there marked admin-only. The singer who is up opens the same
+menu, and what the whole room sees is not theirs to decide.
 
 **Absence means on.** Every room in the database predates the switch, and each
 of them is one where messages were already appearing — reading their silence as
@@ -632,9 +644,15 @@ Reaching every client is the part that needed its own channel. Room prefs are
 fetched only by the Player (`fetchCurrentRoom` in `PlayerView`), and are filtered
 down to `roles` for anyone who isn't an admin — so a phone has no way to read
 them. `ROOM_DEDICATIONS_PUSH` carries just the boolean: pushed to each client as
-it joins a room, and to everyone in the room when an admin saves it. That last
-one applies on **Save**, not while the checkbox is being clicked; the QR prefs'
-live preview goes to admins only, and a switch this size does not need one.
+it joins a room, and to everyone in the room whenever it changes — immediately
+from the playback menu, and on **Save** from the Edit Room form, which is a
+whole-room submission and has nothing to apply until then.
+
+Admins in the room also get a `ROOM_PREFS_PUSH` when the playback menu flips
+it, so an Edit Room form open on another screen re-seeds instead of saving the
+value it was opened with back over this one. That push was being sent the whole
+`{result, entities}` of `Rooms.get()` where the reducer reads `payload.roomId`,
+so it had been landing on nothing; it now sends the shape the reducer expects.
 
 ### Reaching the television
 

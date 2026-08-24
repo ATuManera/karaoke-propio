@@ -137,6 +137,49 @@ class Rooms {
     return areDedicationsShown(Rooms.get(roomId).entities[roomId]?.prefs)
   }
 
+  /**
+   * Flip just this room's dedication switch, leaving the rest of its prefs
+   * alone.
+   *
+   * Separate from set() because the two are asked for in different places
+   * and mean different things. set() is the Edit Room form: a whole room
+   * submitted at once, name and status and prefs together. This is one
+   * checkbox in the playback menu during a party, where the caller knows the
+   * boolean and nothing else — making it go through set() would mean sending
+   * a room name back to the server to change a boolean, and getting that
+   * name wrong would rename the room.
+   *
+   * Read and write in one transaction so a save from the Edit Room form at
+   * the same moment cannot land between them and be overwritten.
+   */
+  static setDedicationsEnabled (roomId: number, isEnabled: boolean): void {
+    db.exec('BEGIN IMMEDIATE')
+
+    try {
+      const prefs = Rooms.get(roomId).entities[roomId]?.prefs
+
+      if (!prefs) {
+        db.exec('ROLLBACK')
+        throw new ValidationError('Invalid roomId')
+      }
+
+      const query = sql`
+        UPDATE rooms
+        SET data = json_set(data, '$.prefs', json(${JSON.stringify({ ...prefs, dedications: { isEnabled } })}))
+        WHERE roomId = ${roomId}
+      `
+      db.run(String(query), query.parameters)
+      db.exec('COMMIT')
+    } catch (err) {
+      // a ValidationError above has already rolled back; anything else has not
+      try {
+        db.exec('ROLLBACK')
+      } catch { /* already rolled back */ }
+
+      throw err
+    }
+  }
+
   static async set (roomId, room) {
     const { name, password, status, prefs } = room
     let query

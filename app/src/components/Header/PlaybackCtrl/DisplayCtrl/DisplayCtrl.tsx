@@ -10,6 +10,9 @@ import styles from './DisplayCtrl.css'
 import { MediaType, PlaybackOptions } from 'shared/types'
 
 interface DisplayCtrlProps {
+  /** the room's dedication switch — the same setting Edit Room writes */
+  areDedicationsEnabled: boolean
+  isAdmin: boolean
   cdgAlpha: number
   cdgSize: number
   isVideoKeyingEnabled: boolean
@@ -20,11 +23,14 @@ interface DisplayCtrlProps {
   sensitivity: number
   visualizerPresetName: string
   // actions
+  onRequestDedications(isEnabled: boolean): void
   onRequestOptions(opts: PlaybackOptions): void
   onClose: ModalProps['onClose']
 }
 
 const DisplayCtrl = ({
+  areDedicationsEnabled,
+  isAdmin,
   cdgAlpha,
   cdgSize,
   isVideoKeyingEnabled,
@@ -34,6 +40,7 @@ const DisplayCtrl = ({
   mp4Alpha,
   sensitivity,
   visualizerPresetName,
+  onRequestDedications,
   onRequestOptions,
   onClose,
 }: DisplayCtrlProps) => {
@@ -145,6 +152,28 @@ const DisplayCtrl = ({
               && <p className={styles.unsupported}>{t('display.webGLNotSupported')}</p>}
           </fieldset>
         </div>
+
+        {/* Everything else in this menu is a playback option for the screen
+            in front of you, gone when the Player closes. This one is a room
+            setting that outlives the session — it is here because this is
+            where an admin's thumb already is when the room wants the
+            dedications to stop, and the same switch is in Edit Room. Admins
+            only: the singer who is up also opens this menu, and what the
+            whole room sees is not theirs to decide. */}
+        {isAdmin && (
+          <div className={clsx(styles.section, styles.dedications)}>
+            <fieldset>
+              <legend>
+                <InputCheckbox
+                  label={t('display.dedications')}
+                  checked={areDedicationsEnabled}
+                  onChange={e => onRequestDedications(e.currentTarget.checked)}
+                />
+              </legend>
+              <p className={styles.hint}>{t('display.dedicationsHint')}</p>
+            </fieldset>
+          </div>
+        )}
 
         <div className={clsx(styles.section, styles.lyrics)}>
           <fieldset>

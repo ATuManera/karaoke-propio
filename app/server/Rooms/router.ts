@@ -15,7 +15,8 @@ interface RequestWithBody {
 const log = getLogger('Rooms')
 const router = new KoaRouter({ prefix: '/api/rooms' })
 
-import { ROOM_DEDICATIONS_PUSH, ROOM_PREFS_PUSH } from '../../shared/actionTypes.js'
+import { ROOM_PREFS_PUSH } from '../../shared/actionTypes.js'
+import { pushDedications } from './socket.js'
 import { MessageError } from '../lib/i18n.js'
 
 // list rooms
@@ -164,11 +165,16 @@ router.put('/:roomId', async (ctx) => {
 
   const sockets = await ctx.io.in(Rooms.prefix(roomId)).fetchSockets()
 
+  // the shape the rooms reducer reads: a roomId and that room's prefs. It was
+  // being sent the whole {result, entities} of Rooms.get(), which has no
+  // roomId at the top level, so this push had been landing on nothing
+  const prefs = Rooms.get(roomId).entities[roomId]?.prefs
+
   for (const s of sockets) {
     if (s?.user.isAdmin) {
       ctx.io.to(s.id).emit('action', {
         type: ROOM_PREFS_PUSH,
-        payload: Rooms.get(roomId),
+        payload: { roomId, prefs },
       })
     }
   }
@@ -176,10 +182,7 @@ router.put('/:roomId', async (ctx) => {
   // The dedication switch reaches everyone in the room, not just the admins:
   // it decides whether a phone offers to write one at all, so the person
   // holding it has to hear about the change as soon as it is saved.
-  ctx.io.to(Rooms.prefix(roomId)).emit('action', {
-    type: ROOM_DEDICATIONS_PUSH,
-    payload: { isEnabled: Rooms.areDedicationsEnabled(roomId) },
-  })
+  pushDedications(ctx.io, roomId)
 
   // send updated room list
   ctx.body = Rooms.get(null, { status: STATUSES })

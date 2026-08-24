@@ -62,6 +62,8 @@ const en = {
   },
 
   display: {
+    dedications: 'Dedications and messages',
+    dedicationsHint: 'For this room. Off, nobody can write one and nothing appears over the songs; nothing is deleted.',
     title: 'Display',
     visualizer: 'Visualizer',
     previousPreset: 'Previous preset',

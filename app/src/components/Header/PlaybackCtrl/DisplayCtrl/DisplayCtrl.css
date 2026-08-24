@@ -74,6 +74,23 @@
   text-overflow: ellipsis;
 }
 
+/* the checkbox sits in the legend, same as the visualizer's, so the switch
+   reads as the heading of its own box rather than a stray line inside one */
+.dedications legend {
+  label {
+    display: flex;
+    gap: var(--space-s);
+    align-items: center;
+    cursor: pointer;
+  }
+}
+
+.hint {
+  margin: 0;
+  color: var(--color-gray-6);
+  font-size: var(--font-size-s);
+}
+
 .unsupported {
   text-align: center;
   margin: var(--space-m) 0;

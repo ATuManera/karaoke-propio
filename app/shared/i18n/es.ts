@@ -50,6 +50,8 @@ const es: Messages = {
   },
 
   display: {
+    dedications: 'Dedicatorias y mensajes',
+    dedicationsHint: 'Para esta sala. Apagado, nadie puede escribir ninguna y no aparece nada sobre las canciones; no se borra nada.',
     title: 'Pantalla',
     visualizer: 'Visualizador',
     previousPreset: 'Efecto anterior',
