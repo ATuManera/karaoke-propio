@@ -4,7 +4,7 @@
 [![Based on](https://img.shields.io/badge/based%20on-Karaoke%20Eternal-blue.svg)](https://github.com/bhj/KaraokeEternal)
 [![Docker](https://img.shields.io/badge/docker-compose-blue.svg)](docker-compose.yml)
 [![Platform](https://img.shields.io/badge/platform-Linux%20%7C%20Docker-lightgrey.svg)]()
-[![Version](https://img.shields.io/badge/version-2.3.1-blue.svg)]()
+[![Version](https://img.shields.io/badge/version-2.4.0-blue.svg)]()
 
 > **Built on [Karaoke Eternal](https://github.com/bhj/KaraokeEternal)** — © RadRoot LLC, ISC License.
 > Karaoke Propio is an independent project that vendors and extends it; it is **not** an official
@@ -36,7 +36,7 @@
 
 **AI Assistance / Asistencia de IA:** Developed with the support of GPT 5.6 Sol, Claude Opus 5, Claude Opus 4.8, and Claude Sonnet 5.
 
-**Version / Versión:** 2.3.1
+**Version / Versión:** 2.4.0
 
 ---
 
@@ -55,7 +55,7 @@ does well — library, queue, player, phone remote — and adds what a real part
 | **Per-request pitch** | Each singer picks their own key when queueing. Transposition starts immediately in the background, so there is no wait at showtime. |
 | **Personal pitch memory** | The pitch each singer sings a song best in, remembered per person — the same song is -4 for one voice and +2 for another. Shown on the library row, and saved songs become a repertoire that queues in one tap. |
 | **Pitch assistant** | When a song finishes, its singer is asked on their own phone how the pitch felt — too high, just right, a little low — and their saved pitch is corrected accordingly. No semitones to understand, and nobody else sees the question. |
-| **Version picker** | When a song has several recordings, the singer chooses which one. |
+| **Version picker** | When a song has several local recordings, the singer can preview each one on their own device before choosing which one to queue. MP4 versions include video; CD+G versions provide an audio preview. |
 | **Portable repertoire** | A singer's songs and pitches travel between installations as a small file — no music in it, only what they have learned about singing it. Bring it in at the join form (a file on the phone, or a link), and whatever this library already has is theirs again straight away; what it lacks is listed for the admin to decide about. |
 | **Categories** | Genre, decade, voice (male/female/duet/group) and language, looked up automatically from MusicBrainz and editable by hand. |
 | **Popularity sorting** | Order the library by how watched each source recording is. |
@@ -65,7 +65,7 @@ does well — library, queue, player, phone remote — and adds what a real part
 | **Choose your room** | Signing in never picks the room for you. Every open room says whether anyone is in it, so a singer joins the party already going or takes an empty one and starts their own — and hands out its invitation from their own screen, without walking to the television. |
 | **Public access** | Optional HTTPS exposure through an existing nginx-proxy + Let's Encrypt, configured with a single variable. |
 | **Notes & key** | Melody note by note for UltraStar songs, plus an estimated musical key for any track. |
-| **Its own name and version** | The app says what it is and which build you are on — *Karaoke Propio v2.3.1*, linking to this repository — on the welcome screen and in *About*. Credit for the base it is built on sits at the foot of both, with its own link. |
+| **Its own name and version** | The app says what it is and which build you are on — *Karaoke Propio v2.4.0*, linking to this repository — on the welcome screen and in *About*. Credit for the base it is built on sits at the foot of both, with its own link. |
 | **Speaks your language** | English and Spanish, chosen by the phone that arrives — a guest who scans the QR is greeted in their own language without setting anything. A language can be fixed in the account instead, and then it travels to any phone that account signs in from. Everything follows: dates and clocks in the local format, note names as letters or as *Do Re Mi*, and the errors the server sends back. More languages are a single message file away. |
 
 ### Requirements
@@ -184,7 +184,7 @@ fiesta real necesita.
 | **Tono por solicitud** | Cada cantante elige su tonalidad al encolar. La transposición empieza de inmediato en segundo plano, sin espera al momento de cantar. |
 | **Tono personal** | El tono en que cada cantante canta mejor una canción, recordado por persona — la misma canción es -4 para una voz y +2 para otra. Se ve en la fila de la biblioteca, y las canciones guardadas forman un repertorio que se encola con un toque. |
 | **Asistente de tono** | Al terminar una canción, se le pregunta a quien la cantó, en su propio celular, cómo le quedó el tono — muy alta, perfecta, un poco baja — y su tono personal se corrige solo. Sin necesidad de entender semitonos, y sin que nadie más vea la pregunta. |
-| **Selector de versión** | Cuando una canción tiene varias grabaciones, el cantante elige cuál. |
+| **Selector de versión** | Cuando una canción tiene varias grabaciones locales, el cantante puede probar cada una en su propio dispositivo antes de elegir cuál encolar. Las versiones MP4 incluyen video; las versiones CD+G ofrecen una vista previa de audio. |
 | **Repertorio portátil** | Las canciones y los tonos de un cantante viajan entre instalaciones en un archivo pequeño — sin música adentro, solo lo que aprendió sobre cantarlas. Se trae desde el propio formulario de ingreso (un archivo del celular, o un enlace), y todo lo que esta biblioteca ya tiene vuelve a ser suyo al instante; lo que falta queda listado para que el administrador decida. |
 | **Categorías** | Género, década, voz (hombre/mujer/dúo/grupo) e idioma, obtenidos automáticamente de MusicBrainz y editables a mano. |
 | **Orden por popularidad** | Ordenar la biblioteca según qué tan vista es cada grabación de origen. |
@@ -194,7 +194,7 @@ fiesta real necesita.
 | **Elegir la sala** | Iniciar sesión ya no elige la sala por ti. Cada sala abierta dice si hay alguien adentro, así un cantante se suma a la fiesta que ya está o toma una vacía y arma la suya — y reparte su invitación desde su propia pantalla, sin caminar hasta el televisor. |
 | **Acceso público** | Exposición HTTPS opcional mediante un nginx-proxy + Let's Encrypt existente, con una sola variable. |
 | **Notas y tonalidad** | Melodía nota por nota en canciones UltraStar, y tonalidad estimada para cualquier pista. |
-| **Nombre y versión propios** | La aplicación dice qué es y qué versión estás usando — *Karaoke Propio v2.3.1*, enlazando a este repositorio — en la pantalla de bienvenida y en *Acerca de*. El reconocimiento a la base sobre la que está construida va al pie de ambas, con su propio enlace. |
+| **Nombre y versión propios** | La aplicación dice qué es y qué versión estás usando — *Karaoke Propio v2.4.0*, enlazando a este repositorio — en la pantalla de bienvenida y en *Acerca de*. El reconocimiento a la base sobre la que está construida va al pie de ambas, con su propio enlace. |
 | **Habla tu idioma** | Español e inglés, elegidos por el celular que llega — a un invitado que escanea el QR se le habla en su idioma sin que configure nada. También se puede fijar un idioma en la cuenta, y entonces viaja a cualquier celular desde el que esa cuenta entre. Todo lo sigue: fechas y horas en el formato local, los nombres de las notas en letras o en *Do Re Mi*, y los errores que devuelve el servidor. Agregar otro idioma es un solo archivo de mensajes. |
 
 ### Requisitos
