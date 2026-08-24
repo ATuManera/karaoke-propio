@@ -240,6 +240,9 @@ const es: Messages = {
     next: 'Siguiente',
     numbered: 'Versión {{number}}',
     isDefault: 'por defecto',
+    preview: 'Vista previa',
+    hidePreview: 'Ocultar vista previa',
+    audioOnly: 'Vista previa de audio (la letra CD+G solo aparece en el reproductor)',
   },
 
   acquisition: {

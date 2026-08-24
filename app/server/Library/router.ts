@@ -257,6 +257,7 @@ router.get('/song/:songId/versions', (ctx) => {
         mediaId,
         duration: m.duration,
         isPreferred: !!m.isPreferred,
+        mediaType: /\.mp4$/i.test(m.relPath) ? 'mp4' : 'cdg',
         sourceId,
       }
     }),

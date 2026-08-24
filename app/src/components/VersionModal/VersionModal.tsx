@@ -11,6 +11,7 @@ export interface SongVersion {
   mediaId: number
   duration: number
   isPreferred: boolean
+  mediaType: 'cdg' | 'mp4'
   sourceId: string | null
 }
 
@@ -34,6 +35,7 @@ const VersionModal = ({ songId, songTitle, onConfirm, onClose }: VersionModalPro
   const t = useT()
   const [versions, setVersions] = useState<SongVersion[] | null>(null)
   const [selected, setSelected] = useState<number | null>(null)
+  const [previewing, setPreviewing] = useState<number | null>(null)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
@@ -61,6 +63,11 @@ const VersionModal = ({ songId, songTitle, onConfirm, onClose }: VersionModalPro
     }
   }, [songId])
 
+  const togglePreview = (mediaId: number) => {
+    setSelected(mediaId)
+    setPreviewing(current => current === mediaId ? null : mediaId)
+  }
+
   return (
     <Modal
       title={t('version.title')}
@@ -81,10 +88,10 @@ const VersionModal = ({ songId, songTitle, onConfirm, onClose }: VersionModalPro
 
       <ul className={styles.list}>
         {versions?.map((v, i) => (
-          <li key={v.mediaId}>
+          <li key={v.mediaId} className={clsx(styles.item, selected === v.mediaId && styles.selected)}>
             <button
               type='button'
-              className={clsx(styles.option, selected === v.mediaId && styles.selected)}
+              className={styles.option}
               onClick={() => setSelected(v.mediaId)}
             >
               <span className={styles.radio}>{selected === v.mediaId ? '◉' : '○'}</span>
@@ -99,6 +106,37 @@ const VersionModal = ({ songId, songTitle, onConfirm, onClose }: VersionModalPro
                 </span>
               </span>
             </button>
+            <button
+              type='button'
+              className={styles.previewButton}
+              aria-expanded={previewing === v.mediaId}
+              onClick={() => togglePreview(v.mediaId)}
+            >
+              {previewing === v.mediaId ? t('version.hidePreview') : t('version.preview')}
+            </button>
+            {previewing === v.mediaId && (
+              <div className={styles.preview}>
+                {v.mediaType === 'mp4'
+                  ? (
+                    <video
+                      src={`${document.baseURI}api/media/${v.mediaId}?type=video&previewSongId=${songId}`}
+                      controls
+                      autoPlay
+                      playsInline
+                    />
+                    )
+                  : (
+                    <>
+                      <audio
+                        src={`${document.baseURI}api/media/${v.mediaId}?type=audio&previewSongId=${songId}`}
+                        controls
+                        autoPlay
+                      />
+                      <span>{t('version.audioOnly')}</span>
+                    </>
+                    )}
+              </div>
+            )}
           </li>
         ))}
       </ul>

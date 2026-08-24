@@ -53,12 +53,31 @@ function authorizeQueueAccess (ctx, mediaId: number, queueId: number) {
   return { media, pitchSemitones: row.pitchSemitones as number }
 }
 
+/**
+ * Allow a signed-in room member to audition one of the recordings offered by
+ * the library version picker.  The song/media relationship is checked here;
+ * a client cannot use an arbitrary mediaId (or a songId from another row) to
+ * turn this into an unrestricted file endpoint.
+ */
+function authorizeLibraryPreview (ctx, mediaId: number, songId: number) {
+  if (ctx.user.userId === null || ctx.user.roomId === null) ctx.throw(401)
+
+  const mediaRes = Media.search({ mediaId })
+  const media = mediaRes.entities[mediaId]
+  if (!media) ctx.throw(404, 'mediaId not found')
+  if (media.songId !== songId) ctx.throw(403, 'mediaId does not match the previewed song')
+
+  return media
+}
+
 // stream a media file
 router.get('/:mediaId', async (ctx) => {
   const { type } = ctx.query
   const mediaId = parseInt(ctx.params.mediaId, 10)
   const queueIdRaw = ctx.query.queueId
   const queueId = typeof queueIdRaw === 'string' ? parseInt(queueIdRaw, 10) : NaN
+  const previewSongIdRaw = ctx.query.previewSongId
+  const previewSongId = typeof previewSongIdRaw === 'string' ? parseInt(previewSongIdRaw, 10) : NaN
 
   if (Number.isNaN(mediaId) || !type) {
     ctx.throw(422, 'invalid mediaId or type')
@@ -71,6 +90,10 @@ router.get('/:mediaId', async (ctx) => {
     // room playback: queueId is the authorization; roomId/pitch are derived
     // server-side, never trusted from the client
     ;({ media, pitchSemitones } = authorizeQueueAccess(ctx, mediaId, queueId))
+  } else if (Number.isInteger(previewSongId)) {
+    // local library audition: membership and the song/media pair are verified
+    // server-side, and the unpitched original is streamed
+    media = authorizeLibraryPreview(ctx, mediaId, previewSongId)
   } else if (ctx.user.isAdmin) {
     // admin/back-office access without a queue context (e.g. library tools);
     // always the original, pitch does not apply here

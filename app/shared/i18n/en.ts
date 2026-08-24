@@ -265,6 +265,9 @@ const en = {
     next: 'Next',
     numbered: 'Version {{number}}',
     isDefault: 'default',
+    preview: 'Preview',
+    hidePreview: 'Hide preview',
+    audioOnly: 'Audio preview (CD+G lyrics appear only on the Player)',
   },
 
   acquisition: {
