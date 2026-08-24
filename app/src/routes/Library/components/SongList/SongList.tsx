@@ -26,6 +26,7 @@ const SongList = (props: SongListProps) => {
   const pitchPrefs = useAppSelector(state => ensureState(state.userPitchPrefs))
   const starredSongCounts = useAppSelector(state => state.starCounts.songs)
   const isAdmin = useAppSelector(state => state.user.isAdmin)
+  const areDedicationsEnabled = useAppSelector(state => state.rooms.areDedicationsEnabled)
   const { played, upcoming, current } = useAppSelector(getSongsStatus)
 
   // pitch is chosen at the moment a song is queued (see PitchModal); track
@@ -110,7 +111,7 @@ const SongList = (props: SongListProps) => {
           title={t('library.choosePitch')}
           songTitle={songs[pitchModalSongId].title}
           savedPref={pitchPrefs[pitchModalSongId] ?? null}
-          showDedication
+          showDedication={areDedicationsEnabled}
           onConfirm={handlePitchConfirm}
           onClose={handlePitchClose}
         />

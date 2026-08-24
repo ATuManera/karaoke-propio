@@ -86,6 +86,12 @@ export const ROOM_EDITOR_OPEN = 'rooms/EDITOR_OPEN'
 export const ROOM_EDITOR_CLOSE = 'rooms/EDITOR_CLOSE'
 export const ROOM_FILTER_STATUS = 'rooms/TOGGLE_SHOW_ALL'
 export const ROOM_PREFS_PUSH = 'rooms/ROOM_PREFS_PUSH'
+/**
+ * Whether the room a client is in has dedications turned on. A channel of its
+ * own, and not part of the room prefs, because every phone in the room needs
+ * the answer and only the Player ever fetches those.
+ */
+export const ROOM_DEDICATIONS_PUSH = 'rooms/DEDICATIONS_PUSH'
 export const ROOM_PREFS_PUSH_REQUEST = 'server/ROOM_PREFS_PUSH_REQUEST'
 
 // Pitch preferences (the pitch a given user sings a given song best in)

@@ -26,6 +26,7 @@ import {
   PLAYER_STATUS,
   PLAYER_LEAVE,
   PREFS_PUSH,
+  ROOM_DEDICATIONS_PUSH,
   SOCKET_AUTH_ERROR,
   _ERROR,
 } from '../shared/actionTypes.js'
@@ -225,6 +226,14 @@ export default function (io, jwtKey) {
     io.to(sock.id).emit('action', {
       type: QUEUE_PUSH,
       payload: Queue.get(sock.user.roomId),
+    })
+
+    // whether this room is taking dedications at all. Everyone needs it, not
+    // just the Player: with it off, a phone must not offer to write one
+    // either (see QUEUE_DEDICATION_SET, which refuses regardless).
+    io.to(sock.id).emit('action', {
+      type: ROOM_DEDICATIONS_PUSH,
+      payload: { isEnabled: Rooms.areDedicationsEnabled(sock.user.roomId) },
     })
   })
 }

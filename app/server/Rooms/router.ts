@@ -15,7 +15,7 @@ interface RequestWithBody {
 const log = getLogger('Rooms')
 const router = new KoaRouter({ prefix: '/api/rooms' })
 
-import { ROOM_PREFS_PUSH } from '../../shared/actionTypes.js'
+import { ROOM_DEDICATIONS_PUSH, ROOM_PREFS_PUSH } from '../../shared/actionTypes.js'
 import { MessageError } from '../lib/i18n.js'
 
 // list rooms
@@ -52,10 +52,9 @@ router.get(['/', '/:roomId'], (ctx) => {
 
       if (prefs?.roles) passed.roles = prefs.roles
       if (isPlayerLaunchEnabled && prefs?.qr) passed.qr = prefs.qr
-      // likewise for the dedication carousel: a Player run by a singer must
-      // honour an admin's decision to keep messages off the screen, and the
-      // flag is a boolean with nothing private in it
-      if (isPlayerLaunchEnabled && prefs?.dedications) passed.dedications = prefs.dedications
+      // the dedication switch is deliberately NOT passed here: every client
+      // in the room needs it, not only one running a Player, so it has its
+      // own push (ROOM_DEDICATIONS_PUSH) and exactly one way in
 
       res.entities[roomId].prefs = passed
     }
@@ -173,6 +172,14 @@ router.put('/:roomId', async (ctx) => {
       })
     }
   }
+
+  // The dedication switch reaches everyone in the room, not just the admins:
+  // it decides whether a phone offers to write one at all, so the person
+  // holding it has to hear about the change as soon as it is saved.
+  ctx.io.to(Rooms.prefix(roomId)).emit('action', {
+    type: ROOM_DEDICATIONS_PUSH,
+    payload: { isEnabled: Rooms.areDedicationsEnabled(roomId) },
+  })
 
   // send updated room list
   ctx.body = Rooms.get(null, { status: STATUSES })

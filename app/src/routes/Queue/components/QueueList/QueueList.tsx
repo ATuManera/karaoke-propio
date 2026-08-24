@@ -8,6 +8,7 @@ import { moveItem, removeUpcomingItems } from '../../modules/queue'
 import getPlayerHistory from '../../selectors/getPlayerHistory'
 import getRoundRobinQueue from '../../selectors/getRoundRobinQueue'
 import getWaits from '../../selectors/getWaits'
+import type { QueueItem as QueueItemType } from 'shared/types'
 
 const QueueList = () => {
   const artists = useAppSelector(state => state.artists)
@@ -19,6 +20,7 @@ const QueueList = () => {
   const starredSongs = useAppSelector(state => ensureState(state.userStars).starredSongs)
   const starCounts = useAppSelector(state => state.starCounts)
   const user = useAppSelector(state => state.user)
+  const areDedicationsEnabled = useAppSelector(state => state.rooms.areDedicationsEnabled)
   const waits = useAppSelector(getWaits)
 
   // actions
@@ -61,7 +63,11 @@ const QueueList = () => {
         // anything still to come or on what is playing right now
         // (never on an optimistic row: its queueId is a local guess, and the
         // server has no such song to write on yet)
-        isDedicatable={!item.isOptimistic && (isUpcoming || isCurrent) && (isOwner || user.isAdmin)}
+        isDedicatable={areDedicationsEnabled && !item.isOptimistic && (isUpcoming || isCurrent) && (isOwner || user.isAdmin)}
+        // With the room's switch off the whole feature goes quiet, previews
+        // included: a quoted line nothing will ever show is a puzzle, not
+        // information. Nothing is deleted — this is the same rows, unread.
+        dedications={areDedicationsEnabled ? (item as QueueItemType).dedications : undefined}
         duration={duration}
         isAdmin={user.isAdmin}
         key={qId}

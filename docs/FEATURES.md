@@ -607,22 +607,34 @@ saving is the obvious gesture for taking something down.
 
 A room pref (`prefs.dedications.isEnabled`), edited by an admin from *Edit
 Room* alongside the QR overlay, which is the closest thing to it: both are
-decisions about what a room's television shows.
+decisions about what happens in a room.
 
 **Absence means on.** Every room in the database predates the switch, and each
 of them is one where messages were already appearing — reading their silence as
 "off" would take the feature away from them on the next deploy. So only an
-explicit `false` hides the carousel, and `areDedicationsShown()` in
+explicit `false` turns it off, and `areDedicationsShown()` in
 `shared/dedication.ts` is the single place that rule is written.
 
-Off hides the carousel and nothing else: nothing is deleted, singers go on
-writing, and it all reappears when it is turned on again. That is what makes it
-a switch an admin can flip mid-party without weighing what it costs.
+Off means the whole feature goes quiet for that room: no carousel on the
+television, no field when a song is queued, no button in the queue, not even the
+quoted preview on a queue row — a line nothing will ever show is a puzzle, not
+information. The server refuses the write too (`canWrite`, and the dedication
+that rides along with `QUEUE_ADD`), because a tab left open from before the
+switch was flipped would otherwise go on adding messages nobody in the room
+agreed to, and the admin who turned it off would find new ones waiting when they
+turned it back on.
 
-A Player run by a singer rather than an admin has to honour it too, so
-`server/Rooms/router.ts` passes the flag through the same narrow filter the QR
-prefs go through — a boolean with nothing private in it, sent only to a member
-of that room when an admin has opened the Player to non-admins.
+What it never does is delete. Every row stays exactly where it was and comes
+back the moment it is turned on again, which is what makes it a switch an admin
+can flip mid-party without weighing what it costs.
+
+Reaching every client is the part that needed its own channel. Room prefs are
+fetched only by the Player (`fetchCurrentRoom` in `PlayerView`), and are filtered
+down to `roles` for anyone who isn't an admin — so a phone has no way to read
+them. `ROOM_DEDICATIONS_PUSH` carries just the boolean: pushed to each client as
+it joins a room, and to everyone in the room when an admin saves it. That last
+one applies on **Save**, not while the checkbox is being clicked; the QR prefs'
+live preview goes to admins only, and a switch this size does not need one.
 
 ### Reaching the television
 

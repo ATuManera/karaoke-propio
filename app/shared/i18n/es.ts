@@ -465,8 +465,8 @@ const es: Messages = {
     },
     dedications: {
       title: 'Dedicatorias',
-      show: 'Mostrar dedicatorias en el reproductor',
-      hint: 'Apagado, no aparece nada sobre las canciones. No se borra nada: lo que escribieron vuelve cuando lo enciendas de nuevo.',
+      show: 'Permitir dedicatorias y mensajes',
+      hint: 'Apagado, todo queda en silencio: nadie puede escribir una y no aparece nada sobre las canciones. No se borra nada — lo que escribieron vuelve cuando lo enciendas de nuevo.',
     },
     userPrefs: {
       title: 'Usuarios',

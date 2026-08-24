@@ -10,6 +10,7 @@ import {
   ROOM_UPDATE,
   ROOM_CREATE,
   ROOM_REMOVE,
+  ROOM_DEDICATIONS_PUSH,
   ROOM_PREFS_PUSH,
   ROOM_PREFS_PUSH_REQUEST,
   LOGOUT,
@@ -86,6 +87,7 @@ export const openRoomEditor = createAction(ROOM_EDITOR_OPEN)
 export const closeRoomEditor = createAction(ROOM_EDITOR_CLOSE)
 export const filterByStatus = createAction<boolean | string>(ROOM_FILTER_STATUS)
 const roomPrefsPush = createAction<{ roomId: number, prefs: IRoomPrefs }>(ROOM_PREFS_PUSH)
+const roomDedicationsPush = createAction<{ isEnabled: boolean }>(ROOM_DEDICATIONS_PUSH)
 
 export function requestPrefsPush (roomId: number, prefs: IRoomPrefs): AppThunk {
   return (dispatch) => {
@@ -113,6 +115,17 @@ interface RoomsState {
   entities: Record<number, Room>
   filterStatus: boolean | string
   isEditorOpen: boolean
+  /**
+   * Whether the room this client is in is taking dedications. Kept here
+   * rather than read off that room's prefs because only the Player ever
+   * fetches those, and every phone in the room needs the answer — so the
+   * server pushes it on connect and whenever an admin saves the room.
+   *
+   * True until told otherwise, which is the same default the rest of the
+   * feature uses: a room that has never been asked is one where dedications
+   * were already appearing.
+   */
+  areDedicationsEnabled: boolean
 }
 
 const initialState: RoomsState = {
@@ -120,6 +133,7 @@ const initialState: RoomsState = {
   entities: {},
   filterStatus: 'open',
   isEditorOpen: false,
+  areDedicationsEnabled: true,
 }
 
 const roomsReducer = createReducer(initialState, (builder) => {
@@ -148,6 +162,9 @@ const roomsReducer = createReducer(initialState, (builder) => {
       if (state.entities[roomId]) {
         state.entities[roomId].prefs = payload.prefs
       }
+    })
+    .addCase(roomDedicationsPush, (state, { payload }) => {
+      state.areDedicationsEnabled = payload.isEnabled
     })
     .addCase(LOGOUT, () => ({
       ...initialState,

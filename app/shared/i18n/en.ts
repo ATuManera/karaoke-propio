@@ -507,8 +507,8 @@ const en = {
     },
     dedications: {
       title: 'Dedications',
-      show: 'Show dedications on the player',
-      hint: 'Off, nothing appears over the songs. Nothing is deleted: what people wrote comes back when you turn this on again.',
+      show: 'Allow dedications and messages',
+      hint: 'Off, the whole thing goes quiet: nobody can write one and nothing appears over the songs. Nothing is deleted — what people wrote comes back when you turn this on again.',
     },
     userPrefs: {
       title: 'Users',

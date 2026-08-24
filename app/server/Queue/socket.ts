@@ -26,6 +26,12 @@ import {
  *   - the singer writes on their own songs, for as long as the row exists
  *   - an admin writes on any song in the room they are actually in
  *
+ * Both are off entirely in a room whose admin turned dedications off. The
+ * phones stop offering it, but that is the affordance and not the rule: a tab
+ * left open from before the switch was flipped would otherwise go on writing
+ * messages nobody in the room agreed to have, and an admin who turned the
+ * feature off would find new ones waiting when they turned it back on.
+ *
  * The queue screen additionally stops offering the control on songs already
  * sung, which is a courtesy rather than a rule: editing a message nobody will
  * see again is pointless, not dangerous.
@@ -33,6 +39,7 @@ import {
 function canWrite (sock, { queueId, authorId }: { queueId: number, authorId?: number }): boolean {
   const row = Queue.getRow(queueId)
   if (!row || row.roomId !== sock.user.roomId) return false
+  if (!Rooms.areDedicationsEnabled(row.roomId)) return false
   if (sock.user.isAdmin) return true
 
   // their own song, or — when editing an existing message — their own words
@@ -101,7 +108,9 @@ const ACTION_HANDLERS = {
     // PitchModal). Attached to the row that was just created, never to
     // "the song this person queued" — the same person may queue the same
     // song twice tonight and mean something different each time.
-    const clean = sanitizeDedication(dedication)
+    // Same rule as every other write (see canWrite): with the room's switch
+    // off, a song is queued exactly as it was before the feature existed.
+    const clean = Rooms.areDedicationsEnabled(sock.user.roomId) ? sanitizeDedication(dedication) : ''
 
     if (clean !== '') {
       try {

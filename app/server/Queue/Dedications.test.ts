@@ -7,6 +7,7 @@ import Dedications from './Dedications.js'
 import Queue from './Queue.js'
 import Media from '../Media/Media.js'
 import Prefs from '../Prefs/Prefs.js'
+import Rooms from '../Rooms/Rooms.js'
 import Library from '../Library/Library.js'
 import { DEDICATION_MAX_LENGTH } from '../../shared/dedication.js'
 
@@ -141,6 +142,35 @@ describe('Dedications (integration, real SQLite)', () => {
     const queue = Queue.get(roomId)
     expect(queue.entities[queueId].dedications.map(d => d.text)).toEqual(['Para Luis'])
     expect(queue.entities[quietQueueId].dedications).toBeUndefined()
+  })
+
+  it('takes dedications in a room that was never asked about them', () => {
+    // every room that predates the switch is one where they were already
+    // appearing; reading its silence as "off" would take the feature away
+    expect(Rooms.areDedicationsEnabled(roomId)).toBe(true)
+  })
+
+  it('stops taking them once an admin turns them off, and takes them again after', () => {
+    Rooms.set(roomId, { name: 'Test Room', status: 'open', prefs: { dedications: { isEnabled: false } } })
+    expect(Rooms.areDedicationsEnabled(roomId)).toBe(false)
+
+    Rooms.set(roomId, { name: 'Test Room', status: 'open', prefs: { dedications: { isEnabled: true } } })
+    expect(Rooms.areDedicationsEnabled(roomId)).toBe(true)
+  })
+
+  it('keeps every message through a room being switched off and on', () => {
+    const queueId = Queue.add({ roomId, songId, userId: singerId })
+    Dedications.set({ queueId, userId: singerId, text: 'Para Luis' })
+
+    Rooms.set(roomId, { name: 'Test Room', status: 'open', prefs: { dedications: { isEnabled: false } } })
+    Rooms.set(roomId, { name: 'Test Room', status: 'open', prefs: { dedications: { isEnabled: true } } })
+
+    // the switch decides what is shown and who may write, never what is kept
+    expect(Dedications.getForRoom(roomId)[queueId][0].text).toBe('Para Luis')
+  })
+
+  it('answers for a room that isn\'t there without inventing a decision', () => {
+    expect(Rooms.areDedicationsEnabled(999_999)).toBe(true)
   })
 
   it('does not change which recording plays when several people write', () => {

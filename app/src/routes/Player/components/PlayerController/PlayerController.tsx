@@ -7,7 +7,6 @@ import PlayerQR from '../PlayerQR/PlayerQR'
 import getRoundRobinQueue from 'routes/Queue/selectors/getRoundRobinQueue'
 import { playerEnded, playerLeave, playerError, playerLoad, playerPlay, playerStatus, type PlayerState } from '../../modules/player'
 import getRoomPrefs from '../../selectors/getRoomPrefs'
-import { areDedicationsShown } from 'shared/dedication'
 import type { QueueItem } from 'shared/types'
 
 interface PlayerControllerProps {
@@ -21,6 +20,7 @@ const PlayerController = (props: PlayerControllerProps) => {
   const playerVisualizer = useAppSelector(state => state.playerVisualizer)
   const prefs = useAppSelector(state => state.prefs)
   const roomPrefs = useAppSelector(getRoomPrefs)
+  const areDedicationsEnabled = useAppSelector(state => state.rooms.areDedicationsEnabled)
   const queueItem = queue.entities[player.queueId]
   const nextQueueItem = queue.entities[queue.result[queue.result.indexOf(player.queueId) + 1]]
 
@@ -206,7 +206,7 @@ const PlayerController = (props: PlayerControllerProps) => {
       <DedicationCarousel
         queueId={queueItem ? queueItem.queueId : null}
         dedications={(queueItem as QueueItem)?.dedications}
-        isVisible={areDedicationsShown(roomPrefs)
+        isVisible={areDedicationsEnabled
           && !!queueItem && !player.isErrored && !player.isAtQueueEnd && queueItem.pitchStatus === 'ready'}
         width={props.width}
       />

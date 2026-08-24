@@ -13,14 +13,17 @@ interface DedicationPrefsProps {
 }
 
 /**
- * Whether this room's player shows what people wrote on their songs.
+ * Whether this room is taking dedications at all.
  *
  * On for a room that has never been asked — see areDedicationsShown, which is
- * the one place that rule is written down. Turning it off hides the carousel
- * and nothing else: the dedications stay where they are, singers can go on
- * writing them, and everything reappears when it is turned back on. That is
- * what makes this a switch an admin can flip during a party without having to
- * think about what it costs.
+ * the one place that rule is written down. Off turns the whole feature off
+ * for the room: no carousel on the television, no field when a song is
+ * queued, no button in the queue, and the server refuses a write from a tab
+ * that was left open from before.
+ *
+ * What it does not do is delete anything. Every message stays exactly where
+ * it was and reappears the moment this is turned back on, which is what makes
+ * it a switch an admin can flip mid-party without weighing what it costs.
  */
 const DedicationPrefs = ({ onChange, prefs = {} }: DedicationPrefsProps) => {
   const t = useT()

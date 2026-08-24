@@ -5,6 +5,7 @@ import { generateRoomCode, isValidRoomCode, normalizeRoomCode } from '../../shar
 import { db } from '../lib/Database.js'
 import { ValidationError } from '../lib/Errors.js'
 import { MessageError } from '../lib/i18n.js'
+import { areDedicationsShown } from '../../shared/dedication.js'
 
 const NAME_MIN_LENGTH = 1
 const NAME_MAX_LENGTH = 50
@@ -122,6 +123,18 @@ class Rooms {
     })
 
     return { result, entities }
+  }
+
+  /**
+   * Whether this room shows what people write on its songs.
+   *
+   * The answer for a room that has never been asked is yes — see
+   * areDedicationsShown, which is where that rule lives. A missing room is
+   * also yes: nobody is in it to be affected, and guessing "off" here would
+   * make a transient read failure look like an admin's decision.
+   */
+  static areDedicationsEnabled (roomId: number): boolean {
+    return areDedicationsShown(Rooms.get(roomId).entities[roomId]?.prefs)
   }
 
   static async set (roomId, room) {
