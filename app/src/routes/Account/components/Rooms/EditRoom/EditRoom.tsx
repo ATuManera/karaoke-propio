@@ -6,6 +6,7 @@ import Button from 'components/Button/Button'
 import Modal from 'components/Modal/Modal'
 import UserPrefs from './UserPrefs/UserPrefs'
 import QRPrefs from './QRPrefs/QRPrefs'
+import DedicationPrefs from './DedicationPrefs/DedicationPrefs'
 import type { Room, IRoomPrefs } from 'shared/types'
 import styles from './EditRoom.css'
 import { useT } from 'lib/i18n'
@@ -162,6 +163,7 @@ const EditRoom = ({ onClose, room }: EditRoomProps) => {
         <div className={styles.prefsContainer}>
           <UserPrefs prefs={prefs} onChange={handlePrefsChange} />
           <QRPrefs prefs={prefs} onChange={handlePrefsChange} roomPassword={roomPassword} roomPasswordDirty={isPasswordDirty} />
+          <DedicationPrefs prefs={prefs} onChange={handlePrefsChange} />
         </div>
 
         <div className={styles.btnContainer}>

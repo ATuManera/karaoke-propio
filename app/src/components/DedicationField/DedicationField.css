@@ -1,0 +1,54 @@
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-s);
+}
+
+.heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--space-s);
+}
+
+.counter {
+  color: var(--color-gray-6);
+  font-size: var(--font-size-xs);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.full {
+  color: var(--btn-danger-bg-color);
+}
+
+/* global.css styles the text inputs by attribute selector, which a textarea
+   never matches; these are the same rules so the two look like one family */
+.input {
+  display: block;
+  width: 100%;
+  padding: 8px;
+  font-family: inherit;
+  font-size: 18px;
+  resize: vertical;
+  box-shadow: inset 1px 1px 3px 0 rgb(50 50 50 / 75%);
+  border: none;
+  border-radius: var(--border-radius);
+  color: var(--input-color);
+  background-color: var(--input-bg-color);
+
+  &::placeholder {
+    color: var(--input-placeholder-color);
+  }
+
+  &:focus {
+    box-shadow: inset 0 0 5px 3px var(--input-outline-color);
+    outline: none;
+  }
+}
+
+.hint {
+  margin: 0;
+  color: var(--color-gray-6);
+  font-size: var(--font-size-s);
+}

@@ -2,10 +2,12 @@ import React, { useEffect, useCallback } from 'react'
 import { useAppDispatch, useAppSelector } from 'store/hooks'
 import Player from '../Player/Player'
 import PlayerTextOverlay from '../PlayerTextOverlay/PlayerTextOverlay'
+import DedicationCarousel from '../DedicationCarousel/DedicationCarousel'
 import PlayerQR from '../PlayerQR/PlayerQR'
 import getRoundRobinQueue from 'routes/Queue/selectors/getRoundRobinQueue'
 import { playerEnded, playerLeave, playerError, playerLoad, playerPlay, playerStatus, type PlayerState } from '../../modules/player'
 import getRoomPrefs from '../../selectors/getRoomPrefs'
+import { areDedicationsShown } from 'shared/dedication'
 import type { QueueItem } from 'shared/types'
 
 interface PlayerControllerProps {
@@ -196,6 +198,17 @@ const PlayerController = (props: PlayerControllerProps) => {
         isErrored={player.isErrored}
         width={props.width}
         height={props.height}
+      />
+      {/* after the text overlay, which covers the whole area: anything mounted
+          before it would be painted over. Shown only while a performance is
+          actually on screen — the same condition the leaf player is mounted
+          under — since there is nothing to dedicate over an error screen. */}
+      <DedicationCarousel
+        queueId={queueItem ? queueItem.queueId : null}
+        dedications={(queueItem as QueueItem)?.dedications}
+        isVisible={areDedicationsShown(roomPrefs)
+          && !!queueItem && !player.isErrored && !player.isAtQueueEnd && queueItem.pitchStatus === 'ready'}
+        width={props.width}
       />
       {roomPrefs?.qr?.isEnabled && (
         <PlayerQR

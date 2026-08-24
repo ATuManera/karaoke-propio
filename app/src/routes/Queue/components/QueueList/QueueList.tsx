@@ -56,6 +56,12 @@ const QueueList = () => {
         artist={artists.entities[songs.entities[item.songId].artistId].name}
         errorMessage={isCurrent && errorMessage ? errorMessage : ''}
         isCurrent={isCurrent}
+        // a message is worth writing while the song still has a screen ahead
+        // of it: the singer's own until it has been sung, an admin's on
+        // anything still to come or on what is playing right now
+        // (never on an optimistic row: its queueId is a local guess, and the
+        // server has no such song to write on yet)
+        isDedicatable={!item.isOptimistic && (isUpcoming || isCurrent) && (isOwner || user.isAdmin)}
         duration={duration}
         isAdmin={user.isAdmin}
         key={qId}

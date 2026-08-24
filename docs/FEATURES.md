@@ -563,6 +563,93 @@ upload (phones produce 4–12 MB files that stall on party wifi) and uploaded on
 at a time so progress means something. Filenames on disk are generated, never
 taken from the upload.
 
+## Dedications and messages on screen
+
+A line sent with a song and read over it by the whole room: the singer's own
+dedication, and any message an admin put on that same performance. Both are the
+same row in `dedications` (migration 016) and are told apart only by who wrote
+them.
+
+Attached to `queueId`, not to `(songId, userId)`. The same person may queue the
+same song twice in a night and mean something different each time, and the
+lifetime follows: remove the song from the queue and what was said about it goes
+with it, instead of resurfacing over an unrelated performance next week.
+
+One message per person per performance (`UNIQUE (queueId, userId)`), so writing
+is an upsert. Editing a dedication replaces it rather than adding a second one —
+which is the whole of "a singer may change their dedication while the song is
+queued", with no separate edit path to keep in step — and a double-tap on Save
+cannot put the same words on the television twice. The accepted consequence: an
+admin also gets one message per song. Saying two things about one performance
+means editing the one message, and that is deliberate; the banner is a slim
+strip over somebody's lyrics, and a queue of announcements on a single song is
+what it must not become.
+
+An admin editing someone else's dedication rewrites it in place, keeping its
+author: correcting a misspelled name is not signing the greeting.
+
+Two rules govern who may write, both enforced server-side. The singer writes on
+their own songs; an admin writes on any song **in the room they are in** —
+`Queue.isOwner()` matches on `(userId, queueId)` alone, so without the room
+check an admin of one room could put a message on another room's queue. The
+queue screen stops offering the control on songs already sung, which is a
+courtesy rather than a rule.
+
+Text is sanitized by `shared/dedication.ts` on both sides, and the server's
+answer is the one that counts: one line (a textarea's newlines fold to spaces),
+no control characters, no bidi overrides — U+202A–202E would reverse the rest of
+the banner, and on a screen nobody can touch that would simply sit there for the
+whole song — and 160 code points, counted so an emoji costs one character
+instead of two. An empty message removes it, because clearing the box and
+saving is the obvious gesture for taking something down.
+
+### Turning it off
+
+A room pref (`prefs.dedications.isEnabled`), edited by an admin from *Edit
+Room* alongside the QR overlay, which is the closest thing to it: both are
+decisions about what a room's television shows.
+
+**Absence means on.** Every room in the database predates the switch, and each
+of them is one where messages were already appearing — reading their silence as
+"off" would take the feature away from them on the next deploy. So only an
+explicit `false` hides the carousel, and `areDedicationsShown()` in
+`shared/dedication.ts` is the single place that rule is written.
+
+Off hides the carousel and nothing else: nothing is deleted, singers go on
+writing, and it all reappears when it is turned on again. That is what makes it
+a switch an admin can flip mid-party without weighing what it costs.
+
+A Player run by a singer rather than an admin has to honour it too, so
+`server/Rooms/router.ts` passes the flag through the same narrow filter the QR
+prefs go through — a boolean with nothing private in it, sent only to a member
+of that room when an admin has opened the Player to non-admins.
+
+### Reaching the television
+
+No push of its own. The messages ride the queue push every client already
+receives, attached in `Queue.get()` by a **second query**, never a join: that
+query groups over media rows and lets `MAX(isPreferred)` decide which recording
+plays, so a one-to-many join would make the chosen version depend on how many
+people wrote something. A dedication edited on a phone is therefore on the TV
+with the next push, and the Player needs no new socket handler.
+
+### Why a carousel and not a caption
+
+Karaoke lyrics reach the top of the frame — CDG paints wherever it likes, and an
+MP4 karaoke is whatever the uploader made — so anything parked up there competes
+with the words somebody is trying to sing. Each message takes a turn instead:
+in after `UpNow` has slid away (the room sees who is singing, then what they
+wanted to say), up for a dwell computed from its length, and after a full round
+the strip leaves for half a minute. That rest is also what makes a second
+message readable at all; two greetings side by side on a television are two
+greetings nobody reads.
+
+The cycle keys on the *content* of the message list, not on the array's
+identity: every unrelated queue push rebuilds that array, and restarting for
+that would cut a message off mid-sentence. A message written mid-song appears
+in about a second rather than waiting for the next round, so an admin can see
+that what they typed arrived.
+
 ## Guest accounts
 
 Created by scanning the QR or typing the code it carries — never without one —

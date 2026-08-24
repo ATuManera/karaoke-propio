@@ -334,6 +334,33 @@ const en = {
     singIt: 'Sing it',
   },
 
+  /**
+   * What gets said over a song while it plays. Two readers, and they are not
+   * the same person: whoever is writing on a phone, and the whole room
+   * reading the television — hence the separate `onScreen` group, whose only
+   * job is to say who a message came from in as few words as possible.
+   */
+  dedication: {
+    title: 'Dedication',
+    optional: 'Dedication (optional)',
+    placeholder: 'For Ana, who turns 30 today…',
+    hint: 'Shown on the TV while the song plays.',
+    hintOwn: 'Shown on the TV while your song plays. You can change it until it starts.',
+    charsLeft: '{{count}} left',
+    edit: 'Edit',
+    writeMine: 'Write my own message',
+    save: 'Save',
+    remove: 'Remove',
+    others: 'Also on this song',
+    editingFor: 'Editing what {{name}} wrote',
+    editingMine: 'Your message',
+    adminHint: 'As an admin you can add a message to any song, and edit or remove anyone’s.',
+    confirmRemove: 'Take this message off the screen?',
+    onScreen: {
+      from: '— {{name}}',
+    },
+  },
+
   photos: {
     getARoom: 'Get a Room!',
     signInToShare: 'Sign in to a room to share photos.',
@@ -477,6 +504,11 @@ const en = {
       reenterPassword: 're-enter room password',
       size: 'Size',
       opacity: 'Opacity',
+    },
+    dedications: {
+      title: 'Dedications',
+      show: 'Show dedications on the player',
+      hint: 'Off, nothing appears over the songs. Nothing is deleted: what people wrote comes back when you turn this on again.',
     },
     userPrefs: {
       title: 'Users',

@@ -2,8 +2,9 @@ import React, { useRef, useState } from 'react'
 import clsx from 'clsx'
 import { useSwipeable } from 'react-swipeable'
 import { useLongPress } from 'use-long-press'
-import { useAppDispatch } from 'store/hooks'
+import { useAppDispatch, useAppSelector } from 'store/hooks'
 import Button from 'components/Button/Button'
+import DedicationModal from 'components/DedicationModal/DedicationModal'
 import ButtonStar from 'components/ButtonStar/ButtonStar'
 import Buttons from 'components/Buttons/Buttons'
 import UserImage from 'components/UserImage/UserImage'
@@ -14,7 +15,7 @@ import { showErrorMessage } from 'store/modules/ui'
 import { queueSong, removeItem } from '../../modules/queue'
 import SeekBar from './SeekBar'
 import { formatPitch } from 'shared/pitch'
-import type { PitchStatus } from 'shared/types'
+import type { Dedication, PitchStatus } from 'shared/types'
 import styles from './QueueItem.css'
 import { useT } from 'lib/i18n'
 
@@ -22,8 +23,12 @@ const LONG_PRESS_THRESHOLD_MS = 700
 
 interface QueueItemProps {
   artist: string
+  /** what is being said over this performance, in the order it was written */
+  dedications?: Dedication[]
   errorMessage: string
   isCurrent: boolean
+  /** whether this row still has a screen ahead of it worth writing on */
+  isDedicatable: boolean
   isErrored: boolean
   isInfoable: boolean
   isMovable: boolean
@@ -56,8 +61,10 @@ interface QueueItemProps {
 
 const QueueItem = ({
   artist,
+  dedications,
   errorMessage,
   isCurrent,
+  isDedicatable,
   isErrored,
   isInfoable,
   isMovable,
@@ -88,8 +95,10 @@ const QueueItem = ({
 }: QueueItemProps) => {
   const t = useT()
   const [isExpanded, setExpanded] = useState(false)
+  const [isDedicationOpen, setDedicationOpen] = useState(false)
   const longPressActiveRef = useRef(false)
   const dispatch = useAppDispatch()
+  const myUserId = useAppSelector(state => state.user.userId)
 
   const handleErrorInfoClick = () => dispatch(showErrorMessage(errorMessage))
   const handleInfoClick = () => dispatch(showSongInfo(songId))
@@ -110,12 +119,17 @@ const QueueItem = ({
     dispatch(requestPlayNext())
     setExpanded(false)
   }
+  const handleDedicationClick = () => {
+    setDedicationOpen(true)
+    setExpanded(false)
+  }
+
   const handleRemoveClick = () => dispatch(removeItem({ queueId }))
   const handleStarClick = () => dispatch(toggleSongStarred(songId))
 
   const swipeHandlers = useSwipeable({
     onSwipedLeft: () => {
-      setExpanded(isErrored || isInfoable || isRemovable || isSkippable)
+      setExpanded(isErrored || isInfoable || isRemovable || isSkippable || isDedicatable)
     },
     onSwipedRight: () => setExpanded(false),
     preventScrollOnSwipe: true,
@@ -185,6 +199,18 @@ const QueueItem = ({
               )}
             </div>
             <div className={styles.artist}>{artist}</div>
+            {/* what the room will read over this song. The first message is
+                shown in full-ish and the rest counted: the row is a list
+                entry, and the carousel on the television is where they all
+                get their turn. */}
+            {!!dedications?.length && (
+              <div className={styles.dedication}>
+                <span className={styles.dedicationText}>{dedications[0].text}</span>
+                {dedications.length > 1 && (
+                  <span className={styles.dedicationMore}>{`+${dedications.length - 1}`}</span>
+                )}
+              </div>
+            )}
             {pitchStatus === 'preparing' && (
               <div className={styles.pitchStatus}>
                 {t('queue.pitchPreparing', { pitch: formatPitch(pitchSemitones) })}
@@ -222,6 +248,15 @@ const QueueItem = ({
               data-hide
               icon='INFO_OUTLINE'
               onClick={handleInfoClick}
+            />
+          )}
+          {isDedicatable && (
+            <Button
+              className={clsx(styles.btnDedicate, dedications?.length ? styles.active : undefined)}
+              data-hide
+              icon='MESSAGE'
+              aria-label={t('dedication.title')}
+              onClick={handleDedicationClick}
             />
           )}
           {isMovable && (
@@ -296,6 +331,17 @@ const QueueItem = ({
           )}
         </Buttons>
       </div>
+
+      {isDedicationOpen && (
+        <DedicationModal
+          queueId={queueId}
+          songTitle={title}
+          dedications={dedications ?? []}
+          userId={myUserId}
+          isAdmin={isAdmin}
+          onClose={() => setDedicationOpen(false)}
+        />
+      )}
     </div>
   )
 }

@@ -62,6 +62,12 @@
 
 .innerPrimary {
   flex: 1;
+
+  /* The row is a fixed 6.5rem and this column can now hold four lines — title,
+     artist, dedication, pitch status. Clipping here keeps the extra one inside
+     the block instead of pushing the singer's name out of the row. */
+  min-height: 0;
+  overflow: hidden;
 }
 
 .title {
@@ -92,6 +98,39 @@
   text-overflow: ellipsis;
   overflow: hidden;
   white-space: nowrap;
+}
+
+.dedication {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-xs);
+  font-size: var(--font-size-s);
+  color: var(--queued-item-color);
+}
+
+.dedicationText {
+  font-style: italic;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+
+  /* quoted here rather than in the message catalogue: which marks a language
+     uses around quoted speech is a property of the language, and the browser
+     already knows them */
+  &::before {
+    content: open-quote;
+  }
+
+  &::after {
+    content: close-quote;
+  }
+}
+
+.dedicationMore {
+  flex-shrink: 0;
+  font-size: var(--font-size-xs);
+  color: var(--color-gray-6);
+  font-variant-numeric: tabular-nums;
 }
 
 .danger {

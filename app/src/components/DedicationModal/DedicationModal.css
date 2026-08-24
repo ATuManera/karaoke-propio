@@ -1,0 +1,79 @@
+.modal {
+  width: 90vw;
+  max-width: 480px;
+}
+
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-m);
+}
+
+.songTitle {
+  margin: 0;
+  font-size: var(--font-size-m);
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.actions {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-s);
+
+  /* the remove button stays on the right even when it is the only one there */
+  &:has(> :only-child) {
+    justify-content: flex-end;
+  }
+}
+
+.others {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-s);
+  padding-top: var(--space-m);
+  border-top: 1px solid var(--chrome-border-color);
+}
+
+.othersHeading {
+  margin: 0;
+  font-size: var(--font-size-s);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-gray-6);
+}
+
+.other {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-s);
+  padding: var(--space-s);
+  border-radius: var(--border-radius);
+  background-color: var(--panel-bg-color);
+}
+
+.otherText {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.otherAuthor {
+  color: var(--color-gray-6);
+  font-size: var(--font-size-xs);
+}
+
+.otherButtons {
+  display: flex;
+  gap: var(--space-xs);
+  flex-shrink: 0;
+}
+
+.adminHint {
+  margin: 0;
+  color: var(--color-gray-6);
+  font-size: var(--font-size-s);
+}

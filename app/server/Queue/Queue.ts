@@ -1,5 +1,6 @@
 import path from 'path'
 import { db } from '../lib/Database.js'
+import Dedications from './Dedications.js'
 import sql from 'sqlate'
 import { QueueItem } from '../../shared/types.js'
 import { isValidPitch } from '../../shared/pitch.js'
@@ -225,6 +226,19 @@ class Queue {
       const nextQueueId = entities[map.get(curQueueId)].queueId
       result.push(nextQueueId)
       curQueueId = nextQueueId
+    }
+
+    // What is being said over each performance, attached after the fact and
+    // never joined into the query above: that one groups over media rows and
+    // lets MAX(isPreferred) decide which recording plays, so a one-to-many
+    // join would make the chosen version depend on how many people wrote
+    // something. The player reads these off the same queue push it already
+    // receives, which is what lets a dedication edited on a phone reach the
+    // television without a channel of its own.
+    const dedications = Dedications.getForRoom(roomId)
+
+    for (const queueId of Object.keys(dedications)) {
+      if (entities[queueId]) entities[queueId].dedications = dedications[queueId]
     }
 
     return { result, entities }

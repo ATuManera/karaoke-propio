@@ -52,6 +52,10 @@ router.get(['/', '/:roomId'], (ctx) => {
 
       if (prefs?.roles) passed.roles = prefs.roles
       if (isPlayerLaunchEnabled && prefs?.qr) passed.qr = prefs.qr
+      // likewise for the dedication carousel: a Player run by a singer must
+      // honour an admin's decision to keep messages off the screen, and the
+      // flag is a boolean with nothing private in it
+      if (isPlayerLaunchEnabled && prefs?.dedications) passed.dedications = prefs.dedications
 
       res.entities[roomId].prefs = passed
     }

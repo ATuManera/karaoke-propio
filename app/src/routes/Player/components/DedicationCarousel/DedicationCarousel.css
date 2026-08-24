@@ -1,0 +1,87 @@
+.container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: flex;
+  justify-content: center;
+  overflow: hidden;
+
+  /* the play button and the video sit underneath; nothing here is clickable */
+  pointer-events: none;
+}
+
+.banner {
+  margin-top: 2vh;
+  padding: 1.4vh 2.4vh;
+  max-width: 92%;
+  border: 1px solid var(--chrome-border-color);
+  border-radius: var(--border-radius);
+
+  /* the contrast the text is read against. Solid by default so a message is
+     legible over a bright video even where the blur below is unavailable */
+  background-color: hsl(var(--hue-blue) 100% 4% / 82%);
+  text-align: center;
+
+  opacity: 0;
+  transform: translateY(-130%);
+  transition: transform .45s ease-out, opacity .45s ease-out;
+  will-change: transform, opacity;
+}
+
+.shown {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+@supports (backdrop-filter: blur(20px) brightness(60%) saturate(50%)) or (-webkit-backdrop-filter: blur(20px) brightness(60%) saturate(50%)) {
+  .banner {
+    background-color: hsl(var(--hue-blue) 100% 4% / 45%);
+    -webkit-backdrop-filter: blur(20px) brightness(60%) saturate(50%);
+    backdrop-filter: blur(20px) brightness(60%) saturate(50%);
+  }
+}
+
+.text {
+  margin: 0;
+  color: #fff;
+  font-family: var(--font-family-custom);
+  font-size: 3.4vh;
+  font-weight: var(--font-weight-bold);
+  line-height: 1.25;
+
+  /* read from a sofa, over whatever the video happens to be showing */
+  text-rendering: optimizeLegibility;
+  text-shadow: 0 2px 6px rgb(0 0 0 / 90%);
+  overflow-wrap: anywhere;
+
+  /* three lines is already a long message on a TV; past that it is cut rather
+     than allowed to grow down into the lyrics */
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  overflow: hidden;
+}
+
+.author {
+  margin: .4vh 0 0;
+  color: var(--color-gray-8);
+  font-size: 2.1vh;
+  text-shadow: 0 2px 6px rgb(0 0 0 / 90%);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* a banner that slides is motion nobody asked for; the message still needs to
+   arrive, so it fades in place instead */
+@media (prefers-reduced-motion: reduce) {
+  .banner {
+    transform: none;
+    transition: opacity .45s ease-out;
+  }
+
+  .shown {
+    transform: none;
+  }
+}

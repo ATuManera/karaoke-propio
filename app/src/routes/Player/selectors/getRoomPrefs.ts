@@ -3,6 +3,9 @@ import { createSelector } from '@reduxjs/toolkit'
 import type { IRoomPrefs } from 'shared/types'
 
 const DEFAULT_ROOM_PREFS: IRoomPrefs = {
+  dedications: {
+    isEnabled: true,
+  },
   qr: {
     isEnabled: false,
     opacity: 0.625,

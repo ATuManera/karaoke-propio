@@ -309,6 +309,27 @@ const es: Messages = {
     singIt: 'Cantarla',
   },
 
+  dedication: {
+    title: 'Dedicatoria',
+    optional: 'Dedicatoria (opcional)',
+    placeholder: 'Para Ana, que hoy cumple 30…',
+    hint: 'Se ve en la tele mientras suena la canción.',
+    hintOwn: 'Se ve en la tele mientras suena tu canción. Puedes cambiarla hasta que empiece.',
+    charsLeft: 'quedan {{count}}',
+    edit: 'Editar',
+    writeMine: 'Escribir mi propio mensaje',
+    save: 'Guardar',
+    remove: 'Quitar',
+    others: 'También en esta canción',
+    editingFor: 'Editando lo que escribió {{name}}',
+    editingMine: 'Tu mensaje',
+    adminHint: 'Como administrador puedes poner un mensaje en cualquier canción, y editar o quitar el de cualquiera.',
+    confirmRemove: '¿Quitar este mensaje de la pantalla?',
+    onScreen: {
+      from: '— {{name}}',
+    },
+  },
+
   photos: {
     getARoom: '¡Consigue una sala!',
     signInToShare: 'Entra a una sala para compartir fotos.',
@@ -441,6 +462,11 @@ const es: Messages = {
       reenterPassword: 'vuelve a escribir la contraseña de la sala',
       size: 'Tamaño',
       opacity: 'Opacidad',
+    },
+    dedications: {
+      title: 'Dedicatorias',
+      show: 'Mostrar dedicatorias en el reproductor',
+      hint: 'Apagado, no aparece nada sobre las canciones. No se borra nada: lo que escribieron vuelve cuando lo enciendas de nuevo.',
     },
     userPrefs: {
       title: 'Usuarios',

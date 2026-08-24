@@ -20,6 +20,11 @@ export const QUEUE_MOVE = 'server/QUEUE_MOVE'
 export const QUEUE_PUSH = 'queue/PUSH'
 export const QUEUE_REMOVE = 'server/QUEUE_REMOVE'
 
+// Dedications (what is said over a song while it plays). No push of their own:
+// they ride the queue that already reaches every client, the player included.
+export const QUEUE_DEDICATION_SET = 'server/QUEUE_DEDICATION_SET'
+export const QUEUE_DEDICATION_REMOVE = 'server/QUEUE_DEDICATION_REMOVE'
+
 // Acquisition (fetch a song from an external source: YouTube, USDB)
 export const ACQUISITION_SEARCH = 'server/ACQUISITION_SEARCH'
 /** read a public playlist's listing, to see which of its songs are already here */

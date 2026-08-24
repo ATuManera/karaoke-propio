@@ -3,6 +3,7 @@ import Modal from 'components/Modal/Modal'
 import Button from 'components/Button/Button'
 import InputCheckbox from 'components/InputCheckbox/InputCheckbox'
 import Slider from 'components/Slider/Slider'
+import DedicationField from 'components/DedicationField/DedicationField'
 import { formatPitch, PITCH_DEFAULT, PITCH_MAX, PITCH_MIN, PITCH_STEP } from 'shared/pitch'
 import type { SongPitchPref } from 'shared/types'
 import { useT } from 'lib/i18n'
@@ -20,7 +21,13 @@ interface PitchModalProps {
    * hang a preference on.
    */
   savedPref?: SongPitchPref | null
-  onConfirm(pitchSemitones: number, remember?: boolean): void
+  /**
+   * Whether to offer a dedication here. Off by default because this modal is
+   * also shown for a song that is still being downloaded (see
+   * AcquisitionModal), where there is no queue entry yet to attach one to.
+   */
+  showDedication?: boolean
+  onConfirm(pitchSemitones: number, remember?: boolean, dedication?: string): void
   onClose(): void
 }
 
@@ -33,7 +40,7 @@ interface PitchModalProps {
  * song, which is a different thing from the pitch of this one performance:
  * the same song is -4 for one person and +2 for another (see migration 012).
  */
-const PitchModal = ({ title, songTitle, initialPitch, savedPref, onConfirm, onClose }: PitchModalProps) => {
+const PitchModal = ({ title, songTitle, initialPitch, savedPref, showDedication, onConfirm, onClose }: PitchModalProps) => {
   const t = useT()
   const [pitch, setPitch] = useState(initialPitch ?? savedPref?.pitchSemitones ?? PITCH_DEFAULT)
   // Pre-checked only when there is already a deliberate saved pitch: changing
@@ -42,7 +49,9 @@ const PitchModal = ({ title, songTitle, initialPitch, savedPref, onConfirm, onCl
   // an observed 'inferred' value, saving stays an opt-in.
   const [remember, setRemember] = useState(savedPref?.source === 'manual' || savedPref?.source === 'assistant')
 
-  const handleConfirm = () => onConfirm(pitch, remember)
+  const [dedication, setDedication] = useState('')
+
+  const handleConfirm = () => onConfirm(pitch, remember, dedication)
   const handlePitchChange = (value: number | number[]) => setPitch(value as number)
   const handleRememberChange = (e: React.ChangeEvent<HTMLInputElement>) => setRemember(e.target.checked)
 
@@ -86,6 +95,21 @@ const PitchModal = ({ title, songTitle, initialPitch, savedPref, onConfirm, onCl
             </p>
           )}
         </div>
+
+        {/* Asked for here because this is already the moment the singer is
+            thinking about the song, and one dialog beats two. Optional in the
+            plainest way there is: leaving it empty queues the song exactly as
+            before, and it can still be written from the queue afterwards. */}
+        {showDedication && (
+          <DedicationField
+            id='queue-dedication'
+            label={t('dedication.optional')}
+            value={dedication}
+            placeholder={t('dedication.placeholder')}
+            hint={t('dedication.hintOwn')}
+            onChange={setDedication}
+          />
+        )}
 
         {/* Undefined means there is no song to hang a preference on yet (see
             AcquisitionModal); null means there is one and nothing is saved. */}

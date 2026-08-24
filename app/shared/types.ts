@@ -57,6 +57,8 @@ export interface QueueItem {
   pitchSemitones: number
   pitchStatus: PitchStatus
   pitchError?: string
+  /** what is being said over this performance; absent when nothing is */
+  dedications?: Dedication[]
 }
 
 export interface OptimisticQueueItem {
@@ -65,9 +67,35 @@ export interface OptimisticQueueItem {
   queueId: number
   songId: number
   pitchSemitones: number
+  /** written in the same breath as the queue request (see PitchModal) */
+  dedication?: string
+}
+
+/**
+ * One message shown over a performance while it plays: the singer's own
+ * dedication, or one an admin added to that song (see migration 016). Which
+ * it is can be read off userId — the author is not necessarily the singer.
+ */
+export interface Dedication {
+  dedicationId: number
+  queueId: number
+  userId: number
+  userDisplayName: string
+  text: string
+  dateUpdated: number
 }
 
 export interface IRoomPrefs {
+  /**
+   * Whether the player shows the dedications and messages written on each
+   * song. Optional, and absence means shown: every room that existed before
+   * the switch did is a room where they were already appearing, and reading
+   * an older room's prefs as "off" would silently take the feature away from
+   * it (see areDedicationsShown).
+   */
+  dedications?: {
+    isEnabled: boolean
+  }
   qr: {
     isEnabled: boolean
     opacity: number
