@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useRef, useState } from 'react'
 import { useT } from 'lib/i18n'
 import { useAppDispatch, useAppSelector } from 'store/hooks'
 import Button from 'components/Button/Button'
@@ -23,11 +23,25 @@ const SongCategories = ({ songId }: { songId: number }) => {
 
   const [name, setName] = useState('')
   const [type, setType] = useState<CategoryType>('genre')
+  const [isSaving, setIsSaving] = useState(false)
+  const [saveError, setSaveError] = useState<string | null>(null)
+  const savingRef = useRef(false)
 
-  const handleAdd = () => {
-    if (!name.trim()) return
-    dispatch(addSongCategory({ songId, name: name.trim(), type }))
-    setName('')
+  const handleAdd = async () => {
+    if (!name.trim() || savingRef.current) return
+    savingRef.current = true
+    setIsSaving(true)
+    setSaveError(null)
+
+    try {
+      await dispatch(addSongCategory({ songId, name: name.trim(), type })).unwrap()
+      setName('')
+    } catch (err) {
+      setSaveError(err instanceof Error ? err.message : String(err))
+    } finally {
+      savingRef.current = false
+      setIsSaving(false)
+    }
   }
 
   // suggest what the library already uses, so typing "balada" doesn't create a
@@ -65,15 +79,24 @@ const SongCategories = ({ songId }: { songId: number }) => {
           className={styles.categoryInput}
           list={`category-suggestions-${songId}`}
           value={name}
-          onChange={e => setName(e.target.value)}
-          onKeyDown={(e) => { if (e.key === 'Enter') handleAdd() }}
+          onChange={(e) => {
+            setName(e.target.value)
+            setSaveError(null)
+          }}
+          // keyup happens after a datalist has committed its highlighted value;
+          // keydown used the value from before the selection.
+          onKeyUp={(e) => { if (e.key === 'Enter') void handleAdd() }}
+          disabled={isSaving}
           placeholder={t('categories.placeholder')}
         />
         <datalist id={`category-suggestions-${songId}`}>
           {suggestions.map(s => <option key={s} value={s} />)}
         </datalist>
-        <Button onClick={handleAdd} disabled={!name.trim()}>{t('common.add')}</Button>
+        <Button onClick={() => { void handleAdd() }} disabled={!name.trim() || isSaving}>
+          {isSaving ? t('common.saving') : t('common.add')}
+        </Button>
       </div>
+      {saveError && <p className={styles.categoryError}>{saveError}</p>}
     </div>
   )
 }

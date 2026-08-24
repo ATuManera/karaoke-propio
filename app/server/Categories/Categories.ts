@@ -49,6 +49,13 @@ class Categories {
     return map
   }
 
+  static getPayload (): {
+    categories: { result: number[], entities: Record<number, CategoryRow> }
+    songCategories: Record<number, number[]>
+  } {
+    return { categories: this.get(), songCategories: this.getSongMap() }
+  }
+
   static findOrCreate (name: string, type: CategoryType): number {
     const nameNorm = normalize(name)
     const existing = db.get<{ categoryId: number }>(
@@ -79,13 +86,11 @@ class Categories {
   static addManual (songId: number, name: string, type: CategoryType): void {
     const categoryId = this.findOrCreate(name, type)
     db.run('INSERT OR IGNORE INTO songCategories (songId, categoryId, source) VALUES (?, ?, ?)', [songId, categoryId, 'manual'])
-    Library.cache.version = null
   }
 
   static removeFromSong (songId: number, categoryId: number): void {
     db.run('DELETE FROM songCategories WHERE songId = ? AND categoryId = ?', [songId, categoryId])
     this.pruneEmpty()
-    Library.cache.version = null
   }
 
   /** Categories nothing points at anymore would otherwise linger in the filter bar. */

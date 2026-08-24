@@ -13,6 +13,7 @@ export const SONG_UNSTARRED = 'library/SONG_UNSTARRED'
 export const STAR_COUNTS_PUSH = 'library/STAR_COUNTS_PUSH'
 export const LIBRARY_PUSH = 'library/PUSH'
 export const LIBRARY_PUSH_SONG = 'library/PUSH_SONG'
+export const CATEGORIES_PUSH = 'categories/PUSH'
 
 // Queue
 export const QUEUE_ADD = 'server/QUEUE_ADD'

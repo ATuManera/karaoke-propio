@@ -1,6 +1,6 @@
 import { createAsyncThunk, createReducer, createAction } from '@reduxjs/toolkit'
 import HttpApi from 'lib/HttpApi'
-import { LIBRARY_PUSH } from 'shared/actionTypes'
+import { CATEGORIES_PUSH, LIBRARY_PUSH } from 'shared/actionTypes'
 
 const api = new HttpApi()
 
@@ -30,18 +30,14 @@ export const startCategoryScan = createAsyncThunk(
 
 export const addSongCategory = createAsyncThunk(
   'categories/ADD_TO_SONG',
-  async ({ songId, name, type }: { songId: number, name: string, type: CategoryType }, thunkAPI) => {
-    await api.request('POST', `song/${songId}/categories`, { body: { name, type } })
-    await thunkAPI.dispatch(fetchCategories())
-  },
+  async ({ songId, name, type }: { songId: number, name: string, type: CategoryType }) =>
+    await api.request<CategoriesPayload>('POST', `song/${songId}/categories`, { body: { name, type } }),
 )
 
 export const removeSongCategory = createAsyncThunk(
   'categories/REMOVE_FROM_SONG',
-  async ({ songId, categoryId }: { songId: number, categoryId: number }, thunkAPI) => {
-    await api.request('DELETE', `song/${songId}/categories/${categoryId}`)
-    await thunkAPI.dispatch(fetchCategories())
-  },
+  async ({ songId, categoryId }: { songId: number, categoryId: number }) =>
+    await api.request<CategoriesPayload>('DELETE', `song/${songId}/categories/${categoryId}`),
 )
 
 /** which categories the user is filtering by; empty means "show everything" */
@@ -64,16 +60,23 @@ const initialState: CategoriesState = {
   isScanning: false,
 }
 
+const categoriesPush = createAction<CategoriesPayload>(CATEGORIES_PUSH)
+
+const applyPayload = (state: CategoriesState, payload: CategoriesPayload) => {
+  state.result = payload.categories.result
+  state.entities = payload.categories.entities
+  state.songCategories = payload.songCategories
+  state.selected = state.selected.filter(id => state.result.includes(id))
+}
+
 const categoriesReducer = createReducer(initialState, (builder) => {
   builder
     .addCase(fetchCategories.fulfilled, (state, { payload }) => {
-      state.result = payload.categories.result
-      state.entities = payload.categories.entities
-      state.songCategories = payload.songCategories
-      // a category may have disappeared (last song removed); never leave a
-      // filter selected that no longer exists or nothing would ever match
-      state.selected = state.selected.filter(id => state.result.includes(id))
+      applyPayload(state, payload)
     })
+    .addCase(addSongCategory.fulfilled, (state, { payload }) => { applyPayload(state, payload) })
+    .addCase(removeSongCategory.fulfilled, (state, { payload }) => { applyPayload(state, payload) })
+    .addCase(categoriesPush, (state, { payload }) => { applyPayload(state, payload) })
     .addCase(startCategoryScan.pending, (state) => {
       state.isScanning = true
     })

@@ -486,6 +486,13 @@ allowlist; anything unrecognised is dropped rather than guessed at.
 Manual edits are stored with `source = 'manual'` and survive re-scans, which
 only replace `auto` rows.
 
+An edit returns the complete category snapshot in the mutation response and
+pushes that same snapshot to the other connected clients. Do not acknowledge a
+save and then issue a second GET: if that refresh alone loses its connection,
+the database is already changed while the editor still looks stale. The input
+stays populated and locked while its single request is pending, so accepting a
+native datalist suggestion or pressing Enter repeatedly cannot overlap saves.
+
 ## Choosing a room
 
 Signing in never picks the room. With one room open the screen used to select

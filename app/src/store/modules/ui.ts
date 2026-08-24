@@ -103,7 +103,10 @@ const uiReducer = createReducer(initialState, (builder) => {
       state.contentWidth = Math.min(payload.innerWidth, MAX_CONTENT_WIDTH)
     })
     .addMatcher(
-      (action): action is AnyAction => !!action.error,
+      // Category additions keep their error beside the value that failed, so
+      // the song dialog remains open and the admin can retry it. Raising the
+      // global dialog here used to cover that editor and make it look closed.
+      (action): action is AnyAction => !!action.error && action.type !== 'categories/ADD_TO_SONG/rejected',
       (state, { error }) => {
         state.isErrored = true
         state.errorMessage = error.message ?? error

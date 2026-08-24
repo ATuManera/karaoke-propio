@@ -15,6 +15,7 @@ import PitchWorkerClient from '../Pitch/PitchWorkerClient.js'
 const keyCache = new Map<number, unknown>()
 let pitchWorker: PitchWorkerClient | null = null
 import { LIBRARY_PUSH } from '../../shared/actionTypes.js'
+import { CATEGORIES_PUSH } from '../../shared/actionTypes.js'
 import { MessageError } from '../lib/i18n.js'
 const log = getLogger('LibraryRouter')
 const router = new KoaRouter({ prefix: '/api' })
@@ -46,10 +47,7 @@ router.get('/song/:songId', async (ctx) => {
 router.get('/categories', (ctx) => {
   if (ctx.user.userId === null) ctx.throw(401)
 
-  ctx.body = {
-    categories: Categories.get(),
-    songCategories: Categories.getSongMap(),
-  }
+  ctx.body = Categories.getPayload()
 })
 
 // kick off an online lookup for songs that have never been categorized.
@@ -88,9 +86,10 @@ router.post('/song/:songId/categories', (ctx) => {
   }
 
   Categories.addManual(songId, name.trim().slice(0, 60), type as 'genre')
-  ctx.io.emit('action', { type: LIBRARY_PUSH, payload: Library.get() })
+  const payload = Categories.getPayload()
+  ctx.io.emit('action', { type: CATEGORIES_PUSH, payload })
   ctx.status = 200
-  ctx.body = {}
+  ctx.body = payload
 })
 
 router.delete('/song/:songId/categories/:categoryId', (ctx) => {
@@ -101,9 +100,10 @@ router.delete('/song/:songId/categories/:categoryId', (ctx) => {
   if (Number.isNaN(songId) || Number.isNaN(categoryId)) ctx.throw(422, 'invalid id')
 
   Categories.removeFromSong(songId, categoryId)
-  ctx.io.emit('action', { type: LIBRARY_PUSH, payload: Library.get() })
+  const payload = Categories.getPayload()
+  ctx.io.emit('action', { type: CATEGORIES_PUSH, payload })
   ctx.status = 200
-  ctx.body = {}
+  ctx.body = payload
 })
 
 /**

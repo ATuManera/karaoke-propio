@@ -112,6 +112,12 @@
   font-size: var(--font-size-s);
 }
 
+.categoryError {
+  margin: var(--space-xs) 0 0;
+  color: var(--btn-danger-bg-color);
+  font-size: var(--font-size-xs);
+}
+
 .musicBlock {
   padding-bottom: var(--space-m);
   margin-bottom: var(--space-m);
