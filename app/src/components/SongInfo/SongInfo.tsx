@@ -85,7 +85,7 @@ const EditFields = ({ songId, currentArtist, currentTitle }: EditFieldsProps) =>
 }
 
 /**
- * A song a bulk playlist import brought in, still waiting to be looked at.
+ * A song a bulk import or folder scan brought in, still waiting to be checked.
  *
  * This is where the confirmation the bulk download skipped is finally made.
  * The YouTube title it was guessed from is shown because it is the only way to
@@ -105,9 +105,11 @@ const PendingReview = ({ songId }: { songId: number }) => {
   return (
     <div className={styles.pendingReview}>
       <p className={styles.pendingHeading}>
-        {pending.isAmbiguous
-          ? t('songInfo.pendingAmbiguous')
-          : t('songInfo.pendingUnchecked')}
+        {pending.origin === 'scan'
+          ? t('songInfo.pendingScan')
+          : pending.isAmbiguous
+            ? t('songInfo.pendingAmbiguous')
+            : t('songInfo.pendingUnchecked')}
       </p>
       <p className={styles.pendingSource} translate='no'>{pending.sourceTitle}</p>
       <Button onClick={() => dispatch(markSongReviewed(songId))}>

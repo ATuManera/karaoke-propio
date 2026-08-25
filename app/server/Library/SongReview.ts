@@ -1,8 +1,8 @@
 import { db } from '../lib/Database.js'
 
 /**
- * The worklist of songs a bulk playlist import brought in without anyone
- * looking at them.
+ * The worklist of songs added without anyone looking at their metadata: by a
+ * bulk playlist import or by a media-folder scan.
  *
  * A row means pending; reviewing removes it. See migration 013 for why the
  * list exists at all — briefly: the one-at-a-time flow's correctness comes
@@ -21,35 +21,38 @@ export interface PendingSong {
   playlistId: string | null
   isAmbiguous: number
   dateCreated: number
+  origin: 'bulk' | 'scan'
 }
 
 class SongReview {
   /** every song still waiting, worst-understood first */
   static getPending (): PendingSong[] {
     return db.all<PendingSong>(`
-      SELECT songId, sourceTitle, playlistId, isAmbiguous, dateCreated
+      SELECT songId, sourceTitle, playlistId, isAmbiguous, dateCreated, origin
       FROM songsPendingReview
       ORDER BY isAmbiguous DESC, dateCreated DESC
     `, [])
   }
 
-  static markPending (songId: number, { sourceTitle, playlistId, isAmbiguous }: {
+  static markPending (songId: number, { sourceTitle, playlistId, isAmbiguous, origin = 'bulk' }: {
     sourceTitle: string
     playlistId?: string | null
     isAmbiguous: boolean
+    origin?: 'bulk' | 'scan'
   }): void {
     // A bulk import can land on a song that already exists — a second version
     // of one the library has. The newest arrival's source title is the one
     // worth showing, since it is the one nobody has looked at.
     db.run(`
-      INSERT INTO songsPendingReview (songId, sourceTitle, playlistId, isAmbiguous, dateCreated)
-      VALUES (?, ?, ?, ?, ?)
+      INSERT INTO songsPendingReview (songId, sourceTitle, playlistId, isAmbiguous, dateCreated, origin)
+      VALUES (?, ?, ?, ?, ?, ?)
       ON CONFLICT (songId) DO UPDATE SET
         sourceTitle = excluded.sourceTitle,
         playlistId = excluded.playlistId,
         isAmbiguous = excluded.isAmbiguous,
-        dateCreated = excluded.dateCreated
-    `, [songId, sourceTitle.slice(0, 300), playlistId ?? null, isAmbiguous ? 1 : 0, Math.floor(Date.now() / 1000)])
+        dateCreated = excluded.dateCreated,
+        origin = excluded.origin
+    `, [songId, sourceTitle.slice(0, 300), playlistId ?? null, isAmbiguous ? 1 : 0, Math.floor(Date.now() / 1000), origin])
   }
 
   static markReviewed (songId: number): void {

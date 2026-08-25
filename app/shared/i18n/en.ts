@@ -94,6 +94,8 @@ const en = {
     addMediaFoldersToStart: '<a>Add media folders</a> to get started.',
     rereadNames_one: 'Re-read this name',
     rereadNames_other: 'Re-read these {{count}} names',
+    pendingReviewFilter_one: 'Show {{count}} new song awaiting review',
+    pendingReviewFilter_other: 'Show {{count}} new songs awaiting review',
   },
 
   songInfo: {
@@ -119,6 +121,7 @@ const en = {
     markReviewed: 'Mark reviewed',
     pendingAmbiguous: 'Downloaded in bulk — nothing in the library confirmed this artist and title.',
     pendingUnchecked: 'Downloaded in bulk — not checked yet.',
+    pendingScan: 'Found by a folder scan — check its name and categories.',
     myPitch: 'My pitch:',
     pitchLastSung: '(last sung)',
     pitchForget: '(Forget)',

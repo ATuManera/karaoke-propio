@@ -82,6 +82,8 @@ const es: Messages = {
     addMediaFoldersToStart: '<a>Agrega carpetas de música</a> para empezar.',
     rereadNames_one: 'Releer este nombre',
     rereadNames_other: 'Releer estos {{count}} nombres',
+    pendingReviewFilter_one: 'Mostrar {{count}} canción nueva pendiente de revisión',
+    pendingReviewFilter_other: 'Mostrar {{count}} canciones nuevas pendientes de revisión',
   },
 
   songInfo: {
@@ -107,6 +109,7 @@ const es: Messages = {
     markReviewed: 'Marcar como revisada',
     pendingAmbiguous: 'Descargada en bloque — nada en la biblioteca confirmó este artista y este título.',
     pendingUnchecked: 'Descargada en bloque — todavía sin revisar.',
+    pendingScan: 'Encontrada al escanear carpetas — revisa su nombre y categorías.',
     myPitch: 'Mi tono:',
     pitchLastSung: '(la última vez)',
     pitchForget: '(Olvidar)',

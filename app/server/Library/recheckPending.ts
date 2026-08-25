@@ -41,6 +41,7 @@ export interface RecheckResult {
  */
 export async function recheckPending (io: SocketIOServer): Promise<RecheckResult> {
   const pending = SongReview.getPending()
+    .filter(row => row.origin === 'bulk')
   const result: RecheckResult = { checked: 0, corrected: 0, failed: 0 }
 
   log.info('re-reading %d songs awaiting review', pending.length)
@@ -78,6 +79,7 @@ export async function recheckPending (io: SocketIOServer): Promise<RecheckResult
         sourceTitle: row.sourceTitle,
         playlistId: row.playlistId,
         isAmbiguous: false,
+        origin: row.origin,
       })
 
       result.corrected++

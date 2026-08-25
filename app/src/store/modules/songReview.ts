@@ -5,7 +5,7 @@ import { LOGOUT } from 'shared/actionTypes'
 const api = new HttpApi()
 
 /**
- * Songs a bulk playlist import brought in that nobody has looked at yet.
+ * Songs a bulk import or folder scan brought in without a metadata review.
  *
  * Fetched over HTTP rather than pushed with the library, for the reason the
  * server keeps it out of LIBRARY_PUSH: this is one admin's worklist, not
@@ -19,6 +19,7 @@ export interface PendingSong {
   /** 1 when nothing in the library corroborated the reading */
   isAmbiguous: number
   dateCreated: number
+  origin: 'bulk' | 'scan'
 }
 
 export const fetchPendingReview = createAsyncThunk(

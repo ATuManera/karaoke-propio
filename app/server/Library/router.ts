@@ -107,7 +107,8 @@ router.delete('/song/:songId/categories/:categoryId', (ctx) => {
 })
 
 /**
- * Songs a bulk playlist import brought in that nobody has looked at yet.
+ * Songs a bulk playlist import or folder scan brought in that nobody has
+ * looked at yet.
  *
  * Admin-only, and not part of LIBRARY_PUSH on purpose: this is a maintenance
  * worklist for one person, not something every phone in the room should be

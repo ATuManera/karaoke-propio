@@ -118,22 +118,22 @@ const VersionModal = ({ songId, songTitle, onConfirm, onClose }: VersionModalPro
               <div className={styles.preview}>
                 {v.mediaType === 'mp4'
                   ? (
-                    <video
-                      src={`${document.baseURI}api/media/${v.mediaId}?type=video&previewSongId=${songId}`}
-                      controls
-                      autoPlay
-                      playsInline
-                    />
-                    )
-                  : (
-                    <>
-                      <audio
-                        src={`${document.baseURI}api/media/${v.mediaId}?type=audio&previewSongId=${songId}`}
+                      <video
+                        src={`${document.baseURI}api/media/${v.mediaId}?type=video&previewSongId=${songId}`}
                         controls
                         autoPlay
+                        playsInline
                       />
-                      <span>{t('version.audioOnly')}</span>
-                    </>
+                    )
+                  : (
+                      <>
+                        <audio
+                          src={`${document.baseURI}api/media/${v.mediaId}?type=audio&previewSongId=${songId}`}
+                          controls
+                          autoPlay
+                        />
+                        <span>{t('version.audioOnly')}</span>
+                      </>
                     )}
               </div>
             )}

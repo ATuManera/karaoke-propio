@@ -15,6 +15,8 @@ interface SongListProps {
   filterKeywords?: string[]
   showArtist: boolean
   songIds: number[]
+  /** review results open their editor directly instead of entering the queue flow */
+  reviewMode?: boolean
 }
 
 const SongList = (props: SongListProps) => {
@@ -94,6 +96,7 @@ const SongList = (props: SongListProps) => {
           onSongQueue={handleSongQueue}
           onSongStarClick={handleSongStar}
           onSongInfo={handleSongInfo}
+          reviewMode={props.reviewMode}
         />
       ))}
 

@@ -1,4 +1,5 @@
 import Media from './Media.js'
+import SongReview from '../Library/SongReview.js'
 import { MEDIA_ADD, MEDIA_CLEANUP, MEDIA_REMOVE, MEDIA_UPDATE } from '../../shared/actionTypes.js'
 
 /**
@@ -6,7 +7,16 @@ import { MEDIA_ADD, MEDIA_CLEANUP, MEDIA_REMOVE, MEDIA_UPDATE } from '../../shar
  */
 export default function (io) { // eslint-disable-line @typescript-eslint/no-unused-vars
   return {
-    [MEDIA_ADD]: ({ payload }) => Media.add(payload),
+    [MEDIA_ADD]: ({ payload }) => {
+      const mediaId = Media.add(payload.media)
+      SongReview.markPending(payload.media.songId, {
+        sourceTitle: payload.pendingReview.sourceTitle,
+        playlistId: null,
+        isAmbiguous: false,
+        origin: 'scan',
+      })
+      return mediaId
+    },
     [MEDIA_CLEANUP]: Media.cleanup,
     [MEDIA_REMOVE]: ({ payload }) => Media.remove(payload),
     [MEDIA_UPDATE]: ({ payload }) => Media.update(payload),

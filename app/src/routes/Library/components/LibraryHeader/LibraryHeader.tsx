@@ -15,9 +15,9 @@ const LibraryHeader = () => {
   const isAdmin = useAppSelector(state => state.user.isAdmin)
   const { pending, isFiltering } = useAppSelector(state => state.songReview)
 
-  // A second version of a song already here arrives as LIBRARY_PUSH_SONG,
-  // which does not move the library version — so the run's own start and end
-  // are watched too, or the flag would wait for something unrelated to change.
+  // A second version from bulk acquisition arrives as LIBRARY_PUSH_SONG,
+  // which does not move the library version. Folder scans do move it when they
+  // finish; watching both signals keeps the shared review flag current.
   const isBulkRunning = useAppSelector(state => !!state.acquisition.bulk?.isRunning)
 
   useEffect(() => {
@@ -80,7 +80,7 @@ const LibraryHeader = () => {
             className={clsx(styles.btnReview, isFiltering && styles.active)}
             icon='FLAG'
             onClick={() => dispatch(toggleFilterPendingReview())}
-            title={`${pending.length} bulk-imported song(s) to check`}
+            title={t('library.pendingReviewFilter', { count: pending.length })}
           />
         )}
       </div>

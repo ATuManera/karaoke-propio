@@ -79,8 +79,8 @@ const getSongsByView = createSelector(
   (songsWithKeyword, filterStarred, starredSongs, selected, songCategories, filterPending, pending) =>
     songsWithKeyword.filter((songId) => {
       if (filterStarred && !starredSongs.includes(songId)) return false
-      // songs a bulk import brought in that nobody has checked yet — an admin
-      // worklist, narrowing the library the same way starred does
+      // songs a scan or bulk import brought in that nobody has checked yet —
+      // an admin worklist, narrowing the library the same way starred does
       if (filterPending && !pending.has(songId)) return false
       if (!selected.length) return true
 
@@ -111,7 +111,12 @@ const getSearchResults = createSelector(
     // with a filter on that songs can fail, only show artists that still have
     // a matching song — otherwise the artist list contradicts the list below it
     artistsResult: (() => {
-      const filtered = selected.length || filterPending
+      // Review is a song worklist, not an artist browse: showing an artist row
+      // would expand to all of that artist's songs, including old ones that do
+      // not belong to the scan/import being reviewed.
+      if (filterPending) return []
+
+      const filtered = selected.length
         ? artistsResult.filter(artistId =>
             songsResult.some(songId => songs.entities[songId]?.artistId === artistId))
         : artistsResult

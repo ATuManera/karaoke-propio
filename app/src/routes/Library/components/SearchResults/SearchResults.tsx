@@ -37,6 +37,7 @@ interface CustomRowProps {
   artistsResult: number[]
   songsResult: number[]
   expandedArtistResults: number[]
+  isFilteringPendingReview: boolean
 }
 
 // this is outside the SearchResults component to keep the reference as stable as possible,
@@ -52,6 +53,7 @@ const RowComponent = ({
   artistsResult,
   songsResult,
   expandedArtistResults,
+  isFilteringPendingReview,
 }: RowComponentProps<CustomRowProps>) => {
   const { starredSongs } = useAppSelector(state => ensureState(state.userStars))
   const { upcoming } = useAppSelector(getSongsStatus)
@@ -117,6 +119,7 @@ const RowComponent = ({
         songIds={songsResult}
         showArtist
         filterKeywords={filterKeywords}
+        reviewMode={isFilteringPendingReview}
       />
     </div>
   )
@@ -134,11 +137,12 @@ const SearchResults = ({ ui }: SearchResultsProps) => {
 
   const playlist = useAppSelector(state => state.acquisition.playlist)
   const { pending, isFiltering: isFilteringPendingReview, isRechecking } = useAppSelector(state => state.songReview)
+  const bulkPending = pending.filter(row => row.origin === 'bulk')
 
   const handleRecheck = () => {
     // minutes long, rate limited upstream, and it renames files — so it is
     // asked for once and explicitly, the same way the category scan is
-    const message = `Read the names of these ${pending.length} songs again?\n\n`
+    const message = `Read the names of these ${bulkPending.length} songs again?\n\n`
       + `Anything MusicBrainz recognises the other way round gets its artist and `
       + `title swapped, and its files renamed. Takes a couple of seconds per song `
       + `and continues in the background. They all stay flagged for you either way.`
@@ -237,6 +241,7 @@ const SearchResults = ({ ui }: SearchResultsProps) => {
           artistsResult,
           songsResult,
           expandedArtistResults,
+          isFilteringPendingReview,
         }}
         rowHeight={rowHeight}
         numRows={artistsResult.length + 3}
@@ -275,7 +280,7 @@ const SearchResults = ({ ui }: SearchResultsProps) => {
           anybody, so the artist/title reading has nothing to check itself
           against and comes out backwards often enough to matter. This is the
           way to fix them all without re-downloading anything. */}
-      {isFilteringPendingReview && pending.length > 0 && (
+      {isFilteringPendingReview && bulkPending.length > 0 && (
         <div ref={moreBarRef} className={styles.moreBar} style={{ bottom: ui.footerHeight }}>
           <Button
             className={styles.moreButton}
@@ -283,7 +288,7 @@ const SearchResults = ({ ui }: SearchResultsProps) => {
             disabled={isRechecking}
             onClick={handleRecheck}
           >
-            {isRechecking ? t('common.starting') : t('library.rereadNames', { count: pending.length })}
+            {isRechecking ? t('common.starting') : t('library.rereadNames', { count: bulkPending.length })}
           </Button>
         </div>
       )}

@@ -23,7 +23,7 @@ const state = (overrides: { pending?: number[], isFiltering?: boolean, filterStr
   userStars: { starredArtists: [], starredSongs: [] },
   categories: { selected: [], songCategories: {} },
   songReview: {
-    pending: (overrides.pending ?? []).map((songId): PendingSong => ({ songId, sourceTitle: '', playlistId: null, isAmbiguous: 0, dateCreated: 0 })),
+    pending: (overrides.pending ?? []).map((songId): PendingSong => ({ songId, sourceTitle: '', playlistId: null, isAmbiguous: 0, dateCreated: 0, origin: 'scan' })),
     isFiltering: overrides.isFiltering ?? false,
   },
 } as unknown as RootState)
@@ -38,9 +38,9 @@ describe('getSearchResults, filtering by what still needs review', () => {
     expect(getSearchResults(state({ pending: [1, 3], isFiltering: true })).songsResult).toEqual([1, 3])
   })
 
-  // otherwise the artist list contradicts the song list underneath it
-  it('drops artists that have nothing left to show', () => {
-    expect(getSearchResults(state({ pending: [3], isFiltering: true })).artistsResult).toEqual([20])
+  // expanding an artist would reveal its old songs alongside the new one
+  it('uses a direct song worklist rather than expandable artist rows', () => {
+    expect(getSearchResults(state({ pending: [3], isFiltering: true })).artistsResult).toEqual([])
   })
 
   it('narrows a search as well as the whole library', () => {

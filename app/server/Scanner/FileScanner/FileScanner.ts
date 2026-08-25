@@ -153,7 +153,17 @@ class FileScanner extends Scanner {
     log.info('  => new: %s', JSON.stringify(match))
 
     return {
-      mediaId: await (IPC as any).req({ type: MEDIA_ADD, payload: media }),
+      mediaId: await (IPC as any).req({
+        type: MEDIA_ADD,
+        payload: {
+          media,
+          pendingReview: {
+            // Preserve the original filename as the evidence an admin checks
+            // the parsed artist/title against in Song Info.
+            sourceTitle: stripSourceIdSuffix(pathInfo.name),
+          },
+        },
+      }),
       isNew: true,
     }
   }

@@ -323,17 +323,24 @@ answer.
 
 ### Review
 
-Every song a bulk import creates is held in `songsPendingReview` until an admin
-says otherwise — a row means pending, reviewing deletes it, and there is no
-`dateReviewed` because this is a worklist and not history. The table stores the
-YouTube title the guess came from, which is the only way to judge the guess
-without going back to YouTube.
+Every song a bulk import creates, and every song first discovered by a media
+folder scan, is held in `songsPendingReview` until an admin says otherwise — a
+row means pending, reviewing deletes it, and there is no `dateReviewed` because
+this is a worklist and not history. `origin` distinguishes `bulk` from `scan`:
+the former stores the YouTube title the guess came from, while the latter keeps
+the original filename the scanner parsed.
 
 The flag beside the search box filters the library down to them, and appears
 only while there is something to check: a filter that always shows zero is a
-permanent reminder of nothing. Tapping a song opens Song Info, where the fields
-that correct an artist and title already existed — `retagSong` renames the
-files too, so the correction survives a rescan.
+permanent reminder of nothing. Review mode is deliberately a flat song list;
+an expandable artist would leak older songs into the new-song worklist. Tapping
+a result opens Song Info directly instead of queueing it, putting artist, title
+and category editing one gesture away. `retagSong` renames the files too, so a
+name correction survives a rescan.
+
+The MusicBrainz name re-reader remains limited to `bulk` rows. Its question is
+whether an unattended online title was interpreted backwards; applying that
+heuristic to ordinary local filenames would be both slow and surprising.
 
 Marking reviewed is a separate act from editing, because an admin may well want
 a second look at something they just retyped. A song that merges into an

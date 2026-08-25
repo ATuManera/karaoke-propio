@@ -32,6 +32,7 @@ interface SongItemProps {
   filterKeywords: string[]
   /** this viewer's own saved pitch for the song; null when they have none */
   pitchPref?: SongPitchPref | null
+  reviewMode?: boolean
 }
 
 const SongItem = ({
@@ -50,12 +51,14 @@ const SongItem = ({
   numMedia,
   filterKeywords,
   pitchPref,
+  reviewMode,
 }: SongItemProps) => {
   const t = useT()
   const [isExpanded, setExpanded] = useState(false)
 
   const handleClick = () => {
     if (ignoreMouseup) ignoreMouseup = false
+    else if (reviewMode) onSongInfo(songId)
     else if (!isUpcoming) onSongQueue(songId)
   }
   const handleInfoClick = () => onSongInfo(songId)
