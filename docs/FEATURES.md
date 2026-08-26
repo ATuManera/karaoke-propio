@@ -656,6 +656,55 @@ Player was opened at, falling back to `KARAOKE_PUBLIC_URL` when it is running on
 a LAN address — a TV at `192.168.x.x` would otherwise hand out invites nobody
 off the wifi can use.
 
+## Serving media without loading it
+
+Two places used to read a whole media file into memory, and both of them set
+the floor for how small a machine this can run on.
+
+**Scanning.** `probeMedia()` read the file into a Buffer, then took duration,
+ReplayGain and the SHA-256 content fingerprint from that Buffer. Peak memory was
+therefore the size of the largest file in the library — a number nothing bounds,
+since acquisition writes new files into it. It now parses with
+`music-metadata`'s `parseFile()` (random access, no full read) and hashes
+through a stream, so the peak no longer depends on the file at all. Measured on
+the library's largest video (114 MB), inside a 256 MB container: 178 MB peak
+before, 87 MB after. On a 1 GB file the old path is OOM-killed at that limit and
+the new one finishes at 96 MB. Zip entries still pass through memory, and must:
+an archive has to be inflated to be read.
+
+The fingerprint is unchanged by construction — it is the same SHA-256 over the
+same bytes — and was verified byte-for-byte against the old implementation on
+real library files. That matters because a fingerprint that shifted would
+invalidate every pitch cache entry and force every variant to be transcoded
+again.
+
+**Seeking.** `koa-range` was answering `Range` requests for media. It cannot
+seek a stream: it slices one by *reading and discarding* every byte before the
+offset. Skipping to the last minute of a 114 MB video read the whole file to
+throw 90% of it away — invisible on a warm SSD, expensive on a VPS. The media
+route now parses the header itself (`Media/range.ts`) and hands the offsets to
+`fs.createReadStream`, which really does seek. Same bytes out, measured 104–155
+ms before and 7 ms after on a warm cache; on a cold disk the old path had to
+move 103 MB before the first byte reached the player.
+
+`koa-range` still runs for every other route — it is skipped only under
+`/api/media/`, which is what `servesOwnRanges()` decides. Both must agree: if
+`koa-range` ran there too it would slice an already-sliced body a second time.
+
+Serving a zip also inflated the archive twice per request — once to learn which
+entries it holds, once to read the entry asked for. `openMedia()` does both from
+one read.
+
+Two consequences worth knowing:
+
+- `--max-old-space-size` would not have helped either problem. `readFile()`
+  Buffers live outside the V8 heap.
+- What `docker stats` reports for this container is mostly page cache, not the
+  process. Streaming a library warms it, and it grows until something else needs
+  the RAM. It is reclaimable; a `mem_limit` bounds what the number can reach
+  without costing playback anything, because a song streams at ~3.4 Mbps and any
+  disk is orders of magnitude faster than that.
+
 ## Photo album
 
 Per room, because a room is one party. Images are resized in the browser before

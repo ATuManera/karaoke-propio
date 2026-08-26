@@ -24,6 +24,7 @@ import PitchManager from './Pitch/PitchManager.js'
 import acquisitionRouter from './Acquisition/router.js'
 import libraryRouter from './Library/router.js'
 import mediaRouter from './Media/router.js'
+import { servesOwnRanges } from './Media/sendMedia.js'
 import photosRouter from './Photos/router.js'
 import prefsRouter from './Prefs/router.js'
 import repertoireRouter from './Repertoire/router.js'
@@ -157,7 +158,11 @@ async function serverWorker ({ env, startScanner, stopScanner, shutdownHandlers 
   app.use(koaLogger((str, args) => (args.length === 6 && args[3] >= 500) ? log.error(str) : log.debug(str)))
 
   app.use(koaFavicon(path.join(env.KES_PATH_ASSETS, 'favicon.ico')))
-  app.use(koaRange)
+  // media answers its own Range requests (see Media/range.ts): koa-range would
+  // slice an already-sliced body a second time, and it slices a stream by
+  // reading and discarding every byte before the offset — a seek to the last
+  // minute of a video would read the whole file off disk
+  app.use((ctx, next) => servesOwnRanges(ctx.request.path, urlPath) ? next() : koaRange(ctx, next))
   app.use(koaBody({ multipart: true }))
 
   // all http requests

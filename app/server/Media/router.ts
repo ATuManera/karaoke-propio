@@ -1,6 +1,4 @@
-import fs from 'fs'
 import fsPromises from 'node:fs/promises'
-import { Readable } from 'stream'
 import path from 'path'
 import getLogger from '../lib/Log.js'
 import KoaRouter from '@koa/router'
@@ -11,7 +9,8 @@ import Prefs from '../Prefs/Prefs.js'
 import Queue from '../Queue/Queue.js'
 import Rooms from '../Rooms/Rooms.js'
 import fileTypes from './fileTypes.js'
-import { resolveMedia, readSource } from './mediaResolver.js'
+import { openMedia } from './mediaResolver.js'
+import { sendRanged } from './sendMedia.js'
 import { deleteMedia } from './deleteMedia.js'
 import { LIBRARY_PUSH, LIBRARY_PUSH_SONG, QUEUE_PUSH } from '../../shared/actionTypes.js'
 import { MessageError } from '../lib/i18n.js'
@@ -109,7 +108,7 @@ router.get('/:mediaId', async (ctx) => {
   const basePath = paths.entities[media.pathId].path
   const file = path.join(basePath, media.relPath)
 
-  const resolved = await resolveMedia(file)
+  const { resolved, read } = await openMedia(file)
 
   let streamPath: string | null = null
   let buffer: Buffer | undefined
@@ -122,7 +121,7 @@ router.get('/:mediaId', async (ctx) => {
     if (resolved.cdg.type === 'file') {
       streamPath = resolved.cdg.path
     } else {
-      buffer = await readSource(resolved.cdg)
+      buffer = await read(resolved.cdg)
     }
     mimeType = resolved.cdg.mimeType
   } else {
@@ -131,7 +130,7 @@ router.get('/:mediaId', async (ctx) => {
       if (resolved.audio.type === 'file') {
         streamPath = resolved.audio.path
       } else {
-        buffer = await readSource(resolved.audio)
+        buffer = await read(resolved.audio)
       }
       mimeType = resolved.audio.mimeType
     } else {
@@ -151,16 +150,18 @@ router.get('/:mediaId', async (ctx) => {
   if (!mimeType) ctx.throw(404, `Unknown MIME type: ${file}`)
   ctx.type = mimeType
 
-  if (buffer) {
-    ctx.length = buffer.length
-    ctx.body = Readable.from(buffer)
-  } else {
-    const stats = await fsPromises.stat(streamPath)
-    ctx.length = stats.size
-    ctx.body = fs.createReadStream(streamPath)
-  }
+  // ranges are answered here rather than by koa-range, which slices a stream by
+  // reading and discarding everything before the offset — see Media/range.ts
+  const range = buffer
+    ? sendRanged(ctx, { type: 'buffer', buffer })
+    : sendRanged(ctx, { type: 'file', path: streamPath, size: (await fsPromises.stat(streamPath)).size })
 
-  log.verbose('streaming %s (%sMB): %s', ctx.type, (ctx.length / 1000000).toFixed(2), streamPath ?? `${file} (in archive)`)
+  log.verbose('streaming %s (%sMB%s): %s',
+    ctx.type,
+    ((ctx.length ?? 0) / 1000000).toFixed(2),
+    range ? `, bytes ${range.start}-${range.end}` : '',
+    streamPath ?? `${file} (in archive)`,
+  )
 })
 
 // permanently delete one version of a song (files included — see deleteMedia)
