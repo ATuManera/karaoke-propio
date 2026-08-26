@@ -7,6 +7,7 @@ import About from '../../components/About/About'
 import Account from '../../components/Account/Account'
 import MyPitches from '../../components/MyPitches/MyPitches'
 import MyRepertoire from '../../components/MyRepertoire/MyRepertoire'
+import MyRoom from '../../components/MyRoom/MyRoom'
 import Prefs from '../../components/Prefs/Prefs'
 import RoomInvite from '../../components/RoomInvite/RoomInvite'
 import Rooms from '../../components/Rooms/Rooms'
@@ -37,6 +38,10 @@ const SignedInView = () => {
 
       {isAdmin
         && <Prefs />}
+
+      {/* Which room, then how to ask somebody into it: the second only makes
+          sense once the first is settled. */}
+      <MyRoom />
 
       <RoomInvite />
 

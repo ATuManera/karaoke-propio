@@ -10,7 +10,9 @@ export type ServerUser = UserType & {
   role: string
   password?: string // only populated if requesting creds
   image?: string
-  rooms?: number[] // populated in router
+  rooms?: number[] // rooms they are connected to right now; populated in router
+  assignedRoomIds?: number[] // rooms an admin gave them; populated in router
+  preferredRoomId?: number | null // where they land when they sign in
 }
 
 export const IMG_MAX_LENGTH = 51200 // 50KB
@@ -214,6 +216,15 @@ class User {
       WHERE userId = ${userId}
     `
     db.run(String(artistStarsQuery), artistStarsQuery.parameters)
+
+    // remove the rooms they were assigned. Here rather than only where an
+    // admin deletes someone, because guests are swept automatically by the
+    // day and each one carries an assignment made by their invite.
+    const roomsQuery = sql`
+      DELETE FROM userRooms
+      WHERE userId = ${userId}
+    `
+    db.run(String(roomsQuery), roomsQuery.parameters)
 
     // remove the user
     const usersQuery = sql`

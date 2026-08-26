@@ -156,6 +156,13 @@ export interface User {
 
 export interface UserWithRole extends User {
   role?: string
+  /**
+   * The rooms an admin has assigned them (migration 018), and the one they
+   * land in. Only populated on the admin's user list — everyone else is told
+   * where they may go by /api/user/rooms, which answers for the caller alone.
+   */
+  assignedRoomIds?: number[]
+  preferredRoomId?: number | null
 }
 
 export interface PlaybackOptions {

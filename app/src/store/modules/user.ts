@@ -12,6 +12,7 @@ import {
   ACCOUNT_LOCALE_SET,
   ACCOUNT_RECEIVE,
   ACCOUNT_REQUEST,
+  ACCOUNT_ROOM_SET,
   ACCOUNT_CREATE,
   ACCOUNT_UPDATE,
   LOGIN,
@@ -33,7 +34,7 @@ export const login = createAsyncThunk(
   async (creds: object, thunkAPI) => {
     // calls api endpoint that should set an httpOnly cookie with
     // our JWT, then establish the sockiet.io connection
-    const user = await api.post('login', {
+    const user = await api.post<{ roomId: number | null }>('login', {
       body: creds,
     })
 
@@ -47,11 +48,51 @@ export const login = createAsyncThunk(
     socket.open()
 
     // redirect in query string?
+    //
+    // Held back when there is no room yet: signing in with more than one room
+    // to choose from lands on the question "which room", and navigating to
+    // the library underneath it would answer that question by walking past
+    // it. enterRoom finishes the trip once the room is known.
     const redirect = new URLSearchParams(window.location.search).get('redirect')
 
-    if (redirect) {
+    if (redirect && user.roomId !== null) {
       AppRouter.navigate(basename.replace(/\/$/, '') + redirect)
     }
+  },
+)
+
+// ------------------------------------
+// Enter a room (or move to another one)
+// ------------------------------------
+/**
+ * Which room someone is in is part of their session, so changing it is not a
+ * client-side switch: the server signs a new token, and the socket has to be
+ * reconnected because it joined its room at the handshake and nowhere else.
+ * Without the reconnect the phone shows one room's name and the other room's
+ * queue.
+ */
+export const enterRoom = createAsyncThunk<void, number, { state: RootState }>(
+  ACCOUNT_ROOM_SET,
+  async (roomId, thunkAPI) => {
+    const user = await api.put('user/room', { body: { roomId } })
+
+    socket.close()
+
+    // moving rooms leaves the previous room's queue and stars in the
+    // persisted store, which would rehydrate over the new room's
+    Persistor.get().purge()
+
+    thunkAPI.dispatch(receiveAccount(user))
+    thunkAPI.dispatch(fetchPrefs())
+    thunkAPI.dispatch(connectSocket())
+    socket.open()
+
+    // Somewhere to sing. A room was just chosen, so the library is what they
+    // came for — unless they were on their way somewhere specific when the
+    // question interrupted them.
+    const redirect = new URLSearchParams(window.location.search).get('redirect')
+
+    AppRouter.navigate(basename.replace(/\/$/, '') + (redirect ?? '/library'))
   },
 )
 

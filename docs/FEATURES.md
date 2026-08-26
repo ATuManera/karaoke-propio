@@ -500,24 +500,107 @@ the database is already changed while the editor still looks stale. The input
 stays populated and locked while its single request is pending, so accepting a
 native datalist suggestion or pressing Enter repeatedly cannot overlap saves.
 
-## Choosing a room
+## Rooms belong to accounts
 
-Signing in never picks the room. With one room open the screen used to select
-it silently, which is right when the singer is standing in that room and wrong
-when they are away from home and wanted an evening of their own — and either
-way it was never asked.
+Which rooms a person may enter is an admin's decision, kept on their account
+(`userRooms`, migration 018) rather than in a password everyone in the room
+shares.
 
-Every open room is listed with whether anyone is in it (`isLive`, from the
-socket count) and nothing is preselected, so the choice can be made from
-outside the door: join the party already going, or take an empty room, sign in,
-and start it with the "no player in room" invitation that is already there.
+The old arrangement asked the question in the wrong order. The welcome screen
+listed every room on the installation — to anyone who could reach the address,
+since `GET /api/rooms` answered without authentication — and let whoever was
+looking pick one before saying who they were. A room password was the only
+thing between them and the room, which is a lock rather than a guest list: it
+says nothing about *who* may sing where, and it cannot be taken back from one
+person without changing it for everyone.
 
-Only whether, never how many. The room list answers without authentication, and
-a headcount is the room's business. It is read once when the screen loads, so a
-party starting in the seconds after shows on the next load.
+So the screen now asks for one of two things — the invite code somebody was
+given, or the account they already have — and the room is worked out afterwards
+from what that account is allowed.
 
-Someone arriving on an invite skips all of this: their link names a room, which
-is the whole point of having been invited to it.
+### What happens after signing in
+
+- **No rooms.** They are told an admin has to give them one. Nothing else is
+  offered, because there is nothing they can do about it themselves.
+- **One room.** They are put in it. A question with one answer is not a
+  question, and `POST /api/login` signs the room straight into the session.
+- **Several.** The room picker appears (`components/RoomGate`), with one
+  already chosen. It is never an empty list of radio buttons: "always
+  preselected" is the promise, and `getPreferredRoomId` keeps it.
+
+The preselection is the admin's the first time — they set it when assigning
+rooms — and the person's own from then on, since entering a room records it.
+
+That resolution is deliberately a preference and not a promise: the stored
+choice is honoured only while that room is still assigned *and* still open, and
+otherwise the first room they can reach is used. A revoked or deleted room
+therefore costs somebody a preference and never a sign-in.
+
+### The room password, and where it still applies
+
+A room's password is no longer asked of anyone with an assignment. The admin's
+decision is the credential — and nothing in the app ever hands a member the
+room's password, so demanding it would lock out the very person who was let in.
+
+It still guards the one door where there is no assignment to check: an invite
+into a room this account has never been given (`validatePassword:
+!canEnterRoom(...)` in the login route, and `POST /api/user` for someone with no
+account at all). A QR may carry it, as before.
+
+### An invite grants the room
+
+Using a valid code assigns that room, for a new account and for someone who
+already has one. Otherwise the QR flow would die with this change: the code is
+handed out by whoever is hosting, so using it *is* the grant, and making it
+stick is what lets the same person come back tomorrow without being read the
+code again.
+
+Note this is a member-level grant path, not an admin-only one: any non-guest in
+a room can read its code off their account screen. That was already true before
+rooms were assigned — it is what "invite someone into this room" means — and it
+is the reason regenerating a code exists.
+
+### Admins
+
+An admin may enter any room, including closed ones, and always could. It is
+computed rather than stored, so assignments never have to be kept in step with
+a role change, and the user editor says so instead of showing ticks that would
+not apply. An admin of an installation with no rooms at all is let through
+without a room, since the Rooms panel they need is behind the gate.
+
+### The room list is signed-in only
+
+`GET /api/rooms` now requires a session and answers non-admins with their own
+rooms alone. Hiding the picker without this would have been theatre: `curl
+/api/rooms` would still enumerate every room while the screen pretended
+otherwise. `GET /api/rooms/code/:code` stays public — it is the invite path, and
+a stranger holding a valid code is exactly who it is for. It answers with the
+room's name and whether new guests or standard users are allowed, which the
+sign-in screen used to read off the public list.
+
+A non-admin Player still asks for its own room by id and still gets it, which
+is where the QR overlay's prefs come from.
+
+### Moving between rooms
+
+The room rides in the session token, and a socket joins its room once, at the
+handshake (`server/socket.ts`). So `PUT /api/user/room` signs a new token and
+the client closes and reopens the socket; skipping the reconnect leaves a phone
+showing one room's name and another room's queue. It is reachable from *My
+Room* on the account screen, and only for someone with more than one room —
+for everyone else it is not a choice.
+
+Revoking access drops that person's sockets in the rooms they lost
+(`SOCKET_AUTH_ERROR`, the same signal logout uses). Without it an admin takes a
+room away and watches that phone go on queueing songs into it.
+
+### Upgrading
+
+Migration 018 gives every existing account every room that exists at that
+moment — nobody is locked out by an upgrade, and the admin narrows it from
+there. Rooms created afterwards are assigned deliberately, which is the point
+of the table. "All rooms" in the editor ticks today's rooms and is not a
+standing rule.
 
 ## Invite codes
 
@@ -527,9 +610,10 @@ Invites carry a random 6-character code, never the numeric room id — that id i
 sequential, so one invite would advertise that other rooms exist. The alphabet
 excludes `O/0` and `I/1/L` so a code survives being read aloud.
 
-The code never appears in the public room list (that endpoint answers without
-authentication). Lookups are rate limited: with ~1.07e9 combinations, guessing
-is only impractical if it is also slow.
+The code never appears in the room list. Lookups are rate limited: with ~1.07e9
+combinations, guessing is only impractical if it is also slow — and the lookup
+endpoint is the one part of this that is still reachable without signing in,
+because that is what an invite is for.
 
 ### The code is checked when the account is created
 
@@ -538,11 +622,13 @@ to be on for any QR to work at all, so on their own they let in whoever finds
 the address — and everyone in a room shares its queue and its photo album. The
 code is checked in `POST /api/user` (see `server/Rooms/inviteGuard.ts`), where a
 hidden radio button cannot be worked around; the sign-in form only follows,
-offering "New user" and "Guest" once an invite for the selected room is in hand.
+offering "New user" and "Guest" once an invite is in hand — and the invite
+lookup says which of the two that room allows.
 
-Someone who already has an account is unaffected — their password is their
-invitation, and they may sign into any open room. Links of the older
-`?roomId=N` form still sign such a person in, but no longer admit anyone new.
+Someone who already has an account signs in with it, and lands in the rooms an
+admin gave them; passing a code along adds that room to those. Links of the
+older `?roomId=N` form no longer do anything: the room is read off the account,
+never off the URL.
 
 Wrong codes have their own allowance, separate from the code-lookup endpoint: a
 guest arriving by QR spends both, and a shared bucket would have a party

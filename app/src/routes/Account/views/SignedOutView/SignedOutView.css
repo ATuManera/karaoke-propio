@@ -47,9 +47,6 @@
   margin-bottom: var(--space-m);
 }
 
-.hidden {
-  display: none;
-}
 .inviteError {
   color: var(--btn-danger-bg-color);
   text-align: center;
@@ -90,10 +87,27 @@
   }
 }
 
-.roomHint {
+/* an invite's room, stated rather than offered */
+.invitedTo {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
   margin-bottom: var(--space-m);
-  font-size: var(--font-size-s);
+}
+
+.invitedToLabel {
+  font-size: var(--font-size-xs);
   color: var(--color-gray-5);
+}
+
+.invitedToRoom {
+  font-size: var(--font-size-m);
+  color: var(--color-gray-8);
+  overflow-wrap: anywhere;
+}
+
+.roomPassword {
+  width: 100%;
 }
 
 .inviteHint {

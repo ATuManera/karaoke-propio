@@ -1,12 +1,9 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react'
-import clsx from 'clsx'
 import { Trans } from 'react-i18next'
 import { useAppDispatch, useAppSelector } from 'store/hooks'
-import { fetchRooms } from 'store/modules/rooms'
 import { createAccount, login } from 'store/modules/user'
 import { importRepertoire } from 'store/modules/repertoire'
 import Logo from 'components/Logo/Logo'
-import SelectRoom from './SelectRoom/SelectRoom'
 import InputRadio from 'components/InputRadio/InputRadio'
 import Create, { type RepertoireChoice } from './Create/Create'
 import SignIn from './SignIn/SignIn'
@@ -18,51 +15,66 @@ import { KP_NAME, KP_REPO_URL, KP_VERSION } from 'shared/version'
 import { msg, translate, useT } from 'lib/i18n'
 import styles from './SignedOutView.css'
 
+/** what an invite code resolves to; the only room this screen ever names */
+interface Invite {
+  roomId: number
+  name: string
+  hasPassword: boolean
+  allowNewGuest: boolean
+  allowNewStandard: boolean
+}
+
+/**
+ * The way in.
+ *
+ * Two doors and no more: the code somebody was invited with, or the account
+ * they already have. Which room is deliberately not asked here — it used to
+ * be, which meant this screen published every room on the installation to
+ * anyone who could reach the address, and let a stranger pick one before
+ * saying who they were. Rooms belong to accounts now (see migration 018), so
+ * the question moves to after the answer that makes it answerable.
+ */
 const SignedOutView = () => {
   const t = useT()
-  const userSectionRef = useRef<HTMLDivElement | null>(null)
   const firstFieldRef = useRef<HTMLInputElement | null>(null)
 
   const prefs = useAppSelector(state => state.prefs)
-  const rooms = useAppSelector(state => state.rooms)
   const ui = useAppSelector(state => state.ui)
   const dispatch = useAppDispatch()
 
   const [mode, setMode] = useState('returning')
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
-  const [roomId, setRoomId] = useState<number | null>(null)
   const [roomPassword, setRoomPassword] = useState('')
-  const [showRoomSection, setShowRoomSection] = useState(false)
-  const [showAllRooms, setShowAllRooms] = useState(true)
-  const [prevRooms, setPrevRooms] = useState<typeof rooms | null>(null)
   const [focusRequest, setFocusRequest] = useState(0)
   const [isModeDefaulted, setIsModeDefaulted] = useState(false)
 
-  // once per mount
-  useEffect(() => {
-    dispatch(fetchRooms())
-  }, [dispatch])
-
   // An invite code says nothing about which room it opens, so it has to be
   // resolved server-side; the mapping is deliberately not published anywhere.
-  const [invitedRoomId, setInvitedRoomId] = useState<number | null>(null)
-  const [prevInvitedRoomId, setPrevInvitedRoomId] = useState<number | null>(null)
+  const [invite, setInvite] = useState<Invite | null>(null)
   const [inviteCode, setInviteCode] = useState<string | null>(null)
   const [inviteError, setInviteError] = useState<string | null>(null)
   const [codeEntry, setCodeEntry] = useState('')
   const [isCheckingCode, setIsCheckingCode] = useState(false)
 
   const resolveInvite = useCallback((code: string) => fetch(`${document.baseURI}api/rooms/code/${encodeURIComponent(code)}`, { credentials: 'same-origin' })
-    .then((res): Promise<{ roomId: number }> => res.ok
+    .then((res): Promise<Invite> => res.ok
       ? res.json()
       : Promise.reject(new Error(res.status === 429
           ? translate('signedOut.tooManyAttempts')
           : translate('signedOut.inviteInvalid'))))
     .then((data): undefined => {
-      setInvitedRoomId(data.roomId)
+      setInvite(data)
       setInviteCode(code)
       setIsCheckingCode(false)
+
+      // a QR can carry the room's password so nobody has to read one out; the
+      // room still asks for it when it does not
+      const carried = new URLSearchParams(location.search).get('password')
+
+      if (data.hasPassword && carried) setRoomPassword(atob(carried))
+
+      setFocusRequest(r => r + 1)
       return undefined
     })
     .catch((err: Error): undefined => {
@@ -94,52 +106,6 @@ const SignedOutView = () => {
     resolveInvite(code)
   }
 
-  // room selection visibility/defaults
-  // https://react.dev/reference/react/useState#storing-information-from-previous-renders
-  if (rooms !== prevRooms || invitedRoomId !== prevInvitedRoomId) {
-    setPrevRooms(rooms)
-    setPrevInvitedRoomId(invitedRoomId)
-    const searchParams = new URLSearchParams(location.search)
-    // ?room=CODE is the invite form; ?roomId=N is kept so links handed out
-    // before invite codes existed still work on a LAN
-    const roomIdParam = searchParams.get('roomId')
-    const id = invitedRoomId ?? (roomIdParam ? parseInt(roomIdParam, 10) : null)
-    const password = searchParams.get('password')
-
-    if (id && rooms.entities[id]) {
-      setRoomId(id)
-      setShowAllRooms(false)
-
-      if (rooms.entities[id]?.hasPassword) {
-        if (password) {
-          setRoomPassword(atob(password))
-          setShowRoomSection(false)
-          setFocusRequest(r => r + 1)
-        } else {
-          setShowRoomSection(true)
-        }
-      } else {
-        setFocusRequest(r => r + 1)
-      }
-    } else {
-      // Never picked for them, not even when there is only one room. Someone
-      // signing in may be at the party the room already has, or away from home
-      // and wanting one of their own; only they know which, and being put in a
-      // room silently is how they end up in somebody else's.
-      setShowRoomSection(rooms.result.length !== 0)
-    }
-  }
-
-  const handleRoomSelect = (id: number) => {
-    setRoomId(id)
-    setMode('returning')
-
-    if (!rooms.entities[id]?.hasPassword || !showRoomSection) {
-      setFocusRequest(r => r + 1)
-      userSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-    }
-  }
-
   const handleFirstFieldRef = (el: HTMLInputElement | null) => {
     if (el) firstFieldRef.current = el
   }
@@ -150,7 +116,11 @@ const SignedOutView = () => {
     dispatch(login({
       username: username.trim(),
       password: password,
-      roomId,
+      // An invite in hand is passed along even by someone who already has an
+      // account: it is what adds that room to theirs, so tomorrow they sign in
+      // and land in it without being read a code again. Without one the server
+      // reads their rooms off their account.
+      roomCode: inviteCode ?? '',
       roomPassword,
     }))
   }
@@ -166,7 +136,7 @@ const SignedOutView = () => {
     data.append('username', username.trim())
     data.append('newPassword', password)
     data.append('newPasswordConfirm', passwordConfirm)
-    data.append('roomId', String(roomId))
+    data.append('roomId', String(invite?.roomId ?? ''))
     data.append('roomPassword', roomPassword)
     data.append('roomCode', inviteCode ?? '')
     data.append('name', name.trim())
@@ -199,19 +169,12 @@ const SignedOutView = () => {
     }
   }
 
-  const getAllowed = (roleName: string) => {
-    const roleId = prefs.roles.result.find(id => prefs.roles.entities[id].name === roleName)
-    return !!rooms.entities[roomId]?.prefs?.roles?.[roleId]?.allowNew
-  }
-
   // Making an account is for people who were invited to this room, and the
   // invite is the code they arrived with — checked again server-side, since a
   // hidden radio button has never stopped anyone. Someone who already has an
   // account signs in as before: their password is their invitation.
-  const hasInvite = inviteCode !== null && invitedRoomId !== null && invitedRoomId === roomId
-
-  const allowNewGuest = hasInvite && getAllowed('guest')
-  const allowNewStandard = hasInvite && getAllowed('standard')
+  const allowNewGuest = !!invite?.allowNewGuest
+  const allowNewStandard = !!invite?.allowNewStandard
   const allowNew = allowNewStandard || allowNewGuest
 
   // Someone who scanned a QR or was read a code came to join a party, and
@@ -253,34 +216,35 @@ const SignedOutView = () => {
           sign in first to be understood. */}
       <LanguagePicker className={styles.language} showHint={false} />
 
-      {/* a bad invite must say so; otherwise the room picker appears and the
+      {/* a bad invite must say so; otherwise nothing on screen changes and the
           guest cannot tell the link was the problem */}
       {inviteError && <p className={styles.inviteError}>{inviteError}</p>}
 
-      {showRoomSection && (
-        <>
-          <h1>{t('signedOut.whichRoom')}</h1>
-
-          {rooms.result.length > 1 && (
-            <p className={styles.roomHint}>{t('signedOut.roomHint')}</p>
-          )}
-
-          <SelectRoom
-            rooms={rooms}
-            roomId={roomId}
-            roomPassword={roomPassword}
-            showAllRooms={showAllRooms}
-            onRoomSelect={handleRoomSelect}
-            onRoomPasswordChange={setRoomPassword}
-          />
-
-        </>
+      {/* The one room this screen ever names, and only to the person holding
+          the code that opens it: stated, never offered. */}
+      {invite && (
+        <div className={styles.invitedTo}>
+          <span className={styles.invitedToLabel}>{t('signedOut.invitedTo')}</span>
+          <span className={styles.invitedToRoom} translate='no'>{invite.name}</span>
+        </div>
       )}
 
-      {/* Outside the room picker, which a link carrying a room id hides: the
-          sign-in form tells someone new to type the code they were read, so
-          the field has to be there whenever they have not used one yet. */}
-      {!hasInvite && rooms.result.length > 0 && (
+      {invite?.hasPassword && (
+        <input
+          className={styles.roomPassword}
+          type='password'
+          autoComplete='off'
+          onChange={e => setRoomPassword(e.target.value)}
+          placeholder={t('signedOut.roomPasswordRequired')}
+          aria-label={t('signedOut.roomPasswordRequired')}
+          value={roomPassword}
+        />
+      )}
+
+      {/* Somewhere to type a code that was read out loud, for as long as one
+          has not been used. A scanned QR fills it in through the URL and this
+          never appears. */}
+      {!invite && (
         <form className={styles.codeForm} onSubmit={handleCodeSubmit}>
           <input
             type='text'
@@ -302,7 +266,7 @@ const SignedOutView = () => {
         </form>
       )}
 
-      <div ref={userSectionRef} className={clsx(rooms.result.length > 0 && roomId === null && styles.hidden)}>
+      <div>
         {allowNew
           ? (
               <>
@@ -327,7 +291,7 @@ const SignedOutView = () => {
           />
         )}
 
-        {(mode === 'returning' || !allowNew) && !hasInvite && roomId !== null && (
+        {(mode === 'returning' || !allowNew) && !invite && (
           <p className={styles.inviteHint}>{t('signedOut.inviteHint')}</p>
         )}
 

@@ -4,6 +4,7 @@ import { db } from '../lib/Database.js'
 import getLogger from '../lib/Log.js'
 import Prefs from '../Prefs/Prefs.js'
 import Rooms, { STATUSES, getRoomIdByCode, newUniqueCode } from '../Rooms/Rooms.js'
+import { forgetRoom, getEnterableRooms } from './access.js'
 import { InviteFailureLimiter } from './inviteGuard.js'
 import { ValidationError } from '../lib/Errors.js'
 import type { Prefs as PrefsType } from '../../shared/types.js'
@@ -20,10 +21,21 @@ import { pushDedications } from './socket.js'
 import { MessageError } from '../lib/i18n.js'
 
 // list rooms
+//
+// Signed in only, and then only the rooms that are yours. This list used to be
+// readable by anyone who could reach the address, because the sign-in screen
+// rendered it — that screen no longer asks which room, and leaving the
+// endpoint open would mean an admin's room assignments held on screen while
+// `curl /api/rooms` still enumerated the lot.
 router.get(['/', '/:roomId'], (ctx) => {
+  if (typeof ctx.user.userId !== 'number') {
+    ctx.throw(401)
+    return
+  }
+
   const roomId = ctx.params.roomId ? parseInt(ctx.params.roomId, 10) : undefined
   const status = ctx.user.isAdmin ? STATUSES : undefined
-  const res = Rooms.get(roomId, { status })
+  const res = ctx.user.isAdmin ? Rooms.get(roomId, { status }) : filterToMine(ctx, roomId)
 
   // The QR overlay is part of the Player, so a non-admin running one needs
   // that room's qr prefs — but only ever for the room they are in, and only
@@ -41,7 +53,7 @@ router.get(['/', '/:roomId'], (ctx) => {
 
     // Whether anyone is in there, never how many. Someone deciding where to
     // sing needs to know if a party is already going; the size of it is the
-    // room's business, and this list is readable without signing in.
+    // room's business, and a member is not an admin.
     res.entities[roomId].isLive = numUsers > 0
 
     if (ctx.user.isAdmin) {
@@ -94,7 +106,23 @@ router.get('/code/:code', (ctx) => {
     throw new MessageError(404, 'server.room.inviteInvalid')
   }
 
-  ctx.body = { roomId, name: room.name, hasPassword: room.hasPassword, status: room.status }
+  // What this invite is good for. The sign-in screen used to read these off
+  // the public room list to decide whether to offer "new user" or "guest";
+  // that list is signed-in only now, so the invite has to say for itself.
+  const roleIds = db.all<{ roleId: number, name: string }>('SELECT roleId, name FROM roles', [])
+  const allowsNew = (name: string) => {
+    const roleId = roleIds.find(r => r.name === name)?.roleId
+    return !!(roleId && room.prefs?.roles?.[roleId]?.allowNew)
+  }
+
+  ctx.body = {
+    roomId,
+    name: room.name,
+    hasPassword: room.hasPassword,
+    status: room.status,
+    allowNewGuest: allowsNew('guest'),
+    allowNewStandard: allowsNew('standard'),
+  }
 })
 
 // The code for a room the caller is actually in (or any, for an admin).
@@ -188,6 +216,22 @@ router.put('/:roomId', async (ctx) => {
   ctx.body = Rooms.get(null, { status: STATUSES })
 })
 
+/**
+ * The rooms a non-admin may see, which is the same set they may enter.
+ *
+ * A Player run by a member asks for its own room by id and must still get it
+ * (that is where the QR overlay's prefs come from); anything else asks for the
+ * list and gets theirs.
+ */
+function filterToMine (ctx, roomId: number | undefined) {
+  const mine = getEnterableRooms(ctx.user)
+
+  if (typeof roomId !== 'number') return mine
+  if (!mine.result.includes(roomId)) return { result: [], entities: {} }
+
+  return { result: [roomId], entities: { [roomId]: mine.entities[roomId] } }
+}
+
 // remove room
 router.delete('/:roomId', (ctx) => {
   if (!ctx.user.isAdmin) {
@@ -213,6 +257,10 @@ router.delete('/:roomId', (ctx) => {
     WHERE roomId = ${roomId}
   `
   db.run(String(roomQuery), roomQuery.parameters)
+
+  // and every assignment into it, so a room created later cannot inherit the
+  // id and, with it, a guest list nobody chose
+  forgetRoom(roomId)
 
   log.verbose('%s deleted roomId %s', ctx.user.name, roomId)
 

@@ -451,11 +451,6 @@ const en = {
     returningUser: 'Returning user',
     newUser: 'New user',
     guest: 'Guest',
-    whichRoom: 'Which room?',
-    chooseARoom: 'choose a room…',
-    roomLabel: 'room',
-    roomSomeoneHere: ' — someone here',
-    roomFree: ' — free',
     firstRunIntro: 'Create your <b>admin</b> account to get started. All data is locally stored and never shared.',
     /**
      * The credit line at the foot of the sign-in screen. Below the form on
@@ -464,6 +459,7 @@ const en = {
      */
     builtOn: 'Built on <a>Karaoke Eternal</a>',
     inviteCode: 'invite code',
+    invitedTo: 'Your invitation:',
     useInvite: 'Use invite',
     checking: 'Checking…',
     inviteInvalid: 'This invite is not valid. Ask the host for a new one.',
@@ -478,8 +474,23 @@ const en = {
     repertoirePitchesSaved_other: ', and {{count}} of your pitches are saved.',
     repertoireFailed: 'You\'re in, but your repertoire could not be read: {{error}}',
     codeWrongLength: 'An invite code is {{count}} characters.',
-    roomHint: 'Join the party already going, or take a room nobody is in and start your own.',
     inviteHint: 'New here? A room is joined by invitation — scan the QR code your host is showing, or enter the code they read out to you above.',
+  },
+
+  selectRoom: {
+    title: 'Which room?',
+    hint: 'Where you are singing tonight. You can move to another one later, from your account.',
+    enter: 'Enter',
+    entering: 'Entering…',
+    someoneHere: 'someone here',
+    free: 'free',
+    closed: 'closed',
+    noneTitle: 'No room yet',
+    noneBody: 'Rooms are given out by an administrator, and none is yours yet. Ask whoever set this up, then sign in again.',
+    panelTitle: 'My Room',
+    panelHint: 'Where you are singing. Choosing another moves this device; songs you already queued stay where they are.',
+    panelCurrent: 'You are in {{name}}',
+    change: 'Change room',
   },
 
   rooms: {
@@ -544,6 +555,15 @@ const en = {
     repertoireImported_other: '{{matched}} of {{total}} songs are in this library',
     repertoirePitchesSaved_one: ', and {{count}} pitch was saved for {{name}}.',
     repertoirePitchesSaved_other: ', and {{count}} pitches were saved for {{name}}.',
+    roomsTitle: 'Rooms',
+    roomsHint: 'The rooms this person may enter. The one marked below is where they land when they sign in; after that they move between the rest themselves.',
+    roomsAll: 'All',
+    roomsNone: 'None',
+    roomsAdminHint: 'Administrators can enter every room, including closed ones, whatever is ticked here. What is ticked is what they would be left with if this account stopped being an administrator.',
+    roomsLandsHere: 'lands here',
+    roomsLandsHereSet: 'Land here',
+    roomsEmpty: 'There are no rooms yet.',
+    roomsClosed: 'closed',
   },
 
   prefs: {
@@ -656,7 +676,7 @@ const en = {
       credentialsIncorrect: 'Incorrect username/email or password',
       alreadySignedIn: 'You are already signed in',
       invalidRole: 'Invalid role',
-      selectARoom: 'Please select a room',
+      invalidRooms: 'Those room assignments could not be read',
       inviteRequired: 'An invite is required to join this room',
       tooManyAttempts: 'Too many attempts; wait a minute and try again',
       localeUnsupported: 'That language is not available here',
@@ -669,6 +689,7 @@ const en = {
       roleNotFound: 'Role not found',
       roleNotAllowed: 'New "{{role}}" accounts are not allowed in this room',
       inviteInvalid: 'Invalid or expired invite',
+      notAssigned: 'You have not been given access to that room',
       tooManyAttempts: 'Too many attempts; wait a minute and try again',
     },
     repertoire: {

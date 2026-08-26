@@ -1,10 +1,11 @@
-import React, { useRef } from 'react'
+import React, { useRef, useState } from 'react'
 import { useAppDispatch, useAppSelector } from 'store/hooks'
 import { createUser, removeUser, updateUser } from '../../../modules/users'
 import { importRepertoire } from 'store/modules/repertoire'
 import Button from 'components/Button/Button'
 import Modal from 'components/Modal/Modal'
 import AccountForm from '../../AccountForm/AccountForm'
+import UserRooms from './UserRooms'
 import { UserWithRole } from 'shared/types'
 import styles from './EditUser.css'
 import { useT } from 'lib/i18n'
@@ -20,7 +21,27 @@ const EditUser = ({ user, onClose }: EditUserProps) => {
   const isImporting = useAppSelector(state => state.repertoire.isImporting)
   const repertoireFile = useRef<HTMLInputElement>(null)
 
+  const [roomIds, setRoomIds] = useState<number[]>(user?.assignedRoomIds ?? [])
+  const [preferredRoomId, setPreferredRoomId] = useState<number | null>(user?.preferredRoomId ?? null)
+
+  const handleRoomsChange = (nextRoomIds: number[], nextPreferred: number | null) => {
+    setRoomIds(nextRoomIds)
+    setPreferredRoomId(nextPreferred)
+  }
+
   const handleSubmit = (data: FormData) => {
+    // Sent with the account rather than saved on its own: an admin who ticks
+    // three rooms and presses Update expects three rooms, and a separate save
+    // button for one field is a way to lose the ones you ticked.
+    //
+    // Whole list, not a change: an unticked box is a revocation, and the
+    // server reads it as exactly what should be true afterwards.
+    data.append('roomIds', JSON.stringify(roomIds))
+
+    if (preferredRoomId !== null) {
+      data.append('preferredRoomId', String(preferredRoomId))
+    }
+
     if (user) dispatch(updateUser({ userId: user.userId, data }))
     else dispatch(createUser(data))
   }
@@ -63,6 +84,13 @@ const EditUser = ({ user, onClose }: EditUserProps) => {
       title={user ? user.username : t('users.createUser')}
     >
       <AccountForm user={user} onSubmit={handleSubmit} showRole autoFocus={!user}>
+        <UserRooms
+          isAdminUser={user?.role === 'admin'}
+          roomIds={roomIds}
+          preferredRoomId={preferredRoomId}
+          onChange={handleRoomsChange}
+        />
+
         <div className={styles.btnContainer}>
           {!user && (
             <Button type='submit' className={styles.btn} variant='primary'>

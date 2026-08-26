@@ -2,6 +2,7 @@ import { createAction, createAsyncThunk, createReducer } from '@reduxjs/toolkit'
 import { AppThunk, RootState } from 'store/store'
 import type { IRoomPrefs, Room } from 'shared/types'
 import {
+  ROOMS_MINE_REQUEST,
   ROOMS_RECEIVE,
   ROOMS_REQUEST,
   ROOM_EDITOR_OPEN,
@@ -15,6 +16,7 @@ import {
   ROOM_PREFS_PUSH,
   ROOM_PREFS_PUSH_REQUEST,
   LOGOUT,
+  SOCKET_AUTH_ERROR,
 } from 'shared/actionTypes'
 
 import HttpApi from 'lib/HttpApi'
@@ -41,6 +43,40 @@ export const fetchCurrentRoom = createAsyncThunk<object, void, { state: RootStat
     }
 
     return await api.get(`/${roomId}`)
+  },
+)
+
+/**
+ * The rooms this person may enter, and which one is preselected.
+ *
+ * Kept apart from the room list above rather than merged into it: that one is
+ * the admin's inventory — every room, open or closed, with its prefs and how
+ * many people are in it — and the Rooms panel renders it. This is the answer
+ * to "where may I go", which is a different question with a different answer
+ * for the same person.
+ */
+export interface MyRooms {
+  result: number[]
+  entities: Record<number, Room>
+  /** always one of `result`, unless there are none */
+  preferredRoomId: number | null
+}
+
+const userApi = new HttpApi('')
+
+export const fetchMyRooms = createAsyncThunk<MyRooms | null>(
+  ROOMS_MINE_REQUEST,
+  async () => {
+    try {
+      return await userApi.get<MyRooms>('user/rooms')
+    } catch {
+      // Quietly. A session that died while this tab was closed answers 401
+      // here, and the socket is being told the same thing at the same moment —
+      // which resets the account and puts the sign-in screen up. An "Oops:
+      // Unauthorized" over the top of that explains nothing to anyone, and it
+      // is what every other rejected thunk would raise.
+      return null
+    }
   },
 )
 
@@ -137,6 +173,18 @@ interface RoomsState {
    * were already appearing.
    */
   areDedicationsEnabled: boolean
+  /**
+   * The rooms this client may enter. Empty until asked for, which happens on
+   * the screen that asks which room — so `isFetched` is what tells "no rooms
+   * yet" from "nobody has asked yet", and the two must not look alike: one is
+   * a message telling someone to go find an admin.
+   */
+  mine: {
+    result: number[]
+    entities: Record<number, Room>
+    preferredRoomId: number | null
+    isFetched: boolean
+  }
 }
 
 const initialState: RoomsState = {
@@ -145,6 +193,12 @@ const initialState: RoomsState = {
   filterStatus: 'open',
   isEditorOpen: false,
   areDedicationsEnabled: true,
+  mine: {
+    result: [],
+    entities: {},
+    preferredRoomId: null,
+    isFetched: false,
+  },
 }
 
 const roomsReducer = createReducer(initialState, (builder) => {
@@ -154,6 +208,12 @@ const roomsReducer = createReducer(initialState, (builder) => {
       ...state,
       ...payload,
     }))
+    .addCase(fetchMyRooms.fulfilled, (state, { payload }) => {
+      // Left untouched when the answer never came: an empty list means "an
+      // admin has given you nothing", which is a thing to tell somebody, and
+      // a failed request must not be able to say it.
+      if (payload) state.mine = { ...payload, isFetched: true }
+    })
     .addCase(receiveRooms, (state, { payload }) => ({
       ...state,
       ...payload,
@@ -178,6 +238,14 @@ const roomsReducer = createReducer(initialState, (builder) => {
       state.areDedicationsEnabled = payload.isEnabled
     })
     .addCase(LOGOUT, () => ({
+      ...initialState,
+    }))
+    // A session can end without anyone pressing Sign Out — an expired cookie,
+    // a rotated key, an admin deleting the account — and this list is the one
+    // piece of state that says which rooms a particular person may enter. Left
+    // behind, the next person to sign in on that tab would be shown the last
+    // one's rooms until something refetched.
+    .addCase(SOCKET_AUTH_ERROR, () => ({
       ...initialState,
     }))
 })

@@ -1,0 +1,17 @@
+.hint {
+  margin: 0 0 var(--space-s);
+  font-size: var(--font-size-s);
+  color: var(--color-gray-5);
+}
+
+.select {
+  width: 100%;
+  margin-bottom: var(--space-s);
+}
+
+/* A Button carries no disabled styling of its own, so "Change room" would
+   look pressable while it is pointing at the room they are already in. */
+.change:disabled {
+  opacity: 0.45;
+  cursor: default;
+}

@@ -76,10 +76,14 @@ export const ACCOUNT_CREATE = 'user/ACCOUNT_CREATE'
 export const ACCOUNT_UPDATE = 'user/ACCOUNT_UPDATE'
 export const ACCOUNT_REQUEST = 'user/ACCOUNT_REQUEST'
 export const ACCOUNT_LOCALE_SET = 'user/ACCOUNT_LOCALE_SET'
+/** entering a room, or moving to another one, without signing out */
+export const ACCOUNT_ROOM_SET = 'user/ACCOUNT_ROOM_SET'
 
 // Rooms
 export const ROOMS_RECEIVE = 'rooms/RECEIVE'
 export const ROOMS_REQUEST = 'rooms/REQUEST'
+/** the rooms this person may enter — not the same question as ROOMS_REQUEST, which is an admin's */
+export const ROOMS_MINE_REQUEST = 'rooms/MINE_REQUEST'
 export const ROOM_UPDATE = 'rooms/UPDATE'
 export const ROOM_CREATE = 'rooms/CREATE'
 export const ROOM_REMOVE = 'rooms/REMOVE'

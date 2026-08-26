@@ -1,0 +1,108 @@
+.container {
+  margin: 0 auto;
+  overflow-y: auto;
+  padding: var(--container-padding);
+
+  h1 {
+    margin: clamp(var(--space-s), 2.5vh, var(--space-l)) 0 var(--space-s) 0;
+    font-family: var(--font-family-custom);
+    font-size: var(--font-size-l);
+    color: hsl(var(--hue-blue), 10%, 60%);
+  }
+}
+
+/* the same fluid sizing as the sign-in screen: a television browser is wide
+   and short, and a logo sized off width alone eats the room the list needs */
+.logo {
+  text-align: center;
+  font-size: clamp(20px, 4vh, 30px);
+  margin-top: clamp(0px, 1.5vh, var(--space-m));
+  margin-bottom: clamp(var(--space-m), 4vh, var(--space-xl));
+}
+
+.hint {
+  margin: 0 0 var(--space-m);
+  font-size: var(--font-size-s);
+  color: var(--color-gray-5);
+}
+
+.rooms {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-s);
+  margin-bottom: var(--space-l);
+}
+
+/* Rows rather than a dropdown: this is the one thing on the screen, a phone
+   opens a native picker for a <select> that hides the very list being chosen
+   from, and "someone here" is the reason most people pick one room over
+   another — it has to be readable without opening anything. */
+.room {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-m);
+  width: 100%;
+  padding: var(--space-m);
+  border: 2px solid transparent;
+  border-radius: var(--border-radius);
+  background-color: hsl(var(--hue-blue), 10%, 18%);
+  box-shadow: var(--box-shadow);
+  color: var(--text-color);
+  font-size: var(--font-size-s);
+  text-align: left;
+  cursor: pointer;
+
+  &:focus-visible {
+    outline: var(--focus-outline);
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: default;
+  }
+}
+
+/* The chosen room is marked by its border and its weight, not by colour
+   alone — the difference between two dark blues is not a cue every reader
+   gets, and this screen has exactly one thing to communicate. */
+.chosen {
+  border-color: var(--link-color);
+  background-color: hsl(var(--hue-blue), 30%, 22%);
+}
+
+.roomName {
+  font-weight: var(--font-weight-bold);
+  overflow-wrap: anywhere;
+}
+
+.roomState {
+  flex: 0 0 auto;
+  font-size: var(--font-size-xs);
+  color: var(--color-gray-6);
+}
+
+/* A Button has no disabled styling of its own, and this one goes disabled the
+   moment it is pressed — without this it looks pressable for as long as the
+   round trip takes, which invites a second press. */
+.enter {
+  margin-bottom: var(--space-m);
+
+  &:disabled {
+    opacity: 0.45;
+    cursor: default;
+  }
+}
+
+.signOut {
+  display: block;
+  width: 100%;
+  padding: var(--space-s);
+  background: none;
+  border: none;
+  color: var(--color-gray-5);
+  font-size: var(--font-size-s);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}

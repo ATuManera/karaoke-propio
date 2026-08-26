@@ -9,6 +9,15 @@ import KoaRouter from '@koa/router'
 import Prefs from '../Prefs/Prefs.js'
 import Queue from '../Queue/Queue.js'
 import Rooms, { getRoomIdByCode } from '../Rooms/Rooms.js'
+import {
+  canEnterRoom,
+  getAssignedRoomIds,
+  getEnterableRooms,
+  getPreferredRoomId,
+  grantRoom,
+  setAssignedRoomIds,
+  setPreferredRoomId,
+} from '../Rooms/access.js'
 import { InviteFailureLimiter, isInviteFor } from '../Rooms/inviteGuard.js'
 import User from '../User/User.js'
 import parseCookie from '../lib/parseCookie.js'
@@ -77,22 +86,64 @@ const createUserCtx = (user, roomId) => {
 // login
 router.post('/login', async (ctx) => {
   const req = ctx.request as unknown as RequestWithBody
-  const roomId = parseInt(req.body.roomId, 10) || null
   let user
 
   try {
     user = await User.validate(req.body as any)
-
-    if (roomId) {
-      await Rooms.validate(roomId, req.body.roomPassword, {
-        isOpen: user.role !== 'admin', // admins can sign in to closed rooms
-        validatePassword: true,
-      })
-    } else if (user.role !== 'admin') {
-      throw new MessageError(401, 'server.user.selectARoom')
-    }
   } catch (err) {
     rethrowAs(401, err)
+  }
+
+  // Which room is no longer part of signing in. The sign-in screen does not
+  // publish the room list any more, so there is nothing there to choose from:
+  // a person says who they are, and the rooms an admin gave them are read off
+  // their account afterwards.
+  const enterer = { userId: user.userId, isAdmin: user.role === 'admin' }
+  const roomCode = typeof req.body.roomCode === 'string' ? req.body.roomCode.trim() : ''
+  let roomId: number | null = null
+
+  if (roomCode) {
+    // An invite in hand names its room, and is what grants it: the code was
+    // handed out by whoever is hosting. Somebody who already has an account
+    // can arrive on a QR like anyone else, and this is where that becomes a
+    // standing assignment rather than one night's exception.
+    if (joinFailures.isBlocked(ctx.request.ip)) {
+      throw new MessageError(429, 'server.user.tooManyAttempts')
+    }
+
+    const invitedRoomId = getRoomIdByCode(roomCode)
+
+    if (invitedRoomId === null) {
+      joinFailures.recordFailure(ctx.request.ip)
+      throw new MessageError(401, 'server.user.inviteRequired')
+    }
+
+    try {
+      await Rooms.validate(invitedRoomId, req.body.roomPassword, {
+        isOpen: user.role !== 'admin', // admins can sign in to closed rooms
+        // The room password is asked for only where there is no assignment to
+        // stand in for it — an invite into a room this account was never
+        // given. Once an admin has assigned it, that decision is the
+        // credential, and demanding a secret the admin never handed over
+        // would lock out the very person they let in.
+        validatePassword: !canEnterRoom(enterer, invitedRoomId),
+      })
+    } catch (err) {
+      rethrowAs(401, err)
+    }
+
+    grantRoom(user.userId, invitedRoomId)
+    setPreferredRoomId(user.userId, invitedRoomId)
+    roomId = invitedRoomId
+  } else {
+    // One room is not a question, so it is not asked; more than one is asked
+    // on its own screen, once there is a session to ask it in.
+    const rooms = getEnterableRooms(enterer)
+
+    if (rooms.result.length === 1) {
+      roomId = rooms.result[0]
+      setPreferredRoomId(user.userId, roomId)
+    }
   }
 
   if (crypto.isLegacy(user.password)) {
@@ -166,6 +217,89 @@ router.get('/user', (ctx) => {
   }
 
   ctx.body = createUserCtx(user, ctx.user.roomId)
+})
+
+/**
+ * The rooms this person may enter, and which one is preselected.
+ *
+ * Its own endpoint rather than the room list: /api/rooms answers "what rooms
+ * are there", which an admin asks and the Rooms panel renders, while this
+ * answers "where may I go", which is the question the screen after sign-in
+ * puts to the person holding the phone.
+ */
+router.get('/user/rooms', (ctx) => {
+  if (typeof ctx.user.userId !== 'number') {
+    ctx.throw(401)
+    return
+  }
+
+  const res = getEnterableRooms(ctx.user)
+
+  res.result.forEach((roomId) => {
+    const sockets = ctx.io.sockets.adapter.rooms.get(Rooms.prefix(roomId))
+
+    // whether a party is already going in there, never how many people —
+    // the same line the room list has always drawn
+    res.entities[roomId].isLive = sockets ? sockets.size > 0 : false
+
+    // nothing on this screen reads a room's prefs, and the invite code must
+    // never ride along (Rooms.get already withholds it)
+    delete res.entities[roomId].prefs
+  })
+
+  ctx.body = {
+    ...res,
+    preferredRoomId: getPreferredRoomId(ctx.user),
+  }
+})
+
+/**
+ * Enter a room, or move to another one.
+ *
+ * The room rides in the session token, which is signed at sign-in — so
+ * changing it means signing a new one, and the client has to reconnect its
+ * socket to be let into the new room (see server/socket.ts, where the join
+ * happens at the handshake and nowhere else).
+ *
+ * The choice is remembered as this person's preference. The admin sets the
+ * first one when assigning rooms; every one after that is theirs.
+ */
+router.put('/user/room', async (ctx) => {
+  if (typeof ctx.user.userId !== 'number') {
+    ctx.throw(401)
+    return
+  }
+
+  const req = ctx.request as unknown as RequestWithBody
+  const roomId = parseInt(req.body.roomId, 10)
+
+  if (Number.isNaN(roomId)) {
+    throw new MessageError(422, 'server.room.notFound')
+  }
+
+  // Checked here and not only in the picker: the picker is a list of buttons
+  // on somebody's phone, and this is the door.
+  if (!canEnterRoom(ctx.user, roomId)) {
+    throw new MessageError(403, 'server.room.notAssigned')
+  }
+
+  const user = User.getById(ctx.user.userId, true)
+
+  if (!user) {
+    ctx.throw(404)
+    return
+  }
+
+  setPreferredRoomId(user.userId, roomId)
+
+  const userCtx = createUserCtx(user, roomId)
+
+  ctx.cookies.set('keToken', signSession(userCtx, ctx.jwtKey), {
+    httpOnly: true,
+    sameSite: 'lax',
+  })
+
+  ctx.body = userCtx
 })
 
 /**
@@ -248,7 +382,15 @@ router.get('/users', async (ctx) => {
   const users = User.get()
 
   users.result.forEach((userId) => {
+    // where they are right now, which is not the same question as where they
+    // are allowed — the filter above this table reads the first, the room
+    // assignment editor reads the second
     users.entities[userId].rooms = userRooms[userId] || []
+    users.entities[userId].assignedRoomIds = getAssignedRoomIds(userId)
+    users.entities[userId].preferredRoomId = getPreferredRoomId({
+      userId,
+      isAdmin: users.entities[userId].role === 'admin',
+    })
   })
 
   ctx.body = users
@@ -386,6 +528,33 @@ router.put('/user/:userId', async (ctx) => {
     fields.set('roleId', sql`(SELECT roleId FROM roles WHERE name = ${req.body.role})`)
   }
 
+  // changing which rooms they may enter? (admin only)
+  //
+  // Sent whole rather than as a change: the editor submits the set of rooms
+  // that should be true afterwards, so an unchecked box is a revocation and
+  // not an omission. Assignments are their own table, so they are applied
+  // here rather than joining the column list below.
+  if (user.role === 'admin' && typeof req.body.roomIds === 'string') {
+    let roomIds: number[]
+
+    try {
+      const parsed = JSON.parse(req.body.roomIds)
+      roomIds = Array.isArray(parsed) ? parsed.map(Number).filter(Number.isInteger) : []
+    } catch {
+      throw new MessageError(422, 'server.user.invalidRooms')
+    }
+
+    setAssignedRoomIds(targetId, roomIds)
+
+    // The first preselection is the admin's; every one after it is the
+    // person's own, so this only ever writes what the admin actually chose.
+    const preferred = parseInt(req.body.preferredRoomId, 10)
+
+    if (roomIds.includes(preferred)) {
+      setPreferredRoomId(targetId, preferred)
+    }
+  }
+
   fields.set('dateUpdated', Math.floor(Date.now() / 1000))
 
   const query = sql`
@@ -397,6 +566,26 @@ router.put('/user/:userId', async (ctx) => {
 
   if (!res.changes) {
     ctx.throw(404, `userId ${targetId} not found`)
+  }
+
+  // Somebody whose room was just taken away is still sitting in it: their
+  // socket joined at the handshake and nothing since has asked whether they
+  // may still be there. So say it out loud and drop them, the way logout
+  // does — otherwise an admin revokes access and watches that phone go on
+  // queueing songs into the room.
+  const targetUser = User.getById(targetId)
+
+  if (user.role === 'admin' && targetUser) {
+    const enterer = { userId: targetId, isAdmin: targetUser.role === 'admin' }
+
+    for (const s of await ctx.io.fetchSockets()) {
+      if (s.user?.userId !== targetId) continue
+      if (typeof s.user.roomId !== 'number') continue
+      if (canEnterRoom(enterer, s.user.roomId)) continue
+
+      s.emit('action', { type: SOCKET_AUTH_ERROR })
+      s.disconnect()
+    }
   }
 
   // emit (potentially) updated queues to each room
@@ -452,6 +641,7 @@ router.put('/user/:userId', async (ctx) => {
 // create account
 router.post('/user', async (ctx) => {
   const req = ctx.request as unknown as RequestWithBody
+  const invitedRoomId = parseInt(req.body.roomId, 10)
   let image
 
   if (!ctx.user.isAdmin) {
@@ -465,28 +655,27 @@ router.post('/user', async (ctx) => {
       throw new MessageError(401, 'server.user.invalidRole')
     }
 
-    // An invite is what says this person was asked in.
+    // An invite is what says this person was asked in, and — since migration
+    // 018 — what assigns them the room afterwards.
     //
     // Room prefs allowing new guests cannot carry that weight on their own:
     // they have to be on for any QR to work at all, so with only that check a
     // stranger who found the address could sign in as a guest and be handed
     // the room's queue and its photo album. The code they scanned is the
     // permission, and it is checked here rather than only in the form.
-    const roomId = parseInt(req.body.roomId, 10)
-
     if (joinFailures.isBlocked(ctx.request.ip)) {
       throw new MessageError(429, 'server.user.tooManyAttempts')
     }
 
-    if (!isInviteFor(roomId, req.body.roomCode, getRoomIdByCode)) {
+    if (!isInviteFor(invitedRoomId, req.body.roomCode, getRoomIdByCode)) {
       joinFailures.recordFailure(ctx.request.ip)
       throw new MessageError(401, 'server.user.inviteRequired')
     }
 
-    // new users must choose a room at the same time
+    // new users arrive with the room their invite names
     try {
       await Rooms.validate(
-        roomId,
+        invitedRoomId,
         req.body.roomPassword,
         { role: req.body.role },
       )
@@ -511,12 +700,38 @@ router.post('/user', async (ctx) => {
   try {
     const userId = await User.create({ ...req.body, image } as any, req.body.role)
 
-    // if admin creating another user, we're done
+    // if admin creating another user, we're done — bar the rooms they were
+    // given on the way in, which is the whole point of creating them
     if (ctx.user.isAdmin) {
+      if (typeof req.body.roomIds === 'string') {
+        let roomIds: number[]
+
+        try {
+          const parsed = JSON.parse(req.body.roomIds)
+          roomIds = Array.isArray(parsed) ? parsed.map(Number).filter(Number.isInteger) : []
+        } catch {
+          throw new MessageError(422, 'server.user.invalidRooms')
+        }
+
+        setAssignedRoomIds(userId, roomIds)
+
+        const preferred = parseInt(req.body.preferredRoomId, 10)
+
+        if (roomIds.includes(preferred)) {
+          setPreferredRoomId(userId, preferred)
+        }
+      }
+
       ctx.status = 200
       ctx.body = {}
       return
     }
+
+    // The invite that let them in is also what assigns them the room, so
+    // tomorrow they sign in and land back in it without being read a code
+    // again.
+    grantRoom(userId, invitedRoomId)
+    setPreferredRoomId(userId, invitedRoomId)
 
     const user = User.getById(userId, true)
 
@@ -524,7 +739,7 @@ router.post('/user', async (ctx) => {
       throw new Error('User not found')
     }
 
-    const userCtx = createUserCtx(user, req.body.roomId || null)
+    const userCtx = createUserCtx(user, invitedRoomId || null)
 
     // create JWT
     const token = signSession(userCtx, ctx.jwtKey)
@@ -576,6 +791,10 @@ router.post('/setup', async (ctx) => {
     if (typeof roomRes.lastID !== 'number') {
       ctx.throw(500, 'Invalid default room lastID')
     }
+
+    // The admin lands in the room this setup just made, rather than in
+    // whichever room sorts first once they have created a few more.
+    setPreferredRoomId(userId, roomRes.lastID)
 
     // create JWT
     const userCtx = createUserCtx(user, roomRes.lastID)
