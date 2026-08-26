@@ -23,6 +23,26 @@ services:
     container_name: app-karaoke-eternal
     restart: unless-stopped
 
+    # Measured, not guessed: a full scan of a 1786-song / 19 GB library peaks at
+    # 199 MB of real (anonymous) memory for this container, server and scanner
+    # process together, and that number no longer follows the size of the
+    # largest file — media is streamed rather than buffered (see
+    # docs/FEATURES.md, "Serving media without loading it"). 512 MB is roughly
+    # 2.5x the measured peak.
+    #
+    # Most of what `docker stats` reports for this container is page cache from
+    # streaming and scanning, not the process: it reached 3.7 GB right after a
+    # scan. That memory is reclaimable and the limit simply bounds it. It costs
+    # playback nothing — a song streams at ~3.4 Mbps and any disk is orders of
+    # magnitude faster than that — and it is what makes this installable on a
+    # VPS without the container appearing to eat the machine.
+    #
+    # memswap_limit is set to the same value on every service on purpose:
+    # without it Docker allows an extra mem_limit's worth of swap, which turns
+    # a clean OOM into an unpredictable slowdown.
+    mem_limit: 512m
+    memswap_limit: 512m
+
     ports:
       - "8080:8080"
 
@@ -90,6 +110,14 @@ services:
     container_name: app-pitch-worker
     restart: unless-stopped
 
+    # The Node process itself has never exceeded 103 MB here (VmHWM over 11
+    # days of real jobs); the variable part is the ffmpeg + rubberband children,
+    # KES_PITCH_MAX_CONCURRENCY of them at once. 1 GB is deliberately generous
+    # because that peak was not measured under load — halve it if you also set
+    # PITCH_MAX_CONCURRENCY=1, which is the setting for a small VPS.
+    mem_limit: 1g
+    memswap_limit: 1g
+
     volumes:
       - ./songs:/mnt/karaoke:ro
       - pitch-cache:/data/pitch-cache
@@ -119,6 +147,12 @@ services:
     container_name: app-acquisition-worker
     restart: unless-stopped
 
+    # Node peaked at 84 MB over 4 days, but the real consumers are the yt-dlp
+    # and ffmpeg children it spawns per download. Bulk import runs one song at a
+    # time (see AcquisitionManager), so this bounds one download, not forty.
+    mem_limit: 1g
+    memswap_limit: 1g
+
     volumes:
       - ./songs:/mnt/karaoke
 
@@ -142,6 +176,12 @@ services:
     image: karaoke-propio-cdg-worker:latest
     container_name: app-cdg-worker
     restart: unless-stopped
+
+    # .NET, and the smallest of the four: 75 MB peak over 12 days. It renders
+    # one .cdg from a text file. .NET reads the cgroup limit and sizes its heap
+    # against it, so a low ceiling here is a feature.
+    mem_limit: 256m
+    memswap_limit: 256m
 
     volumes:
       - ./songs:/mnt/karaoke

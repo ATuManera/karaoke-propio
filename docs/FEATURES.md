@@ -687,6 +687,28 @@ route now parses the header itself (`Media/range.ts`) and hands the offsets to
 ms before and 7 ms after on a warm cache; on a cold disk the old path had to
 move 103 MB before the first byte reached the player.
 
+### What each service is allowed to use
+
+With the unbounded allocation gone, a memory ceiling can be set from measurement
+rather than from fear, which is what makes the stack installable on a VPS.
+`docker-compose.yml` caps all four services, and `memswap_limit` matches
+`mem_limit` on each — otherwise Docker grants an extra ceiling's worth of swap
+and a clean OOM becomes an unpredictable slowdown.
+
+| Service | Limit | Measured |
+|---|---|---|
+| karaoke-eternal | 512m | 199 MB peak anon during a full 1786-song / 19 GB scan |
+| pitch-worker | 1g | 103 MB for the Node process; ffmpeg + rubberband children are the variable part |
+| acquisition-worker | 1g | 84 MB for the Node process; yt-dlp and ffmpeg children dominate |
+| cdg-worker | 256m | 75 MB peak over 12 days |
+
+Verified against the real library with the limit in force: a full scan finished
+in 77 s against 71 s unlimited, `oom_kill` stayed at 0, and peak anonymous memory
+was *lower* — 88 MB — because a cgroup under pressure makes the collector do its
+job instead of letting garbage accumulate. `memory.current` sat at the ceiling
+throughout, all of it reclaimable page cache, and seeking a video straight
+afterwards still answered in 5 ms.
+
 `koa-range` still runs for every other route — it is skipped only under
 `/api/media/`, which is what `servesOwnRanges()` decides. Both must agree: if
 `koa-range` ran there too it would slice an already-sliced body a second time.
