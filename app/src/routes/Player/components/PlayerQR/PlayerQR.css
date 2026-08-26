@@ -3,6 +3,12 @@
   bottom: 3vh;
   left: 3vh;
   opacity: 1;
+  overflow: hidden;
+  padding: clamp(0.35rem, 0.8vh, 0.75rem);
+  border: 1px solid rgb(0 0 0 / 18%);
+  border-radius: var(--border-radius);
+  background: #fff;
+  box-shadow: 0 0.35rem 1.4rem rgb(0 0 0 / 45%);
   transition: opacity 0.3s ease;
 
   &.alternate {
@@ -11,7 +17,7 @@
   }
 
   canvas {
-    border-radius: var(--border-radius);
+    display: block;
   }
 }
 
@@ -29,6 +35,5 @@
   font-family: monospace;
   font-weight: bold;
   letter-spacing: 0.12em;
-  color: #fff;
-  text-shadow: 0 2px 6px rgb(0 0 0 / 80%);
+  color: #000;
 }

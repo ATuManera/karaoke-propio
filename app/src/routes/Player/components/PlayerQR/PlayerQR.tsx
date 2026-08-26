@@ -113,8 +113,12 @@ const PlayerQR = ({ height, prefs, queueItem }: PlayerQRProps) => {
     url.searchParams.append('password', btoa(prefs.password))
   }
 
-  const size = Math.round(height * (0.05 + (prefs.size ?? 0.5) / 5)) // min: 5vh, max: 25vh
-  const quietZoneSize = 5 + (10 * (prefs.size ?? 0.5)) // min: 5px, max: 15px
+  // Keep the overlay out of the lyric area while avoiding the old 5vh extreme,
+  // which could produce a code only 54px wide on a 1080p Player. Scannability
+  // comes primarily from the opaque high-contrast symbol below, not sheer size.
+  const normalizedSize = Math.min(1, Math.max(0, prefs.size ?? 0.5))
+  const size = Math.round(height * (0.12 + normalizedSize * 0.08)) // 12–20vh; default 16vh
+  const quietZoneSize = Math.max(16, Math.round(size * 0.06))
 
   return (
     <CSSTransition
@@ -144,15 +148,12 @@ const PlayerQR = ({ height, prefs, queueItem }: PlayerQRProps) => {
       >
         <QRCode
           value={url.href}
-          ecLevel='L'
+          ecLevel='M'
           size={size}
           quietZone={quietZoneSize}
-          style={{ opacity: prefs.opacity ?? 0.625 }}
-          logoImage={`${document.baseURI}assets/app.png`}
-          logoWidth={size * 0.5}
-          logoHeight={size * 0.5}
-          logoOpacity={0.5}
-          qrStyle='dots'
+          bgColor='#ffffff'
+          fgColor='#000000'
+          qrStyle='squares'
         />
 
         {/* Shown alongside the QR for anyone who can't scan — a phone with a
@@ -160,7 +161,7 @@ const PlayerQR = ({ height, prefs, queueItem }: PlayerQRProps) => {
             The alphabet already excludes O/0 and I/1/L so it survives being
             dictated. */}
         {inviteCode && (
-          <div className={styles.code} style={{ fontSize: Math.round(size * 0.16), opacity: prefs.opacity ?? 0.625 }}>
+          <div className={styles.code} style={{ fontSize: Math.round(size * 0.16) }}>
             {inviteCode}
           </div>
         )}

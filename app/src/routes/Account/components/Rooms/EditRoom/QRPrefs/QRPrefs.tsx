@@ -83,18 +83,6 @@ const QRPrefs = ({ onChange, prefs = {}, roomPassword, roomPasswordDirty }: QRPr
             aria-labelledby='label-qr-size'
           />
         </div>
-        <div className={clsx(styles.field)}>
-          <label id='label-qr-opacity'>{t('rooms.qr.opacity')}</label>
-          <Slider
-            className={styles.slider}
-            min={0.25}
-            max={1}
-            step={0.075}
-            value={prefs?.qr?.opacity ?? 0.625}
-            onChange={(val: number) => handleSetPref({ qr: { ...prefs.qr, opacity: val } })}
-            aria-labelledby='label-qr-opacity'
-          />
-        </div>
       </div>
     </Accordion>
   )

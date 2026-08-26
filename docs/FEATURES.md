@@ -788,6 +788,21 @@ reuses the normal user-removal path so queued songs and stars are cleaned up
 too; deleting rows directly would leave the queue pointing at users that no
 longer exist.
 
+### A TV QR remains scannable over any song background
+
+The Player invite is deliberately rendered as a functional symbol rather than
+as artwork. It uses square black modules on an opaque white surface, a generous
+quiet zone, medium error correction and no centre logo. The whole card — QR and
+fallback invite code — is isolated from the moving video by its own white
+background and shadow.
+
+The room's size preference now maps to 12–20% of Player height (16% by default),
+instead of 5–25%. This removes the unusably small extreme without letting the
+default overlay take over the lyric area. Opacity is no longer offered or applied: transparency and a
+decorative microphone made the result depend on the colours and detail in each
+video, so an apparently harmless room preference could break the primary join
+path. Existing stored opacity values are tolerated but ignored.
+
 ## Letting a singer start the Player
 
 Off by default; an admin turns it on under Account → Preferences → Player. With
