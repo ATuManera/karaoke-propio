@@ -862,17 +862,45 @@ longer exist.
 ### A TV QR remains scannable over any song background
 
 The Player invite is deliberately rendered as a functional symbol rather than
-as artwork. It uses square black modules on an opaque white surface, a generous
-quiet zone, medium error correction and no centre logo. The whole card — QR and
-fallback invite code — is isolated from the moving video by its own white
-background and shadow.
+as artwork. It uses square black modules on an opaque white surface, medium
+error correction and no centre logo. Opacity is no longer offered or applied:
+transparency and a decorative microphone made the result depend on the colours
+and detail in each video, so an apparently harmless room preference could break
+the primary join path. Existing stored opacity values are tolerated but ignored.
 
-The room's size preference now maps to 12–20% of Player height (16% by default),
-instead of 5–25%. This removes the unusably small extreme without letting the
-default overlay take over the lyric area. Opacity is no longer offered or applied: transparency and a
-decorative microphone made the result depend on the colours and detail in each
-video, so an apparently harmless room preference could break the primary join
-path. Existing stored opacity values are tolerated but ignored.
+### And it still has to look like part of the player
+
+Scannable and conspicuous are not the same thing. The first version of the
+above answered the scanning problem with size and with a card — white padding
+around the symbol, a border, a shadow, and the fallback invite code inside the
+same white — which on a television read as a sticker left on top of the video.
+
+What replaces it keeps every property a camera needs and gives up only the
+ones a camera never used. The white is exactly the symbol plus the four
+modules of quiet zone the standard asks for, and no CSS padding, border or
+shadow is added around it; the corner rounding is 4px, small enough that it
+only ever clips white. The invite code moved out from under the white onto the
+video itself, in light type with a shadow thin enough to read against a pale
+frame, centred under the symbol. On a 1080p Player the default is a 116px
+symbol in a 148px white square — about an eighth of the screen height, against
+roughly a quarter before.
+
+`qrGeometry.ts` works out both numbers, because both need to know how many
+modules across the symbol is, and that depends on the length of the invite
+URL. It reads the module count out of the standard's byte-mode capacity table
+for error-correction level M — checked in its tests against the counts the
+encoder the Player actually draws with returns for real invite URLs — and then
+rounds to a whole number of pixels per module. The symbol and its quiet zone
+are both multiples of that, so every module is the same width and every edge
+lands on a pixel boundary rather than being resampled across one.
+
+The room's size preference maps to 8.5–14% of Player height (11% by default,
+never below 88px), which after the rounding to whole modules is a handful of
+distinct sizes on a given screen rather than a continuum — three on a 1080p
+Player, and on a 720p one the floor and the rounding meet and leave a single
+size. That is the right trade here: the preference is set in an admin screen
+and judged on a television across the room, so a step nobody can see is worth
+less than a symbol whose modules are all the same width.
 
 ## Letting a singer start the Player
 

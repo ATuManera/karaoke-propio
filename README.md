@@ -4,7 +4,7 @@
 [![Based on](https://img.shields.io/badge/based%20on-Karaoke%20Eternal-blue.svg)](https://github.com/bhj/KaraokeEternal)
 [![Docker](https://img.shields.io/badge/docker-compose-blue.svg)](docker-compose.yml)
 [![Platform](https://img.shields.io/badge/platform-Linux%20%7C%20Docker-lightgrey.svg)]()
-[![Version](https://img.shields.io/badge/version-2.6.2-blue.svg)]()
+[![Version](https://img.shields.io/badge/version-2.6.3-blue.svg)]()
 
 > **Built on [Karaoke Eternal](https://github.com/bhj/KaraokeEternal)** — © RadRoot LLC, ISC License.
 > Karaoke Propio is an independent project that vendors and extends it; it is **not** an official
@@ -36,7 +36,7 @@
 
 **AI Assistance / Asistencia de IA:** Developed with the support of GPT 5.6 Sol, Claude Opus 5, Claude Opus 4.8, and Claude Sonnet 5.
 
-**Version / Versión:** 2.6.2
+**Version / Versión:** 2.6.3
 
 ---
 
@@ -62,12 +62,12 @@ does well — library, queue, player, phone remote — and adds what a real part
 | **Popularity sorting** | Order the library by how watched each source recording is. |
 | **Event photo album** | Guests upload photos from their phone; everyone in the room can view and download them. |
 | **Dedications on screen** | Whoever queues a song can send a line with it — *"for Ana, who turns 30 today"* — and change it for as long as the song is waiting. It takes its turn across the top of the television while the song plays, white on a strip dark enough to read it against, and then gives the screen back to the lyrics. An admin can put a message on any song playing or queued, edit or take down anyone's, and turn the feature off for a room, from the room's settings or from the playback menu mid-party — then nobody can write one and nothing appears on screen. Nothing is deleted, and it all comes back when it is turned on again. |
-| **Invite by QR code** | A random room code replaces the sequential room id, so an invite cannot be guessed. The TV uses a large, opaque, high-contrast QR with a protected white margin and no centre artwork, designed to scan quickly over moving video and from across the room. The code can also be read aloud to anyone who cannot scan. |
+| **Invite by QR code** | A random room code replaces the sequential room id, so an invite cannot be guessed. The television shows a small, opaque, high-contrast QR in a bottom corner — white stopping exactly where the standard's quiet zone does, every module a whole number of pixels wide — with the invite code in light type on the video below it, so the join sits in the player instead of on top of it. The code can also be read aloud to anyone who cannot scan. |
 | **Rooms are assigned, not offered** | The welcome screen asks for an invite code or a username — never which room, and it no longer publishes the room list to anyone who finds the address. An admin decides which rooms each account may enter and which one it lands in. One room and the singer is put straight into it; several and they are asked, with one already chosen — the admin's answer the first time, their own after that. Every open room still says whether anyone is in it, and a singer can move between the rooms that are theirs from *My Room*, without signing out. |
 | **Public access** | Optional HTTPS exposure through an existing nginx-proxy + Let's Encrypt, configured with a single variable. |
 | **Runs on a small server** | Memory use no longer follows the size of the library: a song is streamed and fingerprinted a chunk at a time, so scanning a 1 GB video costs the same as scanning a 5 MB one. Seeking within a song jumps straight to the requested position instead of reading the file from the beginning — invisible on a fast disk, and the difference between instant and sluggish on a VPS. |
 | **Notes & key** | Melody note by note for UltraStar songs, plus an estimated musical key for any track. |
-| **Its own name and version** | The app says what it is and which build you are on — *Karaoke Propio v2.6.2*, linking to this repository — on the welcome screen and in *About*. Credit for the base it is built on sits at the foot of both, with its own link. |
+| **Its own name and version** | The app says what it is and which build you are on — *Karaoke Propio v2.6.3*, linking to this repository — on the welcome screen and in *About*. Credit for the base it is built on sits at the foot of both, with its own link. |
 | **Speaks your language** | English and Spanish, chosen by the phone that arrives — a guest who scans the QR is greeted in their own language without setting anything. A language can be fixed in the account instead, and then it travels to any phone that account signs in from. Everything follows: dates and clocks in the local format, note names as letters or as *Do Re Mi*, and the errors the server sends back. More languages are a single message file away. |
 
 ### Requirements
@@ -193,12 +193,12 @@ fiesta real necesita.
 | **Orden por popularidad** | Ordenar la biblioteca según qué tan vista es cada grabación de origen. |
 | **Álbum de fotos** | Los invitados suben fotos desde el celular; todos en la sala pueden verlas y descargarlas. |
 | **Dedicatorias en pantalla** | Quien pone una canción puede mandar una línea con ella — *"para Ana, que hoy cumple 30"* — y cambiarla mientras la canción siga en la cola. Sale por turnos en la parte de arriba del televisor mientras suena, en blanco sobre una franja lo bastante oscura para leerla, y después le devuelve la pantalla a la letra. El administrador puede poner un mensaje en cualquier canción en reproducción o en cola, editar o quitar el de cualquiera, y apagar la función entera para una sala, desde los ajustes de la sala o desde el menú de reproducción en plena fiesta — entonces nadie puede escribir ninguna y no aparece nada en pantalla. No se borra nada, y todo vuelve al encenderla otra vez. |
-| **Invitación por QR** | Un código aleatorio reemplaza al id de sala secuencial, así una invitación no se puede adivinar. El televisor muestra un QR grande, opaco, de alto contraste, con margen blanco protegido y sin dibujo central, pensado para escanear rápidamente sobre video en movimiento y desde el otro lado de la sala. El código también se puede dictar a quien no pueda escanear. |
+| **Invitación por QR** | Un código aleatorio reemplaza al id de sala secuencial, así una invitación no se puede adivinar. El televisor muestra un QR pequeño, opaco y de alto contraste en una esquina inferior — el blanco termina justo donde termina el margen que pide la norma, y cada módulo mide un número entero de píxeles — con el código de invitación en letra clara sobre el video, debajo, para que la invitación viva dentro del reproductor y no encima. El código también se puede dictar a quien no pueda escanear. |
 | **Salas asignadas, no ofrecidas** | La pantalla de bienvenida pide un código de invitación o un usuario — nunca la sala, y ya no publica la lista de salas a cualquiera que llegue a la dirección. El administrador decide a qué salas puede entrar cada cuenta y en cuál cae al ingresar. Con una sola sala, el cantante entra directo; con varias se le pregunta, con una ya preseleccionada — la del administrador la primera vez, la suya después. Cada sala abierta sigue diciendo si hay alguien adentro, y quien tiene varias se cambia desde *Mi sala* sin cerrar sesión. |
 | **Acceso público** | Exposición HTTPS opcional mediante un nginx-proxy + Let's Encrypt existente, con una sola variable. |
 | **Funciona en un servidor pequeño** | El uso de memoria ya no depende del tamaño de la biblioteca: cada canción se lee y se identifica por partes, así que escanear un video de 1 GB cuesta lo mismo que uno de 5 MB. Adelantar dentro de una canción salta directamente a la posición pedida en vez de leer el archivo desde el principio: no se nota en un disco rápido y es la diferencia entre instantáneo y lento en un VPS. |
 | **Notas y tonalidad** | Melodía nota por nota en canciones UltraStar, y tonalidad estimada para cualquier pista. |
-| **Nombre y versión propios** | La aplicación dice qué es y qué versión estás usando — *Karaoke Propio v2.6.2*, enlazando a este repositorio — en la pantalla de bienvenida y en *Acerca de*. El reconocimiento a la base sobre la que está construida va al pie de ambas, con su propio enlace. |
+| **Nombre y versión propios** | La aplicación dice qué es y qué versión estás usando — *Karaoke Propio v2.6.3*, enlazando a este repositorio — en la pantalla de bienvenida y en *Acerca de*. El reconocimiento a la base sobre la que está construida va al pie de ambas, con su propio enlace. |
 | **Habla tu idioma** | Español e inglés, elegidos por el celular que llega — a un invitado que escanea el QR se le habla en su idioma sin que configure nada. También se puede fijar un idioma en la cuenta, y entonces viaja a cualquier celular desde el que esa cuenta entre. Todo lo sigue: fechas y horas en el formato local, los nombres de las notas en letras o en *Do Re Mi*, y los errores que devuelve el servidor. Agregar otro idioma es un solo archivo de mensajes. |
 
 ### Requisitos

@@ -11,7 +11,7 @@
  * up wrong. The git tag is deliberately NOT covered by that test: tagging is
  * an act of release, done once the code is final, not an input to the build.
  */
-export const KP_VERSION = '2.6.2'
+export const KP_VERSION = '2.6.3'
 
 export const KP_REPO_URL = 'https://github.com/ATuManera/karaoke-propio'
 

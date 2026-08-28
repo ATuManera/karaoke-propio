@@ -5,6 +5,7 @@ import { CSSTransition } from 'react-transition-group'
 import { QRCode } from 'react-qrcode-logo'
 import type { QueueItem, IRoomPrefs } from 'shared/types'
 import { resolveInviteBaseUrl } from 'shared/inviteUrl'
+import { getQRGeometry } from './qrGeometry'
 import styles from './PlayerQR.css'
 
 const MIN_STATIC_MS = 10000 // 10 sec
@@ -113,12 +114,7 @@ const PlayerQR = ({ height, prefs, queueItem }: PlayerQRProps) => {
     url.searchParams.append('password', btoa(prefs.password))
   }
 
-  // Keep the overlay out of the lyric area while avoiding the old 5vh extreme,
-  // which could produce a code only 54px wide on a 1080p Player. Scannability
-  // comes primarily from the opaque high-contrast symbol below, not sheer size.
-  const normalizedSize = Math.min(1, Math.max(0, prefs.size ?? 0.5))
-  const size = Math.round(height * (0.12 + normalizedSize * 0.08)) // 12–20vh; default 16vh
-  const quietZoneSize = Math.max(16, Math.round(size * 0.06))
+  const { size, quietZone } = getQRGeometry(height, prefs.size, url.href)
 
   return (
     <CSSTransition
@@ -146,22 +142,27 @@ const PlayerQR = ({ height, prefs, queueItem }: PlayerQRProps) => {
         className={clsx(styles.container, alternate && styles.alternate)}
         ref={ref}
       >
-        <QRCode
-          value={url.href}
-          ecLevel='M'
-          size={size}
-          quietZone={quietZoneSize}
-          bgColor='#ffffff'
-          fgColor='#000000'
-          qrStyle='squares'
-        />
+        {/* the white ends here: everything the symbol needs, and nothing the
+            room has to look at */}
+        <div className={styles.symbol}>
+          <QRCode
+            value={url.href}
+            ecLevel='M'
+            size={size}
+            quietZone={quietZone}
+            bgColor='#ffffff'
+            fgColor='#000000'
+            qrStyle='squares'
+          />
+        </div>
 
         {/* Shown alongside the QR for anyone who can't scan — a phone with a
             dead camera, or someone reading it out to a guest over the phone.
             The alphabet already excludes O/0 and I/1/L so it survives being
-            dictated. */}
+            dictated. It sits on the video rather than inside the white, which
+            is what made the whole thing read as a card. */}
         {inviteCode && (
-          <div className={styles.code} style={{ fontSize: Math.round(size * 0.16) }}>
+          <div className={styles.code} style={{ fontSize: Math.max(12, Math.round(size * 0.15)) }}>
             {inviteCode}
           </div>
         )}
