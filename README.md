@@ -4,7 +4,7 @@
 [![Based on](https://img.shields.io/badge/based%20on-Karaoke%20Eternal-blue.svg)](https://github.com/bhj/KaraokeEternal)
 [![Docker](https://img.shields.io/badge/docker-compose-blue.svg)](docker-compose.yml)
 [![Platform](https://img.shields.io/badge/platform-Linux%20%7C%20Docker-lightgrey.svg)]()
-[![Version](https://img.shields.io/badge/version-2.6.3-blue.svg)]()
+[![Version](https://img.shields.io/badge/version-2.7.0-blue.svg)]()
 
 > **Built on [Karaoke Eternal](https://github.com/bhj/KaraokeEternal)** — © RadRoot LLC, ISC License.
 > Karaoke Propio is an independent project that vendors and extends it; it is **not** an official
@@ -36,7 +36,7 @@
 
 **AI Assistance / Asistencia de IA:** Developed with the support of GPT 5.6 Sol, Claude Opus 5, Claude Opus 4.8, and Claude Sonnet 5.
 
-**Version / Versión:** 2.6.3
+**Version / Versión:** 2.7.0
 
 ---
 
@@ -58,7 +58,7 @@ does well — library, queue, player, phone remote — and adds what a real part
 | **Version picker** | When a song has several local recordings, the singer can preview each one on their own device before choosing which one to queue. MP4 versions include video; CD+G versions provide an audio preview. |
 | **New-song review** | Songs newly discovered by a media-folder scan are held under the library flag. One tap filters even a large library down to that worklist; tapping a result opens its artist, title and category editor directly. |
 | **Portable repertoire** | A singer's songs and pitches travel between installations as a small file — no music in it, only what they have learned about singing it. Bring it in at the join form (a file on the phone, or a link), and whatever this library already has is theirs again straight away; what it lacks is listed for the admin to decide about. |
-| **Categories** | Genre, decade, voice (male/female/duet/group) and language, looked up automatically from MusicBrainz and editable by hand. |
+| **Categories** | Genre, decade, voice (male/female/duet/group) and language, editable by hand — and, for 1,216 songs, already right when the library first sees them. The categorisations somebody checked one by one ship with this repository as [an ordinary table](app/server/Categories/data/song-categories.tsv) anyone can read, correct or add to; it is consulted first, and MusicBrainz is only asked about the songs it does not name. A song a folder scan finds arrives categorised on the spot, with no rate-limited lookup and nothing to press. |
 | **Popularity sorting** | Order the library by how watched each source recording is. |
 | **Event photo album** | Guests upload photos from their phone; everyone in the room can view and download them. |
 | **Dedications on screen** | Whoever queues a song can send a line with it — *"for Ana, who turns 30 today"* — and change it for as long as the song is waiting. It takes its turn across the top of the television while the song plays, white on a strip dark enough to read it against, and then gives the screen back to the lyrics. An admin can put a message on any song playing or queued, edit or take down anyone's, and turn the feature off for a room, from the room's settings or from the playback menu mid-party — then nobody can write one and nothing appears on screen. Nothing is deleted, and it all comes back when it is turned on again. |
@@ -67,7 +67,7 @@ does well — library, queue, player, phone remote — and adds what a real part
 | **Public access** | Optional HTTPS exposure through an existing nginx-proxy + Let's Encrypt, configured with a single variable. |
 | **Runs on a small server** | Memory use no longer follows the size of the library: a song is streamed and fingerprinted a chunk at a time, so scanning a 1 GB video costs the same as scanning a 5 MB one. Seeking within a song jumps straight to the requested position instead of reading the file from the beginning — invisible on a fast disk, and the difference between instant and sluggish on a VPS. |
 | **Notes & key** | Melody note by note for UltraStar songs, plus an estimated musical key for any track. |
-| **Its own name and version** | The app says what it is and which build you are on — *Karaoke Propio v2.6.3*, linking to this repository — on the welcome screen and in *About*. Credit for the base it is built on sits at the foot of both, with its own link. |
+| **Its own name and version** | The app says what it is and which build you are on — *Karaoke Propio v2.7.0*, linking to this repository — on the welcome screen and in *About*. Credit for the base it is built on sits at the foot of both, with its own link. |
 | **Speaks your language** | English and Spanish, chosen by the phone that arrives — a guest who scans the QR is greeted in their own language without setting anything. A language can be fixed in the account instead, and then it travels to any phone that account signs in from. Everything follows: dates and clocks in the local format, note names as letters or as *Do Re Mi*, and the errors the server sends back. More languages are a single message file away. |
 
 ### Requirements
@@ -189,7 +189,7 @@ fiesta real necesita.
 | **Selector de versión** | Cuando una canción tiene varias grabaciones locales, el cantante puede probar cada una en su propio dispositivo antes de elegir cuál encolar. Las versiones MP4 incluyen video; las versiones CD+G ofrecen una vista previa de audio. |
 | **Revisión de canciones nuevas** | Las canciones recién encontradas al escanear una carpeta quedan bajo la bandera de la biblioteca. Un toque reduce incluso una biblioteca grande a esa lista de trabajo; tocar un resultado abre directamente la edición de artista, título y categorías. |
 | **Repertorio portátil** | Las canciones y los tonos de un cantante viajan entre instalaciones en un archivo pequeño — sin música adentro, solo lo que aprendió sobre cantarlas. Se trae desde el propio formulario de ingreso (un archivo del celular, o un enlace), y todo lo que esta biblioteca ya tiene vuelve a ser suyo al instante; lo que falta queda listado para que el administrador decida. |
-| **Categorías** | Género, década, voz (hombre/mujer/dúo/grupo) e idioma, obtenidos automáticamente de MusicBrainz y editables a mano. |
+| **Categorías** | Género, década, voz (hombre/mujer/dúo/grupo) e idioma, editables a mano — y, para 1216 canciones, ya correctos la primera vez que la biblioteca las ve. Las categorías que alguien revisó una por una viajan en este repositorio como [una tabla común y corriente](app/server/Categories/data/song-categories.tsv) que cualquiera puede leer, corregir o ampliar; se consulta primero, y a MusicBrainz solo se le pregunta por las canciones que la tabla no nombra. Una canción que aparece al escanear una carpeta llega categorizada en el acto, sin consulta limitada por cuota y sin nada que apretar. |
 | **Orden por popularidad** | Ordenar la biblioteca según qué tan vista es cada grabación de origen. |
 | **Álbum de fotos** | Los invitados suben fotos desde el celular; todos en la sala pueden verlas y descargarlas. |
 | **Dedicatorias en pantalla** | Quien pone una canción puede mandar una línea con ella — *"para Ana, que hoy cumple 30"* — y cambiarla mientras la canción siga en la cola. Sale por turnos en la parte de arriba del televisor mientras suena, en blanco sobre una franja lo bastante oscura para leerla, y después le devuelve la pantalla a la letra. El administrador puede poner un mensaje en cualquier canción en reproducción o en cola, editar o quitar el de cualquiera, y apagar la función entera para una sala, desde los ajustes de la sala o desde el menú de reproducción en plena fiesta — entonces nadie puede escribir ninguna y no aparece nada en pantalla. No se borra nada, y todo vuelve al encenderla otra vez. |
@@ -198,7 +198,7 @@ fiesta real necesita.
 | **Acceso público** | Exposición HTTPS opcional mediante un nginx-proxy + Let's Encrypt existente, con una sola variable. |
 | **Funciona en un servidor pequeño** | El uso de memoria ya no depende del tamaño de la biblioteca: cada canción se lee y se identifica por partes, así que escanear un video de 1 GB cuesta lo mismo que uno de 5 MB. Adelantar dentro de una canción salta directamente a la posición pedida en vez de leer el archivo desde el principio: no se nota en un disco rápido y es la diferencia entre instantáneo y lento en un VPS. |
 | **Notas y tonalidad** | Melodía nota por nota en canciones UltraStar, y tonalidad estimada para cualquier pista. |
-| **Nombre y versión propios** | La aplicación dice qué es y qué versión estás usando — *Karaoke Propio v2.6.3*, enlazando a este repositorio — en la pantalla de bienvenida y en *Acerca de*. El reconocimiento a la base sobre la que está construida va al pie de ambas, con su propio enlace. |
+| **Nombre y versión propios** | La aplicación dice qué es y qué versión estás usando — *Karaoke Propio v2.7.0*, enlazando a este repositorio — en la pantalla de bienvenida y en *Acerca de*. El reconocimiento a la base sobre la que está construida va al pie de ambas, con su propio enlace. |
 | **Habla tu idioma** | Español e inglés, elegidos por el celular que llega — a un invitado que escanea el QR se le habla en su idioma sin que configure nada. También se puede fijar un idioma en la cuenta, y entonces viaja a cualquier celular desde el que esa cuenta entre. Todo lo sigue: fechas y horas en el formato local, los nombres de las notas en letras o en *Do Re Mi*, y los errores que devuelve el servidor. Agregar otro idioma es un solo archivo de mensajes. |
 
 ### Requisitos

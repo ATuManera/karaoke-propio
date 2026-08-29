@@ -2,9 +2,18 @@ import { db } from '../lib/Database.js'
 import getLogger from '../lib/Log.js'
 import Library from '../Library/Library.js'
 import { musicBrainz, TransientLookupError } from './MusicBrainzClient.js'
+import CategoryReference from './CategoryReference.js'
 import { toCategories, type Category, type CategoryType } from './categoryMap.js'
 
 const log = getLogger('Categories')
+
+/**
+ * Which pass put a category on a song, weakest first. See `attach()` for why
+ * they are ranked rather than merely distinguished.
+ */
+export type CategorySource = 'auto' | 'reference' | 'manual'
+
+const RANK_SQL = (expr: string) => `(CASE ${expr} WHEN 'manual' THEN 3 WHEN 'reference' THEN 2 ELSE 1 END)`
 
 export interface CategoryRow {
   categoryId: number
@@ -56,6 +65,25 @@ class Categories {
     return { categories: this.get(), songCategories: this.getSongMap() }
   }
 
+  /**
+   * Insert a category onto a song, never demoting the row that is already
+   * there.
+   *
+   * Three passes write here — the shipped reference table, an online lookup,
+   * and a person — and they can land on the same pair. Plain INSERT OR IGNORE
+   * loses that race silently: an admin's correction over an existing 'auto'
+   * row became a no-op, the row kept source 'auto', and the next enrichment
+   * run deleted it as its own. So a write may only raise the source, and the
+   * ladder is manual > reference > auto.
+   */
+  private static attach (songId: number, categoryId: number, source: CategorySource): void {
+    db.run(`
+      INSERT INTO songCategories (songId, categoryId, source) VALUES (?, ?, ?)
+      ON CONFLICT (songId, categoryId) DO UPDATE SET source = excluded.source
+        WHERE ${RANK_SQL('excluded.source')} > ${RANK_SQL('songCategories.source')}
+    `, [songId, categoryId, source])
+  }
+
   static findOrCreate (name: string, type: CategoryType): number {
     const nameNorm = normalize(name)
     const existing = db.get<{ categoryId: number }>(
@@ -67,25 +95,70 @@ class Categories {
     return res.lastID as number
   }
 
-  static setSongCategories (songId: number, categories: Category[], source: 'auto' | 'manual' = 'auto'): void {
+  static setSongCategories (songId: number, categories: Category[], source: CategorySource = 'auto'): void {
     // a re-run must not undo someone's correction, so only rows from the same
     // source are replaced
     db.run('DELETE FROM songCategories WHERE songId = ? AND source = ?', [songId, source])
 
     for (const category of categories) {
-      const categoryId = this.findOrCreate(category.name, category.type)
-      db.run(
-        'INSERT OR IGNORE INTO songCategories (songId, categoryId, source) VALUES (?, ?, ?)',
-        [songId, categoryId, source],
-      )
+      this.attach(songId, this.findOrCreate(category.name, category.type), source)
     }
 
     Library.cache.version = null // invalidate
   }
 
   static addManual (songId: number, name: string, type: CategoryType): void {
-    const categoryId = this.findOrCreate(name, type)
-    db.run('INSERT OR IGNORE INTO songCategories (songId, categoryId, source) VALUES (?, ?, ?)', [songId, categoryId, 'manual'])
+    this.attach(songId, this.findOrCreate(name, type), 'manual')
+    Library.cache.version = null // invalidate
+  }
+
+  /**
+   * Apply what the shipped reference table knows about a song, if anything.
+   *
+   * Synchronous and local, so it can run wherever a song appears — including
+   * inside the scanner's IPC handler, where waiting on a rate-limited web
+   * service is not an option.
+   *
+   * A hit supersedes an earlier online guess: the auto rows are dropped once
+   * the reference rows are in, since keeping both would leave a song wearing
+   * MusicBrainz's "80s" next to the decade a person checked. Manual rows are
+   * untouched, as always.
+   */
+  static applyReference (songId: number, artist: string, title: string): Category[] {
+    const categories = CategoryReference.lookup(artist, title)
+    if (!categories.length) return []
+
+    this.setSongCategories(songId, categories, 'reference')
+    db.run('DELETE FROM songCategories WHERE songId = ? AND source = \'auto\'', [songId])
+    db.run('UPDATE songs SET dateCategorized = ? WHERE songId = ?', [Math.floor(Date.now() / 1000), songId])
+
+    return categories
+  }
+
+  /**
+   * The reference pass for a song that has just been discovered, looking its
+   * names up itself.
+   *
+   * Returns false when the table has nothing, which is the caller's signal
+   * that this song still needs an online lookup.
+   */
+  static categorizeFromReference (songId: number): boolean {
+    const row = db.get<{ title: string, artist: string }>(`
+      SELECT songs.title, artists.name AS artist
+      FROM songs INNER JOIN artists USING(artistId)
+      WHERE songId = ?
+    `, [songId])
+
+    if (!row) return false
+
+    const categories = this.applyReference(songId, row.artist, row.title)
+
+    if (categories.length) {
+      log.info('categorized "%s - %s" from the reference table: %s',
+        row.artist, row.title, categories.map(c => c.name).join(', '))
+    }
+
+    return categories.length > 0
   }
 
   static removeFromSong (songId: number, categoryId: number): void {
@@ -114,6 +187,18 @@ class Categories {
 
     if (!row) throw new Error(`songId not found: ${songId}`)
 
+    // The hand-checked table first, and if it answers, that is the answer:
+    // MusicBrainz is not asked at all. Not just to save a rate-limited request
+    // — a second opinion that disagrees with a person who looked at the song
+    // is not worth having.
+    const fromReference = this.applyReference(songId, row.artist, row.title)
+
+    if (fromReference.length) {
+      log.info('categorized "%s - %s" from the reference table: %s',
+        row.artist, row.title, fromReference.map(c => c.name).join(', '))
+      return fromReference
+    }
+
     let raw
     try {
       raw = await this.mb.lookup(row.artist, row.title)
@@ -141,7 +226,7 @@ class Categories {
    * about one request per second, and this walks every song, so it is slow by
    * nature and must never be awaited by an HTTP handler.
    */
-  static async categorizeAll ({ force = false }: { force?: boolean } = {}): Promise<{ processed: number, tagged: number }> {
+  static async categorizeAll ({ force = false }: { force?: boolean } = {}): Promise<{ processed: number, tagged: number, fromReference: number }> {
     const rows = db.all<{ songId: number }>(
       force
         ? 'SELECT songId FROM songs'
@@ -149,10 +234,26 @@ class Categories {
       [],
     )
 
-    log.info('categorizing %s song(s)%s', rows.length, force ? ' (forced)' : '')
+    log.info('categorizing %s song(s)%s against a reference table of %s song(s)',
+      rows.length, force ? ' (forced)' : '', CategoryReference.size())
 
-    let tagged = 0
+    // The reference pass first, for every song, before a single request goes
+    // out. It is local, so it costs nothing; doing it song-by-song inside the
+    // online loop would mean a library that is 90% covered still crawling at
+    // MusicBrainz's one request a second for the songs in between.
+    let fromReference = 0
+    const needLookup: number[] = []
+
     for (const { songId } of rows) {
+      if (this.categorizeFromReference(songId)) fromReference++
+      else needLookup.push(songId)
+    }
+
+    log.info('%s song(s) answered by the reference table; %s to look up online',
+      fromReference, needLookup.length)
+
+    let tagged = fromReference
+    for (const songId of needLookup) {
       try {
         const categories = await this.categorizeSong(songId)
         if (categories.length) tagged++
@@ -162,9 +263,10 @@ class Categories {
     }
 
     this.pruneEmpty()
-    log.info('categorization finished: %s/%s song(s) tagged', tagged, rows.length)
+    log.info('categorization finished: %s/%s song(s) tagged (%s from the reference table)',
+      tagged, rows.length, fromReference)
 
-    return { processed: rows.length, tagged }
+    return { processed: rows.length, tagged, fromReference }
   }
 }
 

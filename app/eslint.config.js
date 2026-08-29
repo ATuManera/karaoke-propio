@@ -60,7 +60,7 @@ export default defineConfig(
   },
   // server-only config
   {
-    files: ['server/**/*.{ts,js}', 'config/**/*.{js,ts}', '*.js'],
+    files: ['server/**/*.{ts,js}', 'config/**/*.{js,ts}', 'scripts/**/*.{js,mjs}', '*.js'],
     ...pluginNode.configs['flat/recommended-module'],
     rules: {
       ...pluginNode.configs['flat/recommended-module'].rules,

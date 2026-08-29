@@ -483,15 +483,100 @@ because the join form has to know whether to offer the field.
 
 ## Categories
 
-Genre, decade, voice and language, derived from MusicBrainz.
+Genre, decade, voice and language, from a hand-checked table first and
+MusicBrainz second.
+
+### The reference table
+
+`app/server/Categories/data/song-categories.tsv` (migration 019,
+`CategoryReference.ts`) is the primary source of truth: 1,216 songs whose
+categories a person corrected one at a time, extracted from a real library and
+carried in the repository so the next installation does not repeat that
+afternoon.
+
+It exists because MusicBrainz is a good second opinion and a poor first one. Its
+tags describe an *artist* more often than a song; it answers a duet with
+whichever half of the credit it recognised; it has nothing at all to say about
+the karaoke uploads that make up much of a real library; and it permits about
+one request a second, so a fresh install spends minutes categorising and still
+ends up with gaps somebody has to fill in by hand.
+
+**What went in.** A song qualifies when at least one of its categories was set
+by hand — somebody opened it and typed something — and then *all* of its
+categories are exported, including the ones a lookup supplied: a person who
+corrected the decade and left the genre alone was agreeing with the genre.
+Songs nobody ever touched are excluded even though they are categorised.
+Seeding a table declared authoritative *over* MusicBrainz with MusicBrainz's
+own output is circular, and would freeze its known mistakes into a published
+file.
+
+**Keyed by name, never by `songId`,** which means nothing on another
+installation. `matchKey()` in `categoryMap.ts` is the single key function — it
+folds case, accents, punctuation and a leading *or* trailing article, so this
+app's "Beatles, The" and another library's "The Beatles" are the same song. It
+is deliberately the same function `namesMatch()` uses against MusicBrainz: a
+second normaliser would mean two libraries that agree on a song still failing
+to find each other's row.
+
+**A plain TSV, not rows in a migration,** because it is meant to be read,
+diffed and added to by people: a pull request saying "these forty songs are
+Bolero, not Ballad" should look like forty changed lines. Regenerate it from a
+corrected library with `node scripts/export-category-reference.mjs
+<database.sqlite3>` — dependency-free, run with plain `node`, output sorted so
+the diff is only what changed.
+
+The table is a cache of the file, rewritten wholesale on every boot from
+`main.ts`. Editing a row in SQLite would be undone at the next start; human
+corrections belong in `songCategories`, which outranks it. A missing or
+unparseable file is not fatal — categorisation falls back to the online lookup,
+as it did before the table existed.
+
+### Where it is consulted
+
+Everywhere a song's names are settled:
+
+- `categorizeSong()` asks it before MusicBrainz, and a hit means MusicBrainz is
+  not asked at all. Not only to save a rate-limited request — a second opinion
+  that disagrees with a person who looked at the song is not worth having.
+- `categorizeAll()` runs the whole reference pass first, for every song, before
+  a single request goes out. Interleaving them would leave a library that is
+  90% covered still crawling at one request a second for the songs in between.
+- **A folder scan** (`Media/ipc.ts`, `MEDIA_ADD`) applies it inline. A scanned
+  song used to arrive with nothing and wait for someone to press *categorize*;
+  an online lookup cannot run in that handler, but a local table can.
+- **A retag** (`retagSong`) re-applies it, because the names are what the table
+  is keyed on — this is how a misread bulk import ends up categorised without
+  anyone opening the category editor.
+
+### MusicBrainz, for the songs the table does not name
 
 **Use `genres`, never `tags`.** Tags are unmoderated free text: The Beatles carry
 "heavy metal" and "80s", Queen carry "metal" and "disco". The curated `genres`
 field returns rock/pop/glam rock instead. Raw values are mapped onto a small
 allowlist; anything unrecognised is dropped rather than guessed at.
 
-Manual edits are stored with `source = 'manual'` and survive re-scans, which
-only replace `auto` rows.
+The allowlist and the shipped table are held to each other by a test: a table
+naming a genre the mapper cannot produce would be a table an online lookup
+could never agree with. That test is what added Hip hop, New wave, Peruvian
+Waltz, Tropical, Flamenco, Twist, R&B, Copla, Classical, Sertanejo and Trova —
+every one of them typed by hand on a real song before it was a canonical name.
+New wave left Rock and R&B left Soul for the same reason: somebody filing a
+song under the narrower name is drawing a distinction, and folding it back
+would erase it.
+
+### The source ladder
+
+`songCategories.source` is `manual` > `reference` > `auto`, and a write may
+only raise it, never lower it (`Categories.attach()`). Each pass deletes only
+its own rows, so a re-run never undoes another's work, and a reference hit
+additionally clears the `auto` rows it supersedes — a song should not wear
+MusicBrainz's "80s" next to the decade a person checked.
+
+The ranking is not decoration. `INSERT OR IGNORE` used to lose this race
+silently: `songCategories`' primary key is `(songId, categoryId)` with `source`
+outside it, so an admin adding a category that already existed as `auto` was a
+no-op, the row kept `auto`, and the next enrichment run deleted the correction
+as its own.
 
 An edit returns the complete category snapshot in the mutation response and
 pushes that same snapshot to the other connected clients. Do not acknowledge a

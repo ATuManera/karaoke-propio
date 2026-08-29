@@ -1,6 +1,9 @@
-# Datos operativos de PiKaraoke
-data/
-songs/
+# Datos operativos de Karaoke Propio. Anclados a la raíz a propósito: sin la barra
+# inicial, "data/" ignora CUALQUIER carpeta llamada data en cualquier nivel, y
+# eso dejaba fuera del paquete app/server/Categories/data/, que es justamente la
+# tabla de categorías que debe publicarse (source of truth para un grupo de canciones con categorías validadas manualmente.
+/data/
+/songs/
 
 # Copias de seguridad
 backups/

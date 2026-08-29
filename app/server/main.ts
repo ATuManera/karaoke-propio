@@ -74,6 +74,19 @@ process.on('unhandledRejection', (reason) => {
     ro: false,
   })
 
+  // Karaoke Propio: refresh the hand-checked category table from the file that
+  // ships with the source. Before anything can be scanned or acquired, so a
+  // song discovered seconds after boot is already matched against it.
+  const { default: CategoryReference } = await import('./Categories/CategoryReference.js')
+
+  try {
+    CategoryReference.load()
+  } catch (err) {
+    // a bad data file must not keep the server down; categorization simply
+    // falls back to the online lookup, as it did before this table existed
+    log.error('could not load the category reference table: %s', (err as Error).message)
+  }
+
   // init IPC listener
   const IPCBridge = await import('./lib/IPCBridge.js')
   IPC = IPCBridge.default

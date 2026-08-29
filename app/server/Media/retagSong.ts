@@ -5,6 +5,7 @@ import { db } from '../lib/Database.js'
 import getLogger from '../lib/Log.js'
 import { stripSourceIdSuffix, withSourceIdSuffix } from '../lib/util.js'
 import Library from '../Library/Library.js'
+import Categories from '../Categories/Categories.js'
 import Media from './Media.js'
 import Prefs from '../Prefs/Prefs.js'
 import MetaParser from '../Scanner/MetaParser/MetaParser.js'
@@ -110,6 +111,16 @@ export async function retagSong (songId: number, artistInput: string, titleInput
   // drop artists nothing points at anymore (the misspelling that was corrected)
   db.run('DELETE FROM artistStars WHERE artistId NOT IN (SELECT DISTINCT artistId FROM songs)')
   db.run('DELETE FROM artists WHERE artistId NOT IN (SELECT DISTINCT artistId FROM songs)')
+
+  // The names are what the reference table is keyed on, so a correction is
+  // exactly the moment a song the table already knew about becomes findable in
+  // it — this is how a misread bulk import ends up categorised without anyone
+  // touching the category editor.
+  try {
+    Categories.applyReference(targetSongId, parsed.artist, parsed.title)
+  } catch (err) {
+    log.warn('could not categorize retagged song %s: %s', targetSongId, (err as Error).message)
+  }
 
   Library.cache.version = null // invalidate
 

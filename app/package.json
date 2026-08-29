@@ -29,7 +29,7 @@
     "typecheck": "tsc -b --noEmit",
     "build": "npm run build:server ; npm run build:client",
     "build:client": "webpack --config config/webpack.config.js",
-    "build:server": "rm -rf build/server ; tsc -p config/tsconfig.server.json --noEmitOnError false ; mkdir -p build/server/lib ; cp -R server/lib/schemas build/server/lib/",
+    "build:server": "rm -rf build/server ; tsc -p config/tsconfig.server.json --noEmitOnError false ; mkdir -p build/server/lib build/server/Categories ; cp -R server/lib/schemas build/server/lib/ ; cp -R server/Categories/data build/server/Categories/",
     "serve": "node build/server/main.js",
     "server": "npm run serve"
   },

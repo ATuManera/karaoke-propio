@@ -1,0 +1,1231 @@
+# Karaoke Propio — hand-checked song categories.
+#
+# The primary source of truth for categorisation, consulted before
+# MusicBrainz: every song here was categorised by a person looking at it,
+# and an online lookup is only asked about songs this file does not name.
+#
+# Columns are tab-separated. Artist and title are written the way the
+# library stores them; matching folds case, accents, punctuation and a
+# leading or trailing article, so "The Beatles" and "Beatles, The" are the
+# same song. Several genres are separated by "|". Empty means "not known",
+# never "none".
+#
+# Regenerate with: node scripts/export-category-reference.mjs <database.sqlite3>
+# Corrections are welcome as ordinary pull requests against this file.
+artist	title	genre	decade	voice	language
+ABBA	Chiquitita	Disco|Pop|Rock	70's	Group	English
+ABBA	Dancing Queen	Disco|Pop|Rock	70's	Group	English
+ABBA	Fernando	Ballad|Disco|Pop|Rock	70's	Group	English
+ABBA	I have a dream	Ballad|Disco|Pop|Rock	70's	Group	English
+ABBA	Mamma Mia	Disco|Pop|Rock	70's	Group	English
+ABBA	Slipping through my fingers	Ballad|Disco|Pop|Rock	80's	Group	English
+ABBA	Super Trouper	Disco|Pop|Rock	80's	Group	English
+ABBA	winner takes it all, The	Ballad|Disco|Pop|Rock	80's	Group	English
+AC DC	Highway to Hell	Rock	70's	Group	English
+Adele	Someone like you	Pop|Soul	2010's	Female	English
+Aerosmith	Dream On	Rock	70's	Group	English
+Aerosmith	I don't want to miss a thing	Rock	90's	Group	English
+Aerosmith	Sweet Emotion	Rock	70's	Group	English
+Aerosmith	Van Halen Mama Kin	Rock	70's	Group	English
+Alejandra Guzman	Eternamente bella	Pop|Rock	90's	Female	Spanish
+Alejandra Guzman	Llama por favor	Ballad|Pop|Rock	90's	Female	Spanish
+Alejandro Fernández	Abrázame	Ballad|Pop|Ranchera	2000's	Male	Spanish
+Alejandro Fernández	Hoy Tengo Ganas de Ti	Ballad|Ranchera	2000's	Male	Spanish
+Alejandro Fernández	Me Dediqué a Perderte	Ballad|Ranchera	2000's	Male	Spanish
+Alejandro Fernández	Mi Forma de Sentir	Ballad|Pop|Ranchera	2000's	Male	Spanish
+Alejandro Fernández	No se Olvidar	Ballad|Ranchera	2000's	Male	Spanish
+Alejandro Fernández	Si tu Supieras	Ballad|Ranchera	2000's	Male	Spanish
+Alex Ubago	Aunque No te Pueda Ver	Ballad|Pop	2000's	Male	Spanish
+Alex Ubago	Estar contigo	Pop	2000's	Male	Spanish
+Alex Ubago	Gritos de Esperanza, A	Ballad|Pop	2000's	Male	Spanish
+Alex Ubago	Me Muero por Conocerte	Pop	2000's	Male	Spanish
+Alex Ubago	Sabes	Ballad|Pop	2000's	Male	Spanish
+Alex Ubago	Sin Miedo a Nada	Ballad|Pop	80's	Male	Spanish
+Alexandra Burke	Hallelujah	Pop|R&B|Soul	2000's	Female	English
+Allman Brothers Band, The	Ramblin' Man	Blues|Pop|Rock	70's	Group	English
+Amanda Miguel	Amame una vez mas	Ballad|Pop	90's	Female	Spanish
+America	Sister Golden Hair	Pop|Rock	70's	Group	English
+Amy Winehouse	Valerie	Jazz|Soul	2000's	Female	English
+Amén	Decir Adiós	Rock	2000's	Group|Male	Spanish
+Amén	Sé que tú no estás solo	Rock	2000's	Group|Male	Spanish
+Ana Cirre	Casi perfecto	Ballad|Pop	90's	Female	Spanish
+Ana Gabriel	Luna	Ballad|Pop|Ranchera	90's	Female	Spanish
+Ana Gabriel	Quien como tu	Ballad|Pop	80's	Female	Spanish
+Ana Gabriel	Simplemente amigos	Ballad|Pop	80's	Female	Spanish
+Ana Gabriel & Vicky Carr	Cosas del amor	Pop	90's	Duet|Female	Spanish
+Ana Torroja & Miguel Bose	Corazones	Pop	2010's|90's	Duet	Spanish
+Andrea Bocelli	Bésame mucho	Classical|Pop	2000's|90's	Male	Spanish
+Andrea Bocelli & Marta Sánchez	Vivo por ella	Pop	90's	Duet|Mixed	Spanish
+Andrés Calamaro	Flaca	Rock	90's	Male	Spanish
+Anette Moreno	Guardian de mi corazon	Christian|Pop|Rock	2000's	Female	Spanish
+Angela Carrasco	Ahora o nunca	Ballad|Pop	80's	Female	Spanish
+Angela Carrasco	Alguien como tu	Ballad|Pop	80's	Female	Spanish
+Angela Carrasco	Amigo mio cuenta conmigo	Ballad|Pop	80's	Female	Spanish
+Angela Carrasco	Atrapada	Ballad|Pop	80's	Female	Spanish
+Angela Carrasco	Callados	Ballad|Pop	70's	Female	Spanish
+Angela Carrasco	Caribe	Pop	80's	Female	Spanish
+Angela Carrasco	Cariño Mío	Ballad|Pop	2000's|70's	Female	Spanish
+Angela Carrasco	El tiempo nos pesa	Ballad|Pop	80's	Female	Spanish
+Angela Carrasco	Lo quiero a morir	Ballad|Pop	80's	Female	Spanish
+Angela Carrasco	Mi unico amigo	Ballad|Pop	80's	Female	Spanish
+Angela Carrasco	No me puedo quejar	Ballad|Pop	80's	Female	Spanish
+Angela Carrasco	Quererte a ti	Ballad|Pop	70's	Female	Spanish
+Angela Carrasco	Quiereme	Ballad|Pop	70's	Female	Spanish
+Angela Carrasco	Tu eres mi hombre y yo tu mujer	Ballad|Pop	80's	Female	Spanish
+Angela Carrasco	Tu tambien me haces falta	Ballad|Pop	80's	Female	Spanish
+Angela Carrasco	Un mundo ideal	Ballad|Pop	90's	Female	Spanish
+Animals, The	House of the Rising Sun, The	Rock	60's	Group	English
+Anitta	Girl From Rio	Pop|Soul	2020's	Female	English
+Anitta	Show Das Poderosas	Pop|Reggaeton|Soul	2010's	Female	Portuguese
+Anitta & Greeicy	Jacuzzi	Pop|Reggaeton|Soul	2010's	Duet|Female	Spanish
+Anitta & Simone, Simaria	⭐ Loka (E Toca Uma Moda Boa)	Pop|Reggaeton|Soul		Duet	Portuguese
+Anne Murray	I Just Fall In Love Again	Country|Pop	70's	Female	English
+Anne Murray	You Needed Me	Country|Pop	70's	Female	English
+Aretha Franklin	Respect	Soul	60's	Female	English
+Ariana Grande	Girl in the Bubble, The (from 'Wicked')	Pop|Soul	2020's	Female	English
+Ariana Grande & Cynthia Erivo	Defying Gravity (Shortened) from 'Wicked'	Pop|Soul	2020's	Duet	English
+Armando Manzanero	Adoro	Bolero|Pop	60's	Male	Spanish
+Armando Manzanero	Contigo aprendí	Bolero|Pop	60's|80's	Male	Spanish
+Armando Manzanero	Esta Tarde Vi Llover	Bolero	60's	Male	Spanish
+Armando Manzanero & Lisset	Nada Personal	Ballad|Bolero|Pop	60's|90's	Duet	Spanish
+Arturo Zambo Cavero	Contigo Peru	Peruvian Waltz		Male	Spanish
+Arturo Zambo Cavero	Cuando llora mi guitarra	Peruvian Waltz		Male	Spanish
+Arturo Zambo Cavero	Dijiste adiós	Peruvian Waltz		Male	Spanish
+Arturo Zambo Cavero	Rebeca	Peruvian Waltz		Male	Spanish
+Atomic Kitten	Tide Is High, The (Get the Feeling)	Pop	2000's	Group	English
+Axel	Amo	Pop	2000's	Male	Spanish
+Axel	Como Decirte que te Quiero	Pop	2000's	Male	Spanish
+Axel	Me Estoy Enamorando	Pop	2000's	Male	Spanish
+Axel	Me puedes de punta a punta	Pop	2000's	Male	Spanish
+Axel	Mi Querida Princesa	Pop	2000's	Male	Spanish
+Axel	Que Estás Buscando	Pop	2000's	Male	Spanish
+Axel	Te Equivocas	Pop	2000's	Male	Spanish
+Axel	Te Voy a Amar	Pop	2000's	Male	Spanish
+Axel	Tu Amor por Siempre	Pop	2000's	Male	Spanish
+Axel	Verte reír	Pop	2000's	Male	Spanish
+Bachman-Turner Overdrive	You Ain't Seen Nothing Yet	Rock	70's	Group	English
+Bacilos	Caraluna	Pop	2000's	Group|Male	Spanish
+Bad Bunny & Drake	Mía	Reggaeton	2010's	Duet|Male	Spanish
+Bad Company	Feel Like Makin' Love	Rock	70's	Group	English
+Bad Company	Rock Steady	Rock	70's	Group	English
+Bangles, The	Eternal Flame	Ballad|Pop|Rock	80's	Female|Group	English
+Beatles, The	All My Loving	Pop|Rock	60's	Group	English
+Beatles, The	All You Need Is Love	Pop|Rock	60's	Group	English
+Beatles, The	And I love her	Pop|Rock	60's	Group	English
+Beatles, The	Blackbird	Pop|Rock	60's	Group	English
+Beatles, The	Can't Buy Me Love	Pop|Rock	60's	Group	English
+Beatles, The	Come Together	Pop|Rock	60's	Group	English
+Beatles, The	Day in the Life, A	Pop|Rock	60's	Group	English
+Beatles, The	Do You Want To Know A Secret	Pop|Rock	60's	Group	English
+Beatles, The	Don't Let Me Down	Pop|Rock	60's	Group	English
+Beatles, The	Eight Days a Week	Pop|Rock	60's	Group	English
+Beatles, The	From Me to You	Pop|Rock	60's	Group	English
+Beatles, The	Get Back	Pop|Rock	60's	Group	English
+Beatles, The	Girl	Pop|Rock	60's	Group	English
+Beatles, The	Golden Slumbers Carry That Weight	Pop|Rock	60's	Group	English
+Beatles, The	Hard Day's Night, A	Pop|Rock	60's	Group	English
+Beatles, The	Hello Goodbye	Pop|Rock	60's	Group	English
+Beatles, The	Help!	Pop|Rock	60's	Group	English
+Beatles, The	Here Comes The Sun	Pop|Rock	60's	Group	English
+Beatles, The	Here, There and Everywhere	Pop|Rock	60's	Group	English
+Beatles, The	Hey Jude	Pop|Rock	60's	Group	English
+Beatles, The	I Feel Fine	Pop|Rock	60's	Group	English
+Beatles, The	I Saw Her Standing There	Pop|Rock	60's	Group	English
+Beatles, The	I Should Have Known Better	Pop|Rock	60's	Group	English
+Beatles, The	I Want to Hold Your Hand	Pop|Rock	60's	Group	English
+Beatles, The	I Will	Pop|Rock	60's	Group	English
+Beatles, The	I'll Follow the Sun	Pop|Rock	60's	Group	English
+Beatles, The	If I Fell	Pop|Rock	60's	Group	English
+Beatles, The	In My Life	Pop|Rock	60's	Group	English
+Beatles, The	Let It Be	Pop|Rock	70's	Group	English
+Beatles, The	Love Me Do	Pop|Rock	60's	Group	English
+Beatles, The	Lucy in the Sky with Diamonds	Pop|Rock	60's	Group	English
+Beatles, The	Michelle	Pop|Rock	60's	Group	English
+Beatles, The	Ob-La-Di, Ob-La-Da	Pop|Rock	60's	Group	English
+Beatles, The	Oh! Darling	Pop|Rock	60's	Group	English
+Beatles, The	Penny Lane	Pop|Rock	60's	Group	English
+Beatles, The	Revolution	Pop|Rock	60's	Group	English
+Beatles, The	She Loves You	Pop|Rock	60's	Group	English
+Beatles, The	Something	Pop|Rock	60's	Group	English
+Beatles, The	Strawberry Fields Forever	Pop|Rock	60's	Group	English
+Beatles, The	Ticket to Ride	Pop|Rock	60's	Group	English
+Beatles, The	Till There Was You	Pop|Rock	60's	Group	English
+Beatles, The	Twist and Shout	Pop|Rock	60's	Group	English
+Beatles, The	We Can Work It Out	Pop|Rock	60's	Group	English
+Beatles, The	When I'm Sixty-Four	Pop|Rock	60's	Group	English
+Beatles, The	While My Guitar Gently Weeps	Pop|Rock	60's	Group	English
+Beatles, The	With a Little Help from My Friends	Pop|Rock	60's	Group	English
+Beatles, The	Yellow Submarine	Pop|Rock	60's	Group	English
+Beatles, The	Yesterday	Pop|Rock	60's	Group	English
+Beatles, The	You've Got to Hide Your Love Away	Pop|Rock	60's	Group	English
+Becky G	Can't stop dancing	Pop	2010's	Female	English
+Becky G	Lovin' so hard	Pop	2010's	Female	English
+Becky G	Shower	Pop	2010's	Female	English
+Bee Gees	Don't forget to remember	Pop|Rock	60's	Group	English
+Bee Gees	How deep is your love	Disco|Pop|Rock	70's	Group	English
+Bee Gees	I started a joke	Pop|Rock	60's	Group	English
+Bee Gees	Massachusetts	Pop|Rock	60's	Group	English
+Bee Gees	To love somebody	Pop|Rock	60's	Group	English
+Bee Gees	Words	Pop|Rock	60's	Group	English
+Bette Midler	Rose, The	Ballad|Pop	70's	Female	English
+Bette Midler	Wind Beneath My Wings	Pop	80's	Female	English
+Beyoncé	Broken-Hearted Girl	Pop|Soul	2000's	Female	English
+Beyoncé	Listen (Lower Key)	Pop|Soul	2000's	Female	English
+Big Boy	Mis Ojos Lloran por Ti	Reggaeton	90's	Male	Spanish
+Bill Withers	Use Me	Soul	70's	Male	English
+Billy Joel	Honesty	Pop|Rock	70's	Male	English
+Billy Joel	Just the way you are	Pop|Rock	70's	Male	English
+Billy Joel	Piano Man	Pop|Rock	70's	Male	English
+Billy Joel	She's Always a Woman	Pop|Rock	70's	Male	English
+Billy Joel	She's Got A Way	Pop|Rock	70's	Male	English
+Billy Joel	Uptown Girl	Pop|Rock	80's	Male	English
+Billy Joel	Vienna	Pop|Rock	70's	Male	English
+Billy Joel	You may be right	Pop|Rock	80's	Male	English
+Black Crowes	Hard to Handle	Rock	90's	Group	English
+Black Sabbath	Iron Man	Metal|Rock	70's	Group	English
+Black Sabbath	Paranoid	Metal|Rock	70's	Group	English
+Black Sabbath	War Pigs	Metal|Rock	70's	Group	English
+Bob Dylan	Knockin' on Heaven's Door	Blues|Folk|Rock	70's	Male	English
+Bruce Springsteen	Born in the USA	Folk|Pop|Rock	80's	Male	English
+Bruce Springsteen	Born to run	Folk|Pop|Rock	70's	Male	English
+Bruce Springsteen	Dancing in the dark	Folk|Pop|Rock	80's	Male	English
+Bruce Springsteen	I'm on fire	Folk|Pop|Rock	80's	Male	English
+Bruce Springsteen	My Hometown	Folk|Pop|Rock	80's	Male	English
+Bruce Springsteen	Thunder Road	Folk|Pop|Rock	70's	Male	English
+Bruce Springsteen	Tougher than the rest	Folk|Pop|Rock	80's	Male	English
+Bruno Mars	Grenade	Pop|Rock|Soul	2010's	Male	English
+Bruno Mars	Marry you	Pop|Rock|Soul	2010's	Male	English
+Bruno Mars	lazy song, The	Pop|Rock|Soul	2010's	Male	English
+Buggles, The	Video killed the radio star	Rock	70's	Group	English
+CNCO	Mamita	Pop	2010's	Group|Male	Spanish
+CNCO	Mi Medicina	Pop	2010's	Group|Male	Spanish
+CNCO	Para Enamorarte	Pop	2010's	Group|Male	Spanish
+CNCO	Reggaetón lento	Pop	2010's	Group|Male	Spanish
+Camila	Abrázame	Ballad|Pop	2000's	Group|Male	Spanish
+Camila	Al Fin te Econtre	Ballad|Pop	2000's	Group|Male	Spanish
+Camila	Aléjate de mi	Ballad|Pop	2000's|2010's	Group|Male	Spanish
+Camila	Bésame	Ballad|Pop	2000's|2010's	Group|Male	Spanish
+Camila	Coleccionista de Canciones	Ballad|Pop	2010's	Group|Male	Spanish
+Camila	De Venus	Ballad|Pop	2000's	Group|Male	Spanish
+Camila	De qué me sirve la vida	Pop	2000's	Group|Male	Spanish
+Camila	Me Da Igual	Pop	2000's	Group|Male	Spanish
+Camila	Mientes	Pop	2000's	Group|Male	Spanish
+Camila	Perderte de Nuevo	Pop	2000's	Group|Male	Spanish
+Camila	Restos de Abril	Pop	2000's	Group|Male	Spanish
+Camila	Sin tu Amor	Ballad|Pop	2000's	Group|Male	Spanish
+Camila	Solo para ti	Ballad|Pop	2000's	Group|Male	Spanish
+Camila	Todo Cambio	Ballad|Pop	2000's	Group|Male	Spanish
+Camilo Sesto	Agua Pasada	Ballad|Pop	2000's|70's	Male	Spanish
+Camilo Sesto	Agua de dos ríos	Ballad|Pop	70's	Male	Spanish
+Camilo Sesto	Algo de mí	Ballad|Pop	2010's|70's	Male	Spanish
+Camilo Sesto	Alguien	Ballad|Pop	70's|90's	Male	Spanish
+Camilo Sesto	Amor Libre	Ballad|Pop	70's	Male	Spanish
+Camilo Sesto	Amor No Me Ignores	Ballad|Pop	70's	Male	Spanish
+Camilo Sesto	Amor mío, ¿qué me has hecho?	Ballad|Pop	2000's|70's	Male	Spanish
+Camilo Sesto	Amor... amar	Ballad|Pop	2000's|70's	Male	Spanish
+Camilo Sesto	Ayudadme	Ballad|Pop	70's	Male	Spanish
+Camilo Sesto	Callados	Ballad|Pop	70's	Male	Spanish
+Camilo Sesto	Con el Viento a tu Favor	Ballad	70's	Male	Spanish
+Camilo Sesto	Contra el Aire	Ballad	70's	Male	Spanish
+Camilo Sesto	Corazón encadenado	Ballad	70's	Male	Spanish
+Camilo Sesto	Dónde estés, con quién estés	Ballad	70's	Male	Spanish
+Camilo Sesto	En tus Manos	Ballad	70's	Male	Spanish
+Camilo Sesto	Entre ella y tú	Ballad	70's	Male	Spanish
+Camilo Sesto	Getsemaní	Ballad	70's	Male	Spanish
+Camilo Sesto	Jamas	Ballad	70's	Male	Spanish
+Camilo Sesto	Melina	Ballad	70's	Male	Spanish
+Camilo Sesto	Mientras mi Alma Sienta	Ballad	70's	Male	Spanish
+Camilo Sesto	Miénteme	Ballad	70's	Male	Spanish
+Camilo Sesto	Nada Ocurrirá	Ballad	70's	Male	Spanish
+Camilo Sesto	No Cierres tus Ojos	Ballad	70's	Male	Spanish
+Camilo Sesto	No Fue una Noche Cualquiera	Ballad	70's	Male	Spanish
+Camilo Sesto	Perdoname	Ballad	70's	Male	Spanish
+Camilo Sesto	Piel de angel	Ballad	70's	Male	Spanish
+Camilo Sesto	Puente sobre aguas turbulentas	Ballad	70's	Male	Spanish
+Camilo Sesto	Quererte a Ti	Ballad	70's	Male	Spanish
+Camilo Sesto	Quién	Ballad	70's	Male	Spanish
+Camilo Sesto	Quién lo diría	Ballad	70's	Male	Spanish
+Camilo Sesto	Quién será	Ballad	70's	Male	Spanish
+Camilo Sesto	Qué difícil es ser feliz	Ballad|Pop	70's	Male	Spanish
+Camilo Sesto	Qué más te da	Ballad	70's	Male	Spanish
+Camilo Sesto	Recuérdame	Ballad|Pop	70's	Male	Spanish
+Camilo Sesto	Si tu te Vas	Ballad	70's	Male	Spanish
+Camilo Sesto	Sin Remedio	Ballad	70's	Male	Spanish
+Camilo Sesto	Solo tu	Ballad	70's	Male	Spanish
+Camilo Sesto	Tal para cual	Ballad	70's	Male	Spanish
+Camilo Sesto	Tarde o Temprano	Ballad	70's	Male	Spanish
+Camilo Sesto	Te Amo	Ballad	70's	Male	Spanish
+Camilo Sesto	Terciopelo y Piedra	Ballad	70's	Male	Spanish
+Camilo Sesto	Todo por nada	Ballad	70's	Male	Spanish
+Camilo Sesto	Tres Veces No	Ballad	70's	Male	Spanish
+Camilo Sesto	Un Amor No Muere Asi Como Asi	Ballad|Pop	70's	Male	Spanish
+Camilo Sesto	Un Mundo Mejor	Ballad	70's	Male	Spanish
+Camilo Sesto	Ven o Voy	Ballad	70's	Male	Spanish
+Camilo Sesto	Vivir así es morir de amor	Ballad	70's	Male	Spanish
+Camilo Sesto	Vivir sin Ti	Ballad	70's	Male	Spanish
+Camilo Sesto	Vístete de Blanco	Ballad	70's	Male	Spanish
+Carlos Baute	Colgando en tus Manos	Pop	2000's	Male	Spanish
+Carlos Mata	Déjame intentar	Ballad	80's	Male	Spanish
+Carlos Mata	Dónde está ese amor	Ballad	80's	Male	Spanish
+Carlos Mata	Presiento	Ballad	80's	Male	Spanish
+Carlos Mata	Que Porque te Quiero	Ballad	80's	Male	Spanish
+Carlos Santana	Black magic woman	Pop|Rock	70's	Male	English
+Carlos Santana & Rob Thomas	Smooth	Pop|Rock	90's	Duet	English
+Carlos Santana ft. Michelle Branch	game of love, The	Pop|Rock	2000's	Duet	English
+Carlos Santana ft. Product	Maria Maria	Pop|Rock	90's	Duet	English
+Carlos Vives	Bailar Contigo	Cumbia|Pop|Tropical|Vallenato	2010's	Male	Spanish
+Carlos Vives	Beso (Fruta Fresca)	Cumbia|Pop|Tropical|Vallenato	2020's	Male	Spanish
+Carlos Vives	Carito	Cumbia|Pop|Tropical|Vallenato	2010's	Male	Spanish
+Carlos Vives	Cuando nos volvamos a encontrar	Cumbia|Pop|Tropical|Vallenato	2010's	Male	Spanish
+Carlos Vives	Cumbiana	Cumbia|Pop|Tropical|Vallenato	2020's	Male	Spanish
+Carlos Vives	Ella es mi fiesta	Cumbia|Pop|Tropical|Vallenato	2010's	Male	Spanish
+Carlos Vives	La gota fría	Cumbia|Pop|Tropical|Vallenato	2010's	Male	Spanish
+Carlos Vives	Volvi A Nacer	Cumbia|Pop|Tropical|Vallenato	2010's	Male	Spanish
+Carlos Vives & Shakira	La Bicicleta	Pop|Vallenato	2010's	Duet|Mixed	Spanish
+Carpenters, The	Close To You	Pop|Rock	70's	Group	English
+Carpenters, The	I Just Fall In Love Again	Pop|Rock	70's	Group	English
+Carpenters, The	I Won't Last A Day Without You	Pop|Rock	70's	Group	English
+Chayanne	Atado a tu amor	Pop	90's	Male	Spanish
+Chayanne	Cuidarte el Alma	Pop	2000's|90's	Male	Spanish
+Chayanne	Fuiste un Trozo de Hielo en la Escarcha	Pop	90's	Male	Spanish
+Chayanne	Lo Dejaria Todo	Pop	90's	Male	Spanish
+Chayanne	Me Enamore De Ti	Pop	90's	Male	Spanish
+Chayanne	Quisiera Ser	Pop	90's	Male	Spanish
+Chayanne	Tiempo de Vals	Pop	90's	Male	Spanish
+Chayanne	Un Siglo Sin Ti	Pop	90's	Male	Spanish
+Chayanne	Y Tú Te Vas	Pop	90's	Male	Spanish
+Chayanne	Yo Te Amo	Pop	90's	Male	Spanish
+Cher	Believe	Disco|Pop|Rock	90's	Female	English
+Cher	If I Could Turn Back Time	Disco|Pop|Rock	80's	Female	English
+Chino & Nacho	El Poeta	Pop	2010's	Duet|Male	Spanish
+Chino & Nacho	Mi niña bonita	Pop	2010's	Duet|Male	Spanish
+Chris Durán	Te perdí	Ballad|Christian	2000's	Male	Spanish
+Christian Castro	Nunca voy a olvidarte	Ballad|Pop	90's	Male	Spanish
+Christian Domínguez	Mi estrella	Cumbia	2010's	Male	Spanish
+Christian Meier	Carreteras mojadas	Pop|Rock	90's	Male	Spanish
+Christina Aguilera	Pero Me Acuerdo de ti	Ballad|Pop|Rock|Soul	2000's	Female	Spanish
+Christina Aguilera	Reflection	Pop|Rock|Soul	90's	Female	English
+Christina Perri	Jar Of Hearts	Pop	2010's	Female	English
+Coda	Aun te quiero	Ballad|Electronic|Rock	90's	Group|Male	Spanish
+Collective Soul	Shine	Pop|Rock	90's	Group	English
+Complices	Es por Ti	Pop|Rock	90's	Group	Spanish
+Conchita Velasco	La chica Ye Ye	Pop|Twist	2010's|60's	Female	Spanish
+Coti	Nada De Esto Fue Un Error	Pop|Rock	2000's	Male	Spanish
+Coti & Julieta Venegas & Paulina Rubio	Nada De Esto Fue Un Error	Pop|Rock	2000's	Duet	Spanish
+Cranberries, The	Zombie	Pop|Rock	90's	Group	English
+Creedence Clearwater Revival	Have you ever seen the rain	Rock	70's	Group	English
+Creedence Clearwater Revival	Long As I Can See The Light	Rock	70's	Group	English
+Creedence Clearwater Revival	Up Around The Bend	Rock	70's	Group	English
+Creedence Clearwater Revival	Who'll Stop The Rain	Rock	70's	Group	English
+Creedence Clearwater Revival	ookin' Out My Back Door	Rock	70's	Group	English
+Cristian Castro	Escondidos	Ballad|Pop	2000's|90's	Male	Spanish
+Cristian Castro	Lloran las Rosas	Ballad|Pop	90's	Male	Spanish
+Cristian Castro	Lo Mejor de mi	Ballad|Pop	90's	Male	Spanish
+Cristian Castro	Mañana, mañana	Ballad|Pop	90's	Male	Spanish
+Cristian Castro	Mi Vida sin tu Amor	Ballad|Pop	90's	Male	Spanish
+Cristian Castro	No puedo arrancarte de mí	Ballad|Pop	90's	Male	Spanish
+Cristian Castro	Nunca Voy a Olvidarte	Ballad|Pop	90's	Male	Spanish
+Cristian Castro	Por Amarte Asi	Ballad|Pop	90's	Male	Spanish
+Cristian Castro	Si Me Ves Llorar por Ti	Ballad|Pop	90's	Male	Spanish
+Cristian Castro	Si Tú Me Amaras	Ballad|Pop	90's	Male	Spanish
+Cristian Castro	Volver a amar	Ballad|Pop	90's	Male	Spanish
+Cristian Castro	Y mañana, mañana	Ballad|Pop	90's	Male	Spanish
+Cristian Castro	Yo Queria	Ballad|Pop	90's	Male	Spanish
+Crystal	No me pregunten por él	Ballad|Pop	80's	Female	Spanish
+Crystal	Suavemente	Ballad|Pop	80's	Female	Spanish
+Cure, The	Boys Don't Cry	Pop|Rock	70's	Group	English
+Cure, The	Close To Me	Pop|Rock	80's	Group	English
+Cure, The	Pictures Of You	Pop|Rock	80's	Group	English
+Céline Dion	All By Myself	Pop	90's	Female	English
+Céline Dion	Because You Loved Me	Pop	90's	Female	English
+Céline Dion	It's All Coming Back To Me Now	Pop	90's	Female	English
+Céline Dion	Power of Love, The	Pop	90's	Female	English
+César de Guatemala	Mi Plegaria	Ballad	70's	Male	Spanish
+DLG	La quiero a morir	Salsa	90's	Group|Male	Spanish
+Daddy Yankee	Dura	Reggaeton	2010's	Male	Spanish
+Daniel Lazo	Si no es contigo	Pop	2010's	Male	Spanish
+Daniela Romo	De mi enamorate	Ballad|Pop	80's	Female	Spanish
+Daniela Romo	Quiero amanecer con alguien	Ballad|Pop	80's	Female	Spanish
+Daniela Romo	Todo todo todo	Ballad|Pop	90's	Female	Spanish
+Daniela Romo	Yo No Te Pido La Luna	Ballad|Disco|Pop	80's	Female	Spanish
+Daniela Romo	Yo soy una mujer	Ballad|Pop	80's	Female	Spanish
+Danny Daniel	Decirte quiero	Ballad	70's	Male	Spanish
+Danny Daniel	Después de ti, ¿qué?	Ballad	70's	Male	Spanish
+Danny Daniel	El Amor el Amor	Ballad	70's	Male	Spanish
+Danny Daniel	Esa Eres tu	Ballad	70's	Male	Spanish
+Danny Daniel	Niña, no te pintes tanto	Ballad	70's	Male	Spanish
+Danny Daniel	Que Pena Me Da	Ballad	70's	Male	Spanish
+Danny Daniel	Querida mía	Ballad	70's	Male	Spanish
+Danny Daniel	Se que Me Engañaste un Día	Ballad	70's	Male	Spanish
+Danny Daniel	Te quiero cada día más	Ballad	70's	Male	Spanish
+Danny Daniel	Viento de Otoño	Ballad	70's	Male	Spanish
+David Bisbal	Dos Hombres y un Destino	Pop	2000's	Male	Spanish
+David Bowie	Ashes to ashes	Pop|Rock	80's	Male	English
+David Bowie	Heroes	Pop|Rock	70's	Male	English
+David Bowie	Let's dance	Pop|Rock	80's	Male	English
+David Bowie	Life on Mars	Pop|Rock	70's	Male	English
+David Bowie	Modern Love	Pop|Rock	80's	Male	English
+David Bowie	Rebel Rebel	Pop|Rock	70's	Male	English
+David Bowie	Space oddity	Pop|Rock	60's	Male	English
+David Bowie	Starman	Pop|Rock	70's	Male	English
+Debby Boone	You Light Up My Life	Ballad|Country|Pop	70's	Female	English
+Deep Purple	Black Night	Metal|Rock	70's	Group	English
+Deep Purple	Hush	Metal|Rock	60's	Group	English
+Deep Purple	Smoke On The Water	Metal|Rock	70's	Group	English
+Derek and the Dominos	Layla	Blues|Rock	70's	Group	English
+Diego Verdaguer	La Ladrona	Ballad	80's	Male	Spanish
+Diego Verdaguer	Pídeme	Ballad	80's	Male	Spanish
+Diego Verdaguer	Volveré	Ballad	80's	Male	Spanish
+Diego Verdaguer & Amanda Miguel	Volveré	Ballad|Pop	2000's|90's	Duet	Spanish
+Dionne Warwick	That's What Friends Are For	Pop|Rock|Soul	80's	Female	English
+Dionne Warwick	Walk On By	Pop|Rock|Soul	60's	Female	English
+Don McLean	American Pie	Folk|Pop|Rock	70's	Male	English
+Donald	Estoy hecho un demonio	Pop	70's	Male	Spanish
+Donald	Siempre fuimos compañeros	Pop	2000's|70's	Male	Spanish
+Donato & Stefano	Estoy Enamorado	Pop	90's	Duet|Male	Spanish
+Donna Summer	Bad girls	Disco|Pop|Soul	70's	Female	English
+Donna Summer	Could it be magic	Disco|Pop|Soul	70's	Female	English
+Donna Summer	Hot stuff	Disco|Pop|Soul	70's	Female	English
+Donna Summer	Last Dance	Disco|Pop|Soul	70's	Female	English
+Donna Summer	MacArthur Park	Disco|Pop|Soul	70's	Female	English
+Donna Summer	On the radio	Disco|Pop|Soul	70's	Female	English
+Donna Summer	She works hard for the money	Disco|Pop|Soul	80's	Female	English
+Doobie Brothers, The	Listen To The Music	Pop|Rock	70's	Group	English
+Doobie Brothers, The	Long Train Runnin'	Pop|Rock	70's	Group	English
+Doors	L.A. Woman	Pop|Rock	70's	Group	English
+Doors	Riders On The Storm	Pop|Rock	70's	Group	English
+Doors	Roadhouse Blues	Pop|Rock	70's	Group	English
+Duncan Dhu	En Algun Lugar	Pop|Rock	80's	Group	Spanish
+Duncan Dhu	Un Minuto De Ti, A	Pop|Rock	90's	Group|Male	Spanish
+Dyango	Adiós amor, adiós	Ballad	2020's|80's	Male	Spanish
+Dyango	Corazón mágico	Ballad	80's	Male	Spanish
+Dyango	Cuando Quieras Dónde Quieras	Ballad	80's	Male	Spanish
+Dyango	Nostalgias	Ballad	80's	Male	Spanish
+Dyango	Por Volverte a Ver	Ballad	80's	Male	Spanish
+Dyango	Querer y Perder	Ballad	80's	Male	Spanish
+Dyango	dónde vas amor, A	Ballad	80's	Male	Spanish
+Eagles, The	Desperado	Pop|Rock	70's	Group	English
+Eagles, The	Hotel California	Pop|Rock	70's	Group	English
+Eagles, The	I can't tell you why	Pop|Rock	70's	Group	English
+Eagles, The	Love will keep us alive	Pop|Rock	90's	Group	English
+Eagles, The	New kid in town	Pop|Rock	70's	Group	English
+Eagles, The	Peaceful Easy Feeling	Pop|Rock	70's	Group	English
+Eagles, The	Take it easy	Pop|Rock	70's	Group	English
+Eagles, The	Tequila Sunrise	Pop|Rock	70's	Group	English
+Eagles, The	girl from yesterday, The	Pop|Rock	90's	Group	English
+Eartha Kitt	Santa Baby	Jazz	50's	Female	English
+Eddy Lover	Amor del Bueno	Reggaeton	2000's|2010's	Male	Spanish
+Ednita Nazario	Lo que son las cosas	Ballad|Pop	2000's|90's	Female	Spanish
+El Chili	Loco por Volverte a Ver	Cumbia	2000's	Male	Spanish
+El General	Rica y apretadita	Reggae	90's	Male	Spanish
+Ella May Saison	Till My Heartaches End	Ballad|Pop|Soul	2000's	Female	English
+Elton John	Bennie And The Jets	Pop|Rock	70's	Male	English
+Elton John	Can you feel the love tonight	Pop|Rock	90's	Male	English
+Elton John	Daniel	Pop|Rock	70's	Male	English
+Elton John	Goodbye yellow brick road	Pop|Rock	70's	Male	English
+Elton John	I guess that's why they call it the Blues	Pop|Rock	80's	Male	English
+Elton John	Sacrifice	Pop|Rock	80's	Male	English
+Elton John	Sorry seems to be the hardest word	Pop|Rock	70's	Male	English
+Elton John	Tiny Dancer	Pop|Rock	70's	Male	English
+Elton John	Your Song	Pop|Rock	70's	Male	English
+Elvis Presley	Can't help falling in love	Country|Pop|Rock	60's	Male	English
+Emmanuel	Ahora Me Voy	Ballad|Pop	80's	Male	Spanish
+Emmanuel	Amiga mía	Ballad|Pop	80's	Male	Spanish
+Emmanuel	El día que puedas	Ballad|Pop	80's	Male	Spanish
+Emmanuel	Esta Triste Guitarra	Ballad|Pop	80's	Male	Spanish
+Emmanuel	Este Terco Corazón	Ballad|Pop	80's	Male	Spanish
+Emmanuel	Insoportablemente Bella	Ballad|Pop	80's	Male	Spanish
+Emmanuel	Pobre Diablo	Ballad|Pop	80's	Male	Spanish
+Emmanuel	Quiero Dormir Cansado	Ballad|Pop	80's	Male	Spanish
+Emmanuel	Tengo Mucho que Aprender de Ti	Ballad|Pop	80's	Male	Spanish
+Emmanuel	Todo se Derrumbo Dentro de mi	Ballad	80's	Male	Spanish
+Emmanuel	Tú y yo	Ballad|Pop	80's	Male	Spanish
+Enrique Iglesias	Bailando	Pop	2010's	Male	Spanish
+Enrique Iglesias	Hero	Pop	2000's	Male	English
+Enrique Iglesias	Nunca te olvidaré	Pop	2010's	Male	Spanish
+Enrique Iglesias & Marco Antonio Solís	El Perdedor	Pop	2010's	Duet|Male	Spanish
+Enrique Iglesias ft. Ludacris	Tonight (I'm Loving You)	Pop	2010's	Duet	English
+Eric Clapton	Wonderful Tonight	Blues|Rock	70's	Male	English
+Etta James	I'd Rather Go Blind	Blues|Jazz|Soul	60's	Female	English
+Eva Ayllon	Esta es mi tierra	Peruvian Waltz		Female	Spanish
+Eva Ayllon	Jarana criolla	Peruvian Waltz		Female	Spanish
+Eva Ayllon	Mal paso	Peruvian Waltz		Female	Spanish
+Eva Ayllon	Mi propiedad privada	Peruvian Waltz		Female	Spanish
+Eva Ayllon	Regresa	Peruvian Waltz		Female	Spanish
+Eva Ayllon	Ritmo, sabor y color	Peruvian Waltz		Female	Spanish
+Evanescence	My Immortal	Metal|Rock	2000's	Female|Group	English
+Faith Hill	There You'll Be	Ballad|Country|Pop	2000's	Female	English
+Fernando de Madariaga	Adiós, hoy sobran las palabras	Ballad	70's	Male	Spanish
+Fernando de Madariaga	Un Amor sin Mañana	Ballad	70's	Male	Spanish
+Fernando de Madariaga	Una Sonrisa, una Lágrima	Ballad	70's	Male	Spanish
+Fito Páez	Dar Es Dar	Pop|Rock	2000's|90's	Male	Spanish
+Fito Páez	El amor después del amor	Rock	90's	Male	Spanish
+Flavio César	En Cada Canción	Ballad|Pop	90's	Male	Spanish
+Fleetwood Mac	Dreams	Pop|Rock	70's	Group	English
+Fleetwood Mac	Go your own way	Pop|Rock	70's	Group	English
+Fleetwood Mac	Gold dust woman	Pop|Rock	70's	Group	English
+Fleetwood Mac	Landslide	Pop|Rock	70's	Group	English
+Fleetwood Mac	Rhiannon	Pop|Rock	70's	Group	English
+Fleetwood Mac	Silver Springs	Pop|Rock	70's	Group	English
+Fleetwood Mac	You make loving fun	Pop|Rock	70's	Group	English
+Fleetwood Mac	chain, The	Pop|Rock	70's	Group	English
+Foreigner	I Want To Know What Love Is	Pop|Rock	80's	Group	English
+Frances Ruffelle	On My Own (de Los Miserables)		80's	Female	English
+Franco De Vita	No Basta	Ballad|Pop	80's	Male	Spanish
+Franco De Vita	Solo importas tú	Ballad|Pop	80's	Male	Spanish
+Franco De Vita	Te Veo Venir Soledad	Ballad|Pop	80's	Male	Spanish
+Franco De Vita	Un Buen Perdedor	Ballad|Pop	80's|90's	Male	Spanish
+Franco De Vita & Alejandra Guzmán	Tan Solo Tú	Ballad|Pop	2010's	Duet	Spanish
+Frank Sinatra	My Way	Jazz|Pop	60's	Male	English
+Frank Sinatra	New York, New York	Jazz|Pop	80's	Male	English
+Free	All Right Now	Rock	70's	Group	English
+Fugees ft. Lauryn Hill	Killing Me Softly With His Song		90's	Duet	English
+Fórmula V	Cuentame	Pop|Rock	60's	Group|Male	Spanish
+Fórmula V	Eva Maria	Pop	70's|80's	Group|Male	Spanish
+G.I.T.	Siempre Fuiste mi Amor	Rock	2000's|80's	Group|Male	Spanish
+George Harrison	My Sweet Lord	Folk|Rock	70's	Male	English
+George Thorogood	Bad To The Bone	Blues|Rock	80's	Male	English
+Geraldo	La Tristeza de mi Mujer	Ballad	70's	Male	Spanish
+Gianluca Grignani	Mi Historia Entre tus Dedos	Pop|Rock	90's	Male	Spanish
+Gianmarco	Cuéntame	Pop	2000's|2010's	Male	Spanish
+Gianmarco	Hasta que Vuelvas Conmigo	Pop	2000's	Male	Spanish
+Gianmarco	No puedo amarte	Pop	2000's	Male	Spanish
+Gianmarco	Resucitar	Pop	2000's	Male	Spanish
+Gianmarco	Si me tenías	Pop	2000's	Male	Spanish
+Gianmarco	Tengo Ganas	Pop	2000's	Male	Spanish
+Gianmarco	Una Canción de Amor	Pop	2000's	Male	Spanish
+Gianmarco	Vida de mi Vida	Pop	2000's	Male	Spanish
+Gianni Bella	Si de amor ya no se muere	Pop	70's	Male	Spanish
+Gloria Estefan	Anything for you	Pop|Rock	80's	Female	English
+Gloria Estefan	Como duele perderte	Ballad|Bolero|Pop|Rock	2000's	Female	Spanish
+Gloria Estefan	Con los años que me quedan	Ballad|Bolero|Pop	90's	Female	Spanish
+Gloria Estefan	Conga	Pop|Rock	80's	Female	English
+Gloria Estefan	Hoy	Bolero|Folk|Pop	2000's	Female	Spanish
+Gloria Estefan	No te olvidare	Ballad|Bolero|Pop|Rock	90's	Female	Spanish
+Gloria Estefan	Si voy a Perderte	Ballad|Bolero|Pop|Rock	80's|90's	Female	Spanish
+Gloria Estefan	Words get in the way	Pop|Rock	80's	Female	English
+Gonzalo	Quién piensa en ti	Ballad|Pop	80's	Male	Spanish
+Gordon Lightfoot	If you could read my mind	Country|Folk|Rock	70's	Male	English
+Gordon Lightfoot	Sundown	Country|Folk|Rock	70's	Male	English
+Grupo Mayonesa	Mayonesa	Cumbia|Pop	2000's	Male	Spanish
+Guillermo Dávila	Barco a la Deriva	Ballad|Pop	80's	Male	Spanish
+Guillermo Dávila	Cada Cosa en Su Lugar	Ballad|Pop	80's	Male	Spanish
+Guillermo Dávila	Cantare Para Ti	Ballad|Pop	80's	Male	Spanish
+Guillermo Dávila	Cuando se Acaba el Amor	Ballad|Pop	80's	Male	Spanish
+Guillermo Dávila	Déjate Amar	Ballad|Pop		Male	Spanish
+Guillermo Dávila	Llevo Perfume a Ti	Ballad|Pop	80's	Male	Spanish
+Guillermo Dávila	Sin Pensarlo Dos Veces	Ballad|Pop	80's	Male	Spanish
+Guillermo Dávila	Solo Pienso en Ti	Ballad|Pop	80's	Male	Spanish
+Guillermo Dávila	Tesoro Mío	Ballad|Pop	80's	Male	Spanish
+Guillermo Dávila	Ves Como Es	Ballad|Pop	80's	Male	Spanish
+Guns N' Roses	Knockin' on Heaven's Door	Metal|Rock	90's	Group	English
+Guns N' Roses	November Rain	Metal|Rock	90's	Group	English
+Guns N' Roses	Patience	Metal|Rock	80's	Group	English
+Guns N' Roses	Sweet Child O' Mine	Metal|Rock	80's	Group	English
+Guns N' Roses	Welcome to the Jungle	Metal|Rock	80's	Group	English
+Ha Ash	Hoy te dejo en libertad	Ballad|Pop|Rock	2010's	Duet|Group	Spanish
+Ha Ash	Que hago yo	Ballad|Pop|Rock	2000's	Duet|Group	Spanish
+Ha Ash	Te Dejo En libertad	Ballad|Pop	2010's	Duet	Spanish
+Harry Chapin	Cat's In The Cradle	Folk	70's	Male	English
+Heart	Barracuda	Pop|Rock	70's	Group	English
+Heleno	La chica de la boutique	Ballad	70's|90's	Male	Spanish
+Heleno	No son palabritas	Ballad	70's	Male	Spanish
+High School Musical	Breaking Free	Pop	2000's	Duet	English
+Hollies, The	Air That I Breathe	Pop|Rock	70's	Group	English
+Hollies, The	Long Cool Woman in a Black Dress	Pop|Rock	70's	Group	English
+Hombres G	Te Quiero	Pop|Rock	80's	Group|Male	Spanish
+Hombres G	Temblando	Pop|Rock	80's	Group|Male	Spanish
+Homero	Tu propia telaraña	Ballad	70's	Male	Spanish
+Homero	Un pañuelo y una flor	Ballad	70's	Male	Spanish
+Hoobastank	Reason, The	Pop|Rock	2000's	Group	English
+Hugh Jackman & Ziv Zaifman & Michelle Williams	Million Dreams from ‘The Greatest Showman’, A		2010's	Duet	English
+Il Divo	Regresa a mí	Classical	2000's	Group|Male	Spanish
+Isabel Pantoja	Asi fue	Ballad|Copla	80's	Female	Spanish
+Isabel Pantoja	Era mi vida el	Ballad|Copla	80's	Female	Spanish
+Isabel Pantoja	Hoy Quiero Confesarme	Ballad|Copla	80's	Female	Spanish
+James Brown	I Feel Good	Blues|Soul	60's	Male	English
+James Taylor	Don't Let Me Be Lonely Tonight	Country|Pop|Rock	70's	Male	English
+James Taylor	Fire and Rain	Country|Pop|Rock	70's	Male	English
+Janis Joplin	Cry, Cry, Baby	Blues|Rock|Soul	70's	Female	English
+Janis Joplin	Me And Bobby McGee	Blues|Rock|Soul	70's	Female	English
+Javier Solís	El Peor de mis Fracasos	Bolero|Ranchera	60's	Male	Spanish
+Javier Solís	Mi Eterno Amor Secreto	Ballad|Bolero	60's	Male	Spanish
+Javier Solís	Más que tu Amigo	Ballad	90's	Male	Spanish
+Javier Solís	Si No te Hubieras Ido	Bolero|Ranchera	60's	Male	Spanish
+Javier Solís	Sigue sin mi	Bolero|Ranchera	60's	Male	Spanish
+Jeanette	Daria cualquier cosa	Ballad|Pop	90's	Female	Spanish
+Jeanette	El muchacho de los ojos tristes	Ballad|Pop	80's	Female	Spanish
+Jeanette	Porque te vas	Ballad|Pop	70's	Female	Spanish
+Jeanette	Soy Rebelde	Ballad|Pop	70's	Female	Spanish
+Jeanette	Toda la noche oliendo a ti	Ballad|Pop	80's	Female	Spanish
+Jennifer Peña	El Dolor De Tu Presencia	Ballad|Pop	2000's	Female	Spanish
+Jerry Rivera	Amores como el nuestro	Salsa	90's	Male	Spanish
+Jesse & Joy	Corre	Ballad|Pop	2010's	Duet	Spanish
+Jesse & Joy	Donde esta el Amor	Pop	2010's	Duet	Spanish
+Jesse & Joy	La De La Mala Suerte	Ballad|Pop	2010's	Duet	Spanish
+Jesse & Joy	Llegaste tú	Pop	2000's	Duet	Spanish
+Jethro Tull	Aqualung	Rock	70's	Group	English
+Jim Croce	Bad Bad Leroy Brown	Folk	70's	Male	English
+Jim Croce	Time In A Bottle	Folk	70's	Male	English
+Jim Croce	You Don't Mess Around With Jim	Folk	70's	Male	English
+Joan Jett & The Blackhearts	Crimson And Clover	Rock	80's	Female	English
+Joe Cocker	With a Little Help from My Friends	Pop|Rock	60's	Male	English
+Joe Cocker	You Are So Beautiful	Pop|Rock	70's	Male	English
+John Fogerty	Jambalaya (On the Bayou)	Blues|Folk|Rock	70's	Male	English
+John Lennon	Beautiful Boy (Darling Boy)	Pop|Rock	80's	Male	English
+John Lennon	Imagine	Pop|Rock	70's	Male	English
+John Lennon	Instant Karma! (We All Shine On)	Pop|Rock	70's	Male	English
+John Lennon	Jealous Guy	Pop|Rock	70's	Male	English
+John Lennon	Mother	Pop|Rock	70's	Male	English
+John Lennon	Stand by me	Pop|Rock	70's	Male	English
+John Lennon	Woman	Pop|Rock	80's	Male	English
+Jose Feliciano	Ahora si Quiero Amar	Ballad|Bolero|Pop	70's|80's	Male	Spanish
+Jose Feliciano	Cuando pienso en ti	Ballad|Bolero	70's	Male	Spanish
+Jose Feliciano	Hay cariño	Bolero	70's	Male	Spanish
+Jose Feliciano	La Cárcel de Sing Sing	Ballad|Bolero	70's	Male	Spanish
+Jose Feliciano	La copa rota	Ballad|Bolero	70's	Male	Spanish
+Jose Feliciano	Love comes from the most unexpected places	Pop		Male	English
+Jose Feliciano	Me has echado al olvido	Ballad|Bolero	70's	Male	Spanish
+Jose Feliciano	Mi Eterno Amor	Ballad|Bolero	70's	Male	Spanish
+Jose Feliciano	Once there was a love	Pop	70's	Male	English
+Jose Feliciano	Por Ella	Ballad|Bolero	70's	Male	Spanish
+Jose Feliciano	Qué voy a hacer sin ti	Ballad|Bolero	70's	Male	Spanish
+José José	40 y 20	Ballad|Pop	2010's|70's	Male	Spanish
+José José	Almohada	Ballad	70's	Male	Spanish
+José José	Amnesia	Ballad	70's	Male	Spanish
+José José	Amor Amor	Ballad|Pop	70's|90's	Male	Spanish
+José José	Aun Estoy de Pie	Ballad|Pop	70's|90's	Male	Spanish
+José José	Buenos días, amor	Ballad|Pop	2010's|70's	Male	Spanish
+José José	Como Le Haces	Ballad	70's	Male	Spanish
+José José	Como tu	Ballad	70's	Male	Spanish
+José José	Cuando Vayas Conmigo	Ballad	70's	Male	Spanish
+José José	Desesperado	Ballad	70's	Male	Spanish
+José José	El Amor Acaba	Ballad	70's	Male	Spanish
+José José	El triste	Ballad|Pop	70's	Male	Spanish
+José José	Entre ella y tú	Ballad	70's	Male	Spanish
+José José	Esa, A	Ballad|Pop	70's	Male	Spanish
+José José	Eso no más	Ballad	70's	Male	Spanish
+José José	Gavilán o paloma	Ballad	70's	Male	Spanish
+José José	He renunciado a ti	Ballad	70's	Male	Spanish
+José José	Insaciable Amante	Ballad	70's	Male	Spanish
+José José	La Nave del Olvidó	Ballad	70's	Male	Spanish
+José José	Llora Corazón	Ballad	70's	Male	Spanish
+José José	Lo Dudo	Ballad	70's	Male	Spanish
+José José	Lo pasado pasado	Ballad	70's	Male	Spanish
+José José	Lo que No Fue No Será	Ballad	70's	Male	Spanish
+José José	Lo que Quedo de mi	Ballad	70's	Male	Spanish
+José José	Lo que un día fue no será	Ballad	70's	Male	Spanish
+José José	Lágrimas	Ballad	70's	Male	Spanish
+José José	Mañana si	Ballad	70's	Male	Spanish
+José José	Me Basta	Ballad	70's	Male	Spanish
+José José	Me Olvide de Olvidar	Ballad	70's	Male	Spanish
+José José	Me vas a echar de menos	Ballad	70's	Male	Spanish
+José José	Mi Vida	Ballad	70's	Male	Spanish
+José José	Mi niña	Ballad	70's	Male	Spanish
+José José	Mientras Llueve	Ballad	70's	Male	Spanish
+José José	Mujeriego	Ballad	70's	Male	Spanish
+José José	No Me Digas que te Vas	Ballad	70's	Male	Spanish
+José José	No Valio la Pena	Ballad	70's	Male	Spanish
+José José	O tú o yo	Ballad	70's	Male	Spanish
+José José	Payaso	Ballad	70's	Male	Spanish
+José José	Pero Me Hiciste Tuyo	Ballad	70's	Male	Spanish
+José José	Piel de azúcar	Ballad	70's	Male	Spanish
+José José	Preso	Ballad	70's	Male	Spanish
+José José	Quiero Morir en tu Piel	Ballad	70's	Male	Spanish
+José José	Quiero Perderme Contigo	Ballad	70's	Male	Spanish
+José José	Salúdamela mucho	Ballad	70's	Male	Spanish
+José José	Será	Ballad	70's	Male	Spanish
+José José	Seré	Ballad	70's	Male	Spanish
+José José	Si me dejas ahora	Ballad	70's	Male	Spanish
+José José	Solo yo seguiré siendo tuyo	Ballad	70's	Male	Spanish
+José José	Soy Asi	Ballad	70's	Male	Spanish
+José José	Te Quiero Tal Como Eres	Ballad	70's	Male	Spanish
+José José	Te Voy a Estrenar	Ballad	70's	Male	Spanish
+José José	Te quiero así	Ballad	70's	Male	Spanish
+José José	Tu Primera Vez	Ballad	70's	Male	Spanish
+José José	Tus Ojos	Ballad	70's	Male	Spanish
+José José	Tú me estás volviendo loco	Ballad	70's	Male	Spanish
+José José	Una Noche de Amor	Ballad	70's	Male	Spanish
+José José	Vamos a darnos tiempo	Ballad	70's	Male	Spanish
+José José	Volcán	Ballad	70's	Male	Spanish
+José José	Voy a Apagar la Luz	Ballad	70's	Male	Spanish
+José José	Voy a Llenarte Toda	Ballad	70's	Male	Spanish
+José José	Y que	Ballad	70's	Male	Spanish
+José José & José Feliciano	Por Ella	Ballad|Pop	2000's|80's	Duet	Spanish
+José Luis Perales	Dime	Ballad|Jazz	80's	Male	Spanish
+José Luis Perales	Qué pasará mañana	Ballad	80's	Male	Spanish
+José Luis Perales	Y cómo es él	Ballad	80's	Male	Spanish
+José Luis Perales	Y tú te vas	Ballad	80's	Male	Spanish
+José Luis Rodriguez	Amante eterna, amante mia	Ballad|Pop	2000's|80's	Male	Spanish
+José Luis Rodriguez	Culpable Soy yo	Ballad	80's	Male	Spanish
+José Luis Rodriguez	Dueño de Nada	Ballad	80's	Male	Spanish
+José Luis Rodriguez	Dulcemente Amargo	Ballad	80's	Male	Spanish
+José Luis Rodriguez	Este Amor Es un Sueño de Locos	Ballad	80's	Male	Spanish
+José Luis Rodriguez	Me vas a echar de menos	Ballad	80's	Male	Spanish
+José Luis Rodriguez	Pareces Feliz	Ballad	80's	Male	Spanish
+José Luis Rodriguez	Silencio	Ballad	80's	Male	Spanish
+José Luis Rodriguez	Te Propongo	Ballad	80's	Male	Spanish
+José Luis Rodriguez	Voy a Conquistarte	Ballad	80's	Male	Spanish
+José Luis Rodriguez	Voy a Perder la Cabeza	Ballad	80's	Male	Spanish
+Juan Bau	Acaríciame	Ballad	2010's|70's	Male	Spanish
+Juan Bau	Dama del amanecer	Ballad	70's	Male	Spanish
+Juan Bau	Devuélveme el amor	Ballad	70's	Male	Spanish
+Juan Bau	Penas	Ballad	70's	Male	Spanish
+Juan Camacho	Ti Mujer, A	Ballad	70's	Male	Spanish
+Juan Gabriel	Abrazame muy fuerte	Ballad|Pop|Ranchera	80's	Male	Spanish
+Juan Gabriel	Amor eterno	Ballad|Ranchera	80's	Male	Spanish
+Juan Gabriel	No tengo dinero	Ballad|Ranchera	80's	Male	Spanish
+Juan Gabriel	Por que me haces llorar	Ballad|Ranchera	80's	Male	Spanish
+Juan Gabriel	Querida	Ballad|Ranchera	80's	Male	Spanish
+Juan Gabriel	Se me olvido otra vez	Ballad|Ranchera	80's	Male	Spanish
+Juan Gabriel	Siempre estoy pensando en ti	Ballad|Ranchera	80's	Male	Spanish
+Juan Gabriel	Te Voy a Olvidar	Ballad|Ranchera	80's	Male	Spanish
+Juan Gabriel	Yo No Naci Para Amar	Ballad|Ranchera	80's	Male	Spanish
+Juanes	Fotografía	Pop|Rock	2000's	Male	Spanish
+Julio Iglesias	Cuando Vuelva a tu Lado	Ballad	70's	Male	Spanish
+Julio Iglesias	De Niña a Mujer	Ballad	70's	Male	Spanish
+Julio Iglesias	El Amor	Ballad	70's	Male	Spanish
+Julio Iglesias	Gwendolyne	Ballad	70's	Male	Spanish
+Julio Iglesias	Hey	Ballad	70's	Male	Spanish
+Julio Iglesias	La Vida Sigue Igual	Ballad	70's	Male	Spanish
+Julio Iglesias	O Me Quieres o Me Dejas	Ballad	70's	Male	Spanish
+Julio Iglesias	Por el Amor de una Mujer	Ballad	70's	Male	Spanish
+Julio Iglesias	Quijote	Ballad	70's	Male	Spanish
+Junior	Insoportablemente Bella	Ballad	70's	Male	Spanish
+Junior	Perdóname	Ballad	70's	Male	Spanish
+Junior	Procuro Olvidarte	Ballad	70's	Male	Spanish
+Junior	Si no te amase	Ballad	70's	Male	Spanish
+Justin Bieber	That should be me	Pop|Soul	2010's	Male	English
+KISS	Detroit Rock City	Metal|Pop|Rock	70's	Group	English
+KISS	Hard Luck Woman	Metal|Pop|Rock	70's	Group	English
+KISS	Love Gun	Metal|Pop|Rock	70's	Group	English
+KISS	Rock and Roll All Nite	Metal|Pop|Rock	70's	Group	English
+Kali Uchis	All I Can Say	Pop|Soul	2020's	Female	English
+Kali Uchis	Loner	Pop|Soul	2010's	Female	English
+Kali Uchis	Melting	Pop|Soul	2010's	Female	English
+Kali Uchis	Moonlight	Pop|Soul	2020's	Female	English
+Kali Uchis & Tyler, The Creator	See You Again	Pop|Soul	2010's	Duet	English
+Kali Uchis ft. Daniel Caesar	Get You	Pop|Soul	2010's	Duet	English
+Kansas	Dust in the Wind	Rock	70's	Group	English
+Karina	Bandido	Ballad|Pop	80's	Female	Spanish
+Karina	Bombon asesino	Cumbia|Pop	2000's	Female	Spanish
+Karina	Diganle	Ballad|Pop	2010's|80's	Female	Spanish
+Karina	Haste el fin del mundo	Ballad|Pop	80's	Female	Spanish
+Karol G	Si antes te hubiera conocido	Merengue|Reggaeton	2020's	Female	Spanish
+La Joven Guardia	El extraño de pelo largo	Pop|Rock	2000's|60's	Group|Male	Spanish
+Lady Gaga	Always Remember Us This Way	Pop	2010's	Female	English
+Lady Gaga	I'll Never Love Again	Ballad|Pop	2010's	Female	English
+Lady Gaga & Bradley Cooper	Shallow	Pop	2010's	Duet	English
+Las Ketchup	Asereje	Pop	2000's	Female|Group	Spanish
+Laura Flores & Sergio Fachelli	Lo Que Me Tiene Aquí	Ballad|Pop	80's	Duet	Spanish
+Laura Pausini	It's not goodbye	Ballad|Pop	2000's	Female	English
+Laura Pausini	La solitudine	Ballad|Pop	90's	Female	Italian
+Laura Pausini	Strani amori	Ballad|Pop	90's	Female	Italian
+Lauryn Hill	Killing Me Softly With His Song	Ballad|Pop|R&B|Soul	90's	Female	English
+Led Zeppelin	Black dog	Metal|Rock	70's	Group	English
+Led Zeppelin	Immigrant Song	Metal|Rock	70's	Group	English
+Led Zeppelin	Kashmir	Metal|Rock	70's	Group	English
+Led Zeppelin	Rock and Roll	Metal|Rock	70's	Group	English
+Led Zeppelin	Since I've been loving you	Metal|Rock	70's	Group	English
+Led Zeppelin	Stairway to heaven	Metal|Rock	70's	Group	English
+Led Zeppelin	When the levee breaks	Metal|Rock	70's	Group	English
+Led Zeppelin	Whole lotta love	Metal|Rock	60's	Group	English
+Leo Dan	Siempre Estoy Pensando en Ella	Ballad	60's	Male	Spanish
+Leo Dan	Una Vieja Canción de Amor	Ballad	60's	Male	Spanish
+Leonardo Favio	Din Dong Din Dong	Ballad	60's	Male	Spanish
+Leonardo Favio	Ding Dong (Ding Dong Estas cosas del amor)	Ballad|Pop	2000's|70's	Male	Spanish
+Leonardo Favio	Ella Ya Me Olvidó	Ballad	60's	Male	Spanish
+Leonardo Favio	Fuiste Mía un Verano	Ballad	60's	Male	Spanish
+Leonardo Favio	La Foto de Carnet	Ballad	60's	Male	Spanish
+Leonardo Favio	La Rubia del Cabaret	Ballad	60's	Male	Spanish
+Leonardo Favio	Mi amante niña, mi compañera	Ballad	60's	Male	Spanish
+Leonardo Favio	Ni el Clavel Ni la Rosa	Ballad	60's	Male	Spanish
+Leonardo Favio	Quiero Aprender de Memoria	Ballad	60's	Male	Spanish
+Living Colour	Cult Of Personality	Pop|Rock	80's	Group	English
+Lorenzo Antonio	Doce Rosas	Ballad|Pop	80's	Male	Spanish
+Lorenzo Santamaría	Para que No Me Olvides	Ballad	70's	Male	Spanish
+Los Diablos	Un rayo de sol	Pop	2000's|70's	Group|Male	Spanish
+Los Enanitos Verdes	El Che y los Rolling Stones	Rock	80's	Group|Male	Spanish
+Los Enanitos Verdes	El extraño de pelo largo	Pop|Rock	80's	Group|Male	Spanish
+Los Enanitos Verdes	La Muralla Verde	Rock	80's	Group|Male	Spanish
+Los Enanitos Verdes	Lamento Boliviano	Rock	80's	Group|Male	Spanish
+Los Enanitos Verdes	Te Vi en un Tren	Rock	80's	Group|Male	Spanish
+Los Morochucos	El Plebeyo	Peruvian Waltz	2000's	Group	
+Los Morochucos	Hermelinda	Peruvian Waltz	2010's	Group	
+Los Náufragos	Despeinada	Pop	60's	Group|Male	Spanish
+Los Panchos	Ansiedad	Bolero	50's	Group|Male	Spanish
+Los Panchos	Historia de un Amor	Bolero	50's	Group|Male	Spanish
+Los Panchos	Rayito de Luna	Bolero	50's	Group|Male	Spanish
+Los Panchos	Sabor a mi	Bolero	50's	Group|Male	Spanish
+Los Panchos	Sin Ti	Bolero	50's	Group|Male	Spanish
+Los Panchos	Triunfamos	Bolero	50's	Group|Male	Spanish
+Los Prisioneros	El Baile de los que Sobran	Rock	80's	Group|Male	Spanish
+Los Prisioneros	Sexo	Rock	80's	Group|Male	Spanish
+Los abuelos de la nada	Mil horas	Rock	80's	Group|Male	Spanish
+Los del Río	Macarena	Flamenco|Pop	90's	Group|Male	Spanish
+Lou Reed	Walk on the Wild Side	Pop|Rock	70's	Male	English
+Low Rider	War	Soul	70's	Group	English
+Lucero	Electricidad	Pop|Rock	90's	Female|Group	Spanish
+Lucero	Sobrevivire	Ballad|Pop|Rock	2000's|90's	Female|Group	Spanish
+Lucero	Tacticas de guerra	Ballad|Pop|Rock	90's	Female|Group	Spanish
+Lucero	Veleta	Ballad|Pop|Rock	90's	Female|Group	Spanish
+Lucero	Volvere	Ballad|Pop|Rock	90's	Female|Group	Spanish
+Luis Fonsi	Aqui Estoy yo	Pop	2000's	Male	Spanish
+Luis Fonsi	Aunque Estés Con el	Pop	2000's	Male	Spanish
+Luis Fonsi	El anillo y la flor	Pop	2000's	Male	Spanish
+Luis Fonsi	No Me Doy por Vencido	Pop	2000's	Male	Spanish
+Luis Fonsi	Que Quieres de mi	Pop	2000's	Male	Spanish
+Luis Fonsi	Se Supone	Pop	2000's	Male	Spanish
+Luis Fonsi	Viviendo el Ayer	Pop	2000's	Male	Spanish
+Luis Fonsi & Demi Lovato	Échame la Culpa	Pop	2010's	Duet|Mixed	Spanish
+Luis Miguel	Cuando calienta el sol	Bolero|Pop	90's	Male	Spanish
+Luis Miguel	Estar contigo	Pop	2000's	Male	Spanish
+Luis Miguel	Fría Como el Viento	Bolero|Pop	90's	Male	Spanish
+Luis Miguel	Hasta que me olvides	Bolero|Pop	90's	Male	Spanish
+Luis Miguel	La Bikina	Bolero|Pop	90's	Male	Spanish
+Luis Miguel	La Incondicional	Bolero|Pop	90's	Male	Spanish
+Luis Miguel	La Mentira	Bolero|Pop	90's	Male	Spanish
+Luis Miguel	La media vuelta	Bolero|Pop	90's	Male	Spanish
+Luis Miguel	Me Gustas Tal Como Eres	Bolero|Pop	90's	Male	Spanish
+Luis Miguel	No se tu	Bolero|Pop	90's	Male	Spanish
+Luis Miguel	Palabra de Honor	Bolero|Pop	90's	Male	Spanish
+Luis Miguel	Por Debajo de la Mesa	Bolero|Pop	90's	Male	Spanish
+Luis Miguel	Se te Olvida	Bolero|Pop	90's	Male	Spanish
+Luis Miguel	Si tu te Atreves	Bolero|Pop	90's	Male	Spanish
+Luis Miguel	Te necesito	Bolero|Pop	90's	Male	Spanish
+Luis Miguel	Tengo todo excepto a ti	Bolero|Pop	90's	Male	Spanish
+Luis Miguel	Y	Bolero|Pop	90's	Male	Spanish
+Lynyrd Skynyrd	Free Bird	Rock	70's	Group	English
+Lynyrd Skynyrd	Simple Man	Rock	70's	Group	English
+Lynyrd Skynyrd	Sweet Home Alabama	Rock	70's	Group	English
+Maceradoz	ti, A	Bolero	2020's	Male	Spanish
+Madonna	La isla bonita	Electronic|Pop	80's	Female	English
+Madonna	Like a virgin	Electronic|Pop	80's	Female	English
+Madonna	Material girl	Electronic|Pop	80's	Female	English
+Madonna	Take a bow	Electronic|Pop	90's	Female	English
+Magneto	40 Grados	Pop	90's	Group|Male	Spanish
+Magneto	Mi Amada	Pop	90's	Group|Male	Spanish
+Magneto	Para Siempre	Pop	90's	Group|Male	Spanish
+Magneto	Vuela Vuela	Pop	90's	Group|Male	Spanish
+Maite Perroni & Cali	Loca	Pop	2010's	Duet	Spanish
+Maluma	Amigos con derechos	Pop|Reggaeton	2010's	Male	Spanish
+Maluma	Vivo Pensando en Ti	Pop|Reggaeton	2010's	Male	Spanish
+Manolo Galván	Deja de Llorar por mi	Ballad	70's	Male	Spanish
+Manolo Galván	Te Quise te Quiero y te Querre	Ballad	70's	Male	Spanish
+Manolo Otero	Hola Amor Mío	Ballad	70's	Male	Spanish
+Manolo Otero	Qué He de Hacer Para Olvidarte	Ballad	70's	Male	Spanish
+Manolo Otero	Sin Ti	Ballad	70's	Male	Spanish
+Manuel Mijares	El privilegio de amar	Ballad|Pop	90's	Male	Spanish
+Marco Antonio Solís	Cuando te Acuerdes de mi	Ballad|Ranchera	90's	Male	Spanish
+Marco Antonio Solís	El Peor de mis Fracasos	Ballad	90's	Male	Spanish
+Marco Antonio Solís	La Pareja Ideal	Ballad	90's	Male	Spanish
+Marco Antonio Solís	Mi eterno amor secreto	Bolero|Ranchera	60's	Male	Spanish
+Marco Antonio Solís	Más que tu amigo	Bolero|Ranchera	60's	Male	Spanish
+Marco Antonio Solís	Si no te hubieras ido	Ballad|Ranchera	90's	Male	Spanish
+Marco Antonio Solís	Sigue sin mi	Ballad	90's	Male	Spanish
+Marco Antonio Solís & Marisela	La Pareja Ideal	Ballad|Pop|Ranchera	80's	Duet	Spanish
+Marcos Llunas	Para Reconquistarte	Ballad|Pop	90's	Male	Spanish
+Mari Trini	Ayudala	Ballad	80's|90's	Female	Spanish
+Mari Trini	Te amare, te amo y te querre	Ballad	70's|90's	Female	Spanish
+Mari Trini	Una Estrella En el Jardin	Ballad	80's	Female	Spanish
+Mari Trini	Yo No soy Esa	Ballad	70's	Female	Spanish
+Maria Conchita Alonso	Acariciame	Ballad|Pop	2000's|80's	Female	Spanish
+Maria Conchita Alonso	Hazme sentir	Ballad|Pop	2010's|80's	Female	Spanish
+Maria Conchita Alonso	Noche de Copas	Ballad|Pop	80's	Female	Spanish
+Maria Conchita Alonso	Y es que llegaste tu	Ballad|Pop	2000's|80's	Female	Spanish
+Mariah Carey	Without You	Pop|Soul	90's	Female	English
+Marisela	Arrepentida	Ballad|Pop	80's|90's	Female	Spanish
+Marisela	Completamente tuya	Ballad|Pop	80's	Female	Spanish
+Marisela	Mi Amor Por Ti	Ballad|Pop	2010's|80's	Female	Spanish
+Marisela	Si no te hubieras ido	Ballad|Pop	80's|90's	Female	Spanish
+Marisela	Sola con mi soledad	Ballad|Pop	80's|90's	Female	Spanish
+Marisol	Aquel verano	Pop	70's|90's	Female	Spanish
+Mayte Montenegro	Cancion para una esposa triste	Ballad	70's	Female	Spanish
+Mecano	Me cuesta tanto olvidarte	Ballad|Pop	80's|90's	Group	Spanish
+Menudo	Cambiale las Pilas	Pop	80's	Male	Spanish
+Menudo	Claridad	Pop	80's	Group|Male	Spanish
+Menudo	Dulces Besos	Pop	80's	Group|Male	Spanish
+Menudo	Ella	Pop	80's	Male	Spanish
+Menudo	Fuego	Pop	80's	Group|Male	Spanish
+Menudo	Lluvia	Pop	80's	Group|Male	Spanish
+Menudo	Mi Banda Toca Rock	Pop	80's	Group|Male	Spanish
+Menudo	Quiero Ser	Pop	80's	Group|Male	Spanish
+Menudo	Rock en la Tv	Pop	80's	Group|Male	Spanish
+Menudo	Si tu No Estás	Pop	80's	Group|Male	Spanish
+Menudo	Súbete a mi Moto	Pop	80's	Male	Spanish
+Menudo	Volar, A	Pop	80's	Male	Spanish
+Menudo	Y yo No Bailo	Pop	80's	Group|Male	Spanish
+Michael Jackson	Beat It	Disco|Pop|Soul	80's	Male	English
+Michael Jackson	Man in the mirror	Disco|Pop|Soul	80's	Male	English
+Michael Jackson	One day in your life	Disco|Pop|Soul	70's	Male	English
+Michael Jackson	Smooth criminal	Disco|Pop|Soul	80's	Male	English
+Michael Jackson	Thriller	Disco|Pop|Soul	80's	Male	English
+Michael Jackson	way you make me feel, The	Disco|Pop|Soul	80's	Male	English
+Michel Teló	Ai se eu te pego	Pop|Sertanejo	2010's	Male	Portuguese
+Miguel Bose	Amante Bandido	Ballad|Pop	2000's|80's	Male	Spanish
+Miguel Bose	Amiga	Ballad|Pop	80's|90's	Male	Spanish
+Miguel Bose	Creo en Ti	Pop	80's	Male	Spanish
+Miguel Bose	Don Diablo	Ballad|Pop	80's	Male	Spanish
+Miguel Bose	La Chula	Pop	80's	Male	Spanish
+Miguel Bose	Linda	Pop	80's	Male	Spanish
+Miguel Bose	Morir de Amor	Pop	80's	Male	Spanish
+Miguel Bose	Te amaré	Pop	80's	Male	Spanish
+Miguel Bose	Te diré	Pop	80's	Male	Spanish
+Miguel Bose	Teorema de amor	Pop	80's	Male	Spanish
+Miguel Bosé & Ana Torroja	Corazones	Pop	90's	Duet|Mixed	Spanish
+Miguel Gallardo	Hoy Tengo Ganas de Ti	Ballad	70's	Male	Spanish
+Miguel Gallardo	Luna de Otoño	Ballad	70's	Male	Spanish
+Miguel Gallardo	Otro Ocupa mi Lugar	Ballad	70's	Male	Spanish
+Miguel Gallardo	Y Apago la Luz	Ballad	70's	Male	Spanish
+Miguel Gallardo	Yo Fui el Segundo en tu Vida	Ballad	70's	Male	Spanish
+Miguel Mateos	Tira Para Arriba	Rock	80's	Male	Spanish
+Miguel Rios	Santa Lucia	Rock	80's	Male	Spanish
+Miley Cyrus	I hope you find it	Country|Pop|Rock	2010's	Female	English
+Miley Cyrus	When I Look At You	Country|Pop|Rock	2000's	Female	English
+Miley Cyrus	climb, The	Country|Pop|Rock	2000's	Female	English
+Mocedades	Eres tu	Folk|Pop	70's|80's	Female|Group	Spanish
+Mocedades	Tómame O Déjame	Ballad|Folk|Pop	2000's|70's	Female|Group	Spanish
+Mountain	Mississippi Queen	Rock	70's	Group	English
+Myriam Hernandez	Ay amor	Ballad|Pop	80's	Female	Spanish
+Myriam Hernandez	El hombre que yo amo	Ballad|Pop	80's|90's	Female	Spanish
+Myriam Hernandez	Eres	Ballad|Pop	90's	Female	Spanish
+Myriam Hernandez	Ese hombre	Ballad|Pop	90's	Female	Spanish
+Myriam Hernandez	Herida	Ballad|Pop	2000's|90's	Female	Spanish
+Myriam Hernandez	Huele a Peligro	Ballad|Pop	90's	Female	Spanish
+Myriam Hernandez	Peligros de amor	Ballad|Pop	90's	Female	Spanish
+Myriam Hernandez	Se me fue	Ballad|Pop	90's	Female	Spanish
+Myriam Hernandez	Si no fueras tu	Ballad|Pop	90's	Female	Spanish
+Myriam Hernandez	Te pareces tanto a el	Ballad|Pop	90's	Female	Spanish
+Myriam Hernandez	Todo lo tuyo	Ballad|Pop	90's	Female	Spanish
+NCYNC	La Pacha	Pop	2000's	Male	Spanish
+Natalie Cole	Miss You Like Crazy	Ballad|Pop|Soul	80's	Female	English
+Natalie Imbruglia	Torn	Pop	90's	Female	English
+Neil Young	Heart of Gold	Country|Folk|Rock	70's	Male	English
+Nelson Ned	Déjame si Estoy Llorando	Ballad	70's	Male	Spanish
+Nelson Ned	Happy Birthday To You My Darling	Ballad	70's	Male	Spanish
+Nelson Ned	Quién Eres tu	Ballad	70's	Male	Spanish
+Nicki Minaj	Super Bass	Hip hop|Pop	2010's	Female	English
+Nicola Di Bari	El Corazón Es un Gitano	Ballad	70's	Male	Spanish
+Nicola Di Bari	El Último Romantico	Ballad	70's	Male	Spanish
+Nicole Pillman	Entre la Espada y la Pared	Ballad|Pop	2010's	Female	Spanish
+Nilton César	Cerca de los Ojos Lejos del Corazón	Ballad	70's	Male	Spanish
+Nina Simone	I Put A Spell On You	Blues|Jazz|Soul	60's	Female	English
+Nino Bravo	América, América	Ballad	70's	Male	Spanish
+Nino Bravo	Cartas Amarillas	Ballad	70's	Male	Spanish
+Nino Bravo	Es el Viento	Ballad	70's	Male	Spanish
+Nino Bravo	Libre	Ballad	70's	Male	Spanish
+Nino Bravo	Mi Gran Amor	Ballad	70's	Male	Spanish
+Nino Bravo	Noelia	Ballad	70's	Male	Spanish
+Nino Bravo	Te quiero te quiero	Ballad	70's	Male	Spanish
+Nino Bravo	Un beso y una flor	Ballad	70's	Male	Spanish
+Noel Schajris	Aunque Hoy Me Veas Partir	Pop	2010's	Male	Spanish
+Noel Schajris	No Veo la Horas	Pop	2010's	Male	Spanish
+Noelia	Tu	Ballad|Pop	2000's|90's	Female	Spanish
+Norman Greenbaum	Spirit in the Sky	Pop|Rock	60's	Male	English
+Obie Bermúdez	Antes	Pop|Salsa	2000's	Male	Spanish
+Octava Dimensión	Nunca Cambies	Ballad|Pop	80's	Male	Spanish
+Olga Tañón	Basta Ya	Ballad|Merengue|Pop	90's	Female	Spanish
+Olivia Newton‐John	Hopelessly Devoted To You	Ballad|Country|Pop	70's	Female	English
+Orlando Netti	Clasico Es Amarte	Pop	2010's	Male	Spanish
+Orlando Netti	Recien te Conozco	Pop	2010's	Male	Spanish
+Owl City	Fireflies	Electronic|Pop	2000's	Male	English
+Pablo Milanes	El Breve Espacio En Que No Estas	Ballad|Trova	80's	Male	Spanish
+Pablo Milanes	Yo No Te Pido	Ballad|Trova	70's	Male	Spanish
+Pablo Milanes	Yolanda	Ballad|Trova	80's	Male	Spanish
+Palito Ortega	Corazon contento	Pop	60's|90's	Male	Spanish
+Palito Ortega	Vestida de Novia	New wave	60's	Male	Spanish
+Paloma Faith	Only Love Can Hurt Like This	Ballad|Pop|Soul	2010's	Female	English
+Pandora	Alguien llena mi lugar	Ballad|Electronic|Pop	80's	Female|Group	Spanish
+Pandora	Cómo Te Va Mi Amor	Ballad|Electronic|Pop	80's	Female|Group	Spanish
+Pandora	Despues de ti que	Ballad|Electronic|Pop	90's	Female|Group	Spanish
+Pandora	Frente a frente	Ballad|Electronic|Pop	2000's|2010's	Female|Group	Spanish
+Pandora	La Usurpadora	Electronic|Pop	90's	Female|Group	Spanish
+Pandora	Mi hombre	Ballad|Electronic|Pop	80's	Female|Group	Spanish
+Pandora	Ni tu ni yo	Ballad|Electronic|Pop	90's	Female|Group	Spanish
+Pandora	Solo el y yo	Ballad|Electronic|Pop	80's	Female|Group	Spanish
+Patsy Cline	Crazy	Country	60's	Female	English
+Paul McCartney & Wings	Band on the run	Pop|Rock	70's	Male	English
+Paul McCartney & Wings	Jet	Pop|Rock	70's	Male	English
+Paul McCartney & Wings	Let 'Em In	Pop|Rock	70's	Male	English
+Paul McCartney & Wings	Listen to what the man said	Pop|Rock	70's	Male	English
+Paul McCartney & Wings	Live and let die	Pop|Rock	70's	Male	English
+Paul McCartney & Wings	Maybe I'm amazed	Pop|Rock	70's	Male	English
+Paul McCartney & Wings	Mull of kintyre	Pop|Rock	70's	Male	English
+Paul McCartney & Wings	My Love	Pop|Rock	70's	Male	English
+Paul McCartney & Wings	Silly love songs	Pop|Rock	70's	Male	English
+Paul McCartney & Wings	With a little luck	Pop|Rock	70's	Male	English
+Paulina Rubio	El ultimo adios	Cumbia|Pop|Ranchera	2000's	Female	Spanish
+Paulina Rubio	Todo Mi Amor	Cumbia|Pop|Ranchera	2000's	Female	Spanish
+Pecos Cambas	Procuro Olvidarte	Ballad	70's	Duet|Male	Spanish
+Pedro Infante	Corazón Corazón	Ranchera	50's	Male	Spanish
+Pedro Suárez-Vértiz	Alguien que Bese Como tu	Pop|Rock	90's	Male	Spanish
+Pedro Suárez-Vértiz	Cuando Pienses en Volver	Pop|Rock	90's	Male	Spanish
+Pedro Suárez-Vértiz	Cuando la Cama Me Da Vueltas	Pop|Rock	90's	Male	Spanish
+Pedro Suárez-Vértiz	Lo Olvide	Pop|Rock	90's	Male	Spanish
+Pedro Suárez-Vértiz	Me Eleve	Pop|Rock	90's	Male	Spanish
+Pedro Suárez-Vértiz	Me Estoy Enamorando	Pop|Rock	90's	Male	Spanish
+Pedro Suárez-Vértiz	Me Resfrie en Brasil	Pop|Rock	90's	Male	Spanish
+Pedro Suárez-Vértiz	Mi Auto Era una Rana	Pop	90's	Male	Spanish
+Pedro Suárez-Vértiz	Sentimiento Increible	Pop|Rock	90's	Male	Spanish
+Pedro Suárez-Vértiz	Te Siento de Solo Pensar	Pop|Rock	90's	Male	Spanish
+Pedro Suárez-Vértiz	Y Es que Sucede Asi	Pop|Rock	90's	Male	Spanish
+Phil Collins	Against all odds (Take a Look at Me Now)	Pop|Rock	80's	Male	English
+Phil Collins	Another day in paradise	Pop|Rock	80's	Male	English
+Phil Collins	Do you remember	Pop|Rock	80's	Male	English
+Phil Collins	In the air tonight	Pop|Rock	80's	Male	English
+Phil Collins	You'll be in my heart	Pop|Rock	90's	Male	English
+Phil Collins	groovy kind of love, A	Pop|Rock	80's	Male	English
+Pimpinela	Dimelo Delante De Ella	Ballad	80's|90's	Duet|Group|Mixed	Spanish
+Pimpinela	El amor no se puede olvidar	Ballad	90's	Duet|Group|Mixed	Spanish
+Pimpinela	Ese Hombre	Ballad	80's	Duet|Group	Spanish
+Pimpinela	Olvidame y pega la vuelta	Ballad	80's	Duet|Group	Spanish
+Pimpinela	Tu me prometiste volver	Ballad	80's	Duet|Group	Spanish
+Pimpinela	esa, A	Ballad	80's	Duet|Group|Mixed	Spanish
+Pink & Nate Reuss	Just Give Me A Reason	Pop	2010's	Duet	English
+Pink Floyd	Another brick in the wall	Rock	70's	Group	English
+Pink Floyd	Another brick in the wall (Part II)	Rock	70's	Group	English
+Pink Floyd	Breathe	Rock	70's	Group	English
+Pink Floyd	Comfortably Numb	Rock	70's	Group	English
+Pink Floyd	Nobody home	Rock	70's	Group	English
+Pink Floyd	Time	Rock	70's	Group	English
+Pink Floyd	Wish you were here	Rock	70's	Group	English
+Piso 21	Te Vi	Pop	2010's	Group|Male	Spanish
+Poison	Every Rose Has Its Thorn	Metal|Rock	80's	Group	English
+Police, The	Every breath you take	Pop|Rock	80's	Group	English
+Police, The	Message in a bottle	Pop|Rock	70's	Group	English
+Police, The	Roxanne	Pop|Rock	70's	Group	English
+Prince	Let's go crazy	Pop|Rock|Soul	80's	Male	English
+Prince	Nothing compares 2 u	Pop|Rock|Soul	80's	Male	English
+Prince	Purple rain	Pop|Rock|Soul	80's	Male	English
+Prince	When doves cry	Pop|Rock|Soul	80's	Male	English
+Queen	Bohemian Rhapsody	Pop|Rock	70's	Group	English
+Queen	Don't Stop Me Now	Pop|Rock	70's	Group	English
+Queen	I Want To Break Free	Pop|Rock	80's	Group	English
+Queen	Killer Queen	Pop|Rock	70's	Group	English
+Queen	Love Of My Life	Pop|Rock	70's	Group	English
+Queen	Radio Ga Ga	Pop|Rock	80's	Group	English
+Queen	Show Must Go On, The	Pop|Rock	90's	Group	English
+Queen	Somebody To Love	Pop|Rock	70's	Group	English
+Queen	We Are The Champions	Pop|Rock	70's	Group	English
+Queen	We Will Rock You	Pop|Rock	70's	Group	English
+Queen & David Bowie	Under Pressure	Pop|Rock	80's	Duet	English
+Ramones	Blitzkrieg Bop	Rock	70's	Group	English
+Raphael	Amor Mío	Ballad	60's	Male	Spanish
+Raphael	Ave María	Ballad|Pop	2000's|60's	Male	Spanish
+Raphael	Cierro mis Ojos	Ballad	60's	Male	Spanish
+Raphael	Como yo te amo	Ballad	60's	Male	Spanish
+Raphael	Cuando tú no estás	Ballad	60's	Male	Spanish
+Raphael	Desde aquel día	Ballad	60's	Male	Spanish
+Raphael	Desde el Fondo de mi Alma	Ballad	60's	Male	Spanish
+Raphael	En Carne Viva	Ballad	60's	Male	Spanish
+Raphael	Estar Enamorado	Ballad	60's	Male	Spanish
+Raphael	Estuve Enamorado	Ballad	60's	Male	Spanish
+Raphael	Mi Gran Noche	Ballad	60's	Male	Spanish
+Raphael	No Puedo Arrancarte de mi	Ballad	60's	Male	Spanish
+Raphael	Qué sabe nadie	Ballad	60's	Male	Spanish
+Raphael	Qué tal te va sin mí	Ballad	60's	Male	Spanish
+Raphael	Toco madera	Ballad	60's	Male	Spanish
+Raphael	Yo Soy Aquel	Ballad	60's	Male	Spanish
+Raúl Vásquez	Vas a ser mi compañera	Ballad	70's	Male	Spanish
+Reik	Creo en Ti	Ballad|Pop	2000's	Group|Male	Spanish
+Reik	Inolvidable	Pop	2010's	Group|Male	Spanish
+Reik	Noviembre sin Ti	Pop	2000's	Group|Male	Spanish
+Reik	Qué vida la mía	Pop	2000's	Group|Male	Spanish
+Reik	Sabes	Pop	2000's	Group|Male	Spanish
+Reik	Te fuiste de aquí	Ballad|Pop	2000's	Group|Male	Spanish
+Reik	Voy a Olvidarte	Ballad|Pop	2000's	Group|Male	Spanish
+Reik	Ya me enteré	Pop	2000's	Group|Male	Spanish
+Reik	Yo Quisiera	Ballad|Pop	2000's	Group|Male	Spanish
+Ricardo Arjona	Acompáñame a estar solo	Ballad|Pop	2010's|90's	Male	Spanish
+Ricardo Arjona	La mujer que no soñé jamás	Pop	90's	Male	Spanish
+Ricardo Arjona	Mi Novia se Me Esta Poniendo Vieja	Pop	90's	Male	Spanish
+Ricardo Arjona	Por que Es Tan Cruel el Amor	Pop	90's	Male	Spanish
+Ricardo Arjona	Quién diría	Pop	90's	Male	Spanish
+Ricardo Arjona & Gaby Moreno	Fuiste tú	Pop	2010's	Duet|Mixed	Spanish
+Ricardo Montaner	Amarte Es mi Pecado	Ballad|Pop	90's	Male	Spanish
+Ricardo Montaner	Aunque Ahora Estés Con el	Ballad|Pop	90's	Male	Spanish
+Ricardo Montaner	Bésame la boca	Ballad|Pop	90's	Male	Spanish
+Ricardo Montaner	La Cima del Cielo	Ballad|Pop	90's	Male	Spanish
+Ricardo Montaner	Me va a extrañar	Ballad|Pop	90's	Male	Spanish
+Ricardo Montaner	Onda	Ballad|Pop	90's	Male	Spanish
+Ricardo Montaner	Para Llorar	Ballad|Pop	90's	Male	Spanish
+Ricardo Montaner	Será	Ballad|Pop	90's	Male	Spanish
+Ricardo Montaner	Tan Enamorados	Ballad|Pop	90's	Male	Spanish
+Ricardo Montaner	Yo que te amé	Ballad|Pop	90's	Male	Spanish
+Ricardo Montaner	dónde va el amor, A	Ballad|Pop	90's	Male	Spanish
+Ricchi e Poveri	Dónde estarás	Pop	80's	Group|Male	Spanish
+Ricchi e Poveri	Me Enamoro de Ti	Pop	80's	Group	Spanish
+Ricchi e Poveri	Será porque te amo	Pop	80's	Group|Male	Spanish
+Ricky Martin	Livin' la vida loca	Pop	90's	Male	English
+Ricky Martin	Living la Vida Loca	Pop	90's	Male	English
+Ricky Martin	Medio Vivir, A	Pop	90's	Male	Spanish
+Ricky Martin	She bangs	Pop	2000's	Male	English
+Ricky Martin	Tal Vez	Pop	90's	Male	Spanish
+Ricky Martin	Tu Recuerdo	Pop	90's	Male	Spanish
+Ricky Martin	Vente pa’ ca	Pop	2010's	Male	Spanish
+Ricky Martin	Vuelve	Pop	90's	Male	Spanish
+Righteous Brothers, The	Unchained Melody	Pop|Soul	60's	Group	English
+Rihanna & Mikky Ekko	Stay	Ballad|Pop|Soul	2010's	Duet|Female|Male	English
+Ritchie	Mi niña veneno	Pop	80's	Male	Spanish
+Roberta Flack	Killing Me Softly With His Song	Pop|Soul	70's	Female	English
+Roberto Carlos	Cama y mesa	Ballad	70's	Male	Spanish
+Roberto Carlos	Camionero	Ballad	70's	Male	Spanish
+Roberto Carlos	Candilejas	Ballad	70's	Male	Spanish
+Roberto Carlos	Cóncavo y convexo	Ballad	70's	Male	Spanish
+Roberto Carlos	Desahogo	Ballad	70's	Male	Spanish
+Roberto Carlos	Detalles	Ballad	70's	Male	Spanish
+Roberto Carlos	No te apartes de mi	Ballad	70's	Male	Spanish
+Roberto Carlos	Un millon de amigos	Ballad	70's	Male	Spanish
+Roberto Carlos	Yo te Recuerdo	Ballad	70's	Male	Spanish
+Roberto Carlos & Lani Hall	De Repente El Amor	Ballad|Pop	80's	Duet|Mixed	Spanish
+Roberto Jordan	Amor de estudiante	Ballad|Pop|Rock	2000's|70's	Male	Spanish
+Roberto Jordan	Hazme una señal	Ballad|Pop	70's	Male	Spanish
+Roberto Jordan	No se Ha Dado Cuenta	Ballad|Pop	70's	Male	Spanish
+Roberto Jordan	Rosa Marchita	Ballad|Pop	70's	Male	Spanish
+Roberto Luti	Tú me amas	Ballad|Pop	2010's	Male	Spanish
+Roberto Tello	El espejo de mi vida	Peruvian Waltz			
+Rocio Jurado	Como Yo Te Amo	Ballad	70's	Female	Spanish
+Rocío Dúrcal	Acompañame	Ballad|Pop|Ranchera	60's	Female|Mixed	Spanish
+Rocío Dúrcal	Amor eterno	Ballad|Ranchera	80's	Female	Spanish
+Rocío Dúrcal	Como tu mujer	Ballad|Ranchera	80's	Female	Spanish
+Rocío Dúrcal	Costumbres	Ballad|Ranchera	80's	Female	Spanish
+Rocío Dúrcal	La gata bajo la lluvia	Ballad	80's	Female	Spanish
+Rocío Dúrcal	Ya te olvidé	Ballad	80's	Female	Spanish
+Rocío Dúrcal & Juan Gabriel	Déjame Vivir	Pop|Ranchera	80's	Duet	Spanish
+Rocío Dúrcal & Juan Gabriel	El Destino	Pop|Ranchera	2000's|90's	Duet	Spanish
+Rod Stewart	Maggie May	Pop|Rock	70's	Male	English
+Rod Stewart	Stay with Me	Pop|Rock	70's	Male	English
+Rolling Stones, The	Angie	Blues|Pop|Rock	70's	Group	English
+Rolling Stones, The	Beast of Burden	Blues|Pop|Rock	70's	Group	English
+Rolling Stones, The	Doo Doo Doo Doo, The (Heartbreaker)	Blues|Pop|Rock	70's	Group	English
+Rolling Stones, The	Wild Horses	Blues|Pop|Rock	70's	Group	English
+Romeo Santos	Perjuicio	Bachata	2010's	Male	Spanish
+Romina Power & Al Bano	Arena blanca mar azul	Ballad|Pop	70's	Duet|Mixed	Spanish
+Rosalía, Lisa	New woman	Pop	2020's	Duet	English
+Rossana	Si tu no estas aqui	Pop|Trova	90's	Female	Spanish
+Roxette	It Must Have Been Love with backing vocals	Ballad|Pop|Rock	90's	Female|Group	English
+Rudy La Scala	El cariño es como una flor	Ballad	80's	Male	Spanish
+Rudy La Scala	Mi vida eres tú	Ballad	80's	Male	Spanish
+Rudy La Scala	Por qué será	Ballad	80's	Male	Spanish
+Rush	Tom Sawyer	Metal|Pop|Rock	80's	Group	English
+Río Roma	Al Fin te Encontre	Pop	2010's	Duet|Group|Male	Spanish
+Río Roma	Eres la persona correcta	Pop	2010's	Duet|Group|Male	Spanish
+Río Roma	No lo Beses	Pop	2010's	Duet|Male	Spanish
+Río Roma	Por Eso te Amo	Pop	2010's	Duet|Group|Male	Spanish
+Río Roma	Tan Solo un Minuto	Pop	2010's	Duet|Group|Male	Spanish
+Río Roma	Todo Fue una Ilusion	Pop	2010's	Duet|Group|Male	Spanish
+Río Roma	Tonto	Pop	2010's	Duet|Male	Spanish
+Río Roma	Tú me cambiaste la vida	Pop	2010's	Duet|Group|Male	Spanish
+Sabú	Es el amor de verdad	Ballad	70's	Male	Spanish
+Sabú	Pequeña y frágil	Ballad	70's	Male	Spanish
+Sabú	Vuelvo a Vivir Vuelvo a Cantar	Ballad	70's	Male	Spanish
+Safari	Venite volando	Pop|Rock	70's	Male	Spanish
+Salvatore Adamo	Es mi Vida	Ballad|Pop	70's	Male	Spanish
+Santana ft. Product	Maria Maria	Jazz|Pop|Rock	90's	Duet	English
+Sarah Geronimo	Maybe This Time (Lower Key)	Ballad|Pop	2010's	Female	English
+Sebastián Yatra & Reik	Un año	Pop	2010's	Duet|Male	Spanish
+Selena Gomez	year without rain, A	Pop|Rock	2010's	Female	English
+Selena Quintanilla	Dreaming of you	Ballad|Pop	90's	Female	English
+Selena Quintanilla	I could fall in love	Pop	90's	Female	English
+Sergio Dalma	Bailar Pegados	Ballad|Pop	2000's|90's	Male	Spanish
+Sergio Dalma	La cosa más bella	Ballad|Pop	90's	Male	Spanish
+Sergio Fachelli	El único que te entiende	Ballad	80's	Male	Spanish
+Sergio Fachelli	Quiéreme tal como soy	Ballad	80's	Male	Spanish
+Sergio Fachelli	Soy el único que te entiende	Ballad	80's	Male	Spanish
+Sergio Murillo	Serás todo para mí	Ballad|Pop	80's	Male	Spanish
+Shakira	Underneath your clothes	Pop	2000's	Female	English
+Shakira	Waka Waka (This Time For Africa)	Pop	2010's	Female	English
+Shakira	Whenever, wherever	Pop	2000's	Female	English
+Shakira ft. Wyclef Jean	Hips Don't Lie	Pop	2000's	Duet	English
+Sheena Easton	For Your Eyes Only	Ballad|Pop	80's	Female	English
+Sie7e	Yo tengo tu love	Pop	2010's	Male	Spanish
+Silvana Di Lorenzo	Me muero por estar contigo	Ballad|Pop	2000's|70's	Female	Spanish
+Silvana Di Lorenzo	Palabras, palabras	Ballad|Pop	2000's|70's	Duet|Female|Mixed	Spanish
+Silvana Di Lorenzo	Tomame o Dejame	Ballad|Pop	70's	Female	Spanish
+Silvestre Dangond & Nicky Jam	Cásate Conmigo	Pop|Vallenato	2010's	Duet	Spanish
+Silvio Rodriguez	Canción del Elegido	Trova	70's	Male	Spanish
+Silvio Rodriguez	Ojala	Trova	70's	Male	Spanish
+Silvio Rodriguez	Oleo De Mujer Con Sombrero	Trova	70's	Male	Spanish
+Silvio Rodriguez	Pequeña serenata diurna	Trova	70's	Male	Spanish
+Silvio Rodriguez	Te doy una canción	Trova	70's	Male	Spanish
+Simon & Garfunkel	Bridge Over Troubled Water	Folk|Pop	70's	Duet	English
+Sin Bandera	Entra en mi Vida	Pop	2000's	Duet|Group	Spanish
+Sin Bandera	Mientes Tan Bien	Pop	2000's	Group|Male	Spanish
+Sin Bandera	Si tú no estás aquí	Pop	2000's	Duet|Group|Male	Spanish
+Sin Bandera	Sirena	Pop	2000's	Group|Male	Spanish
+Sin Bandera	Te Vi Venir	Pop	2000's	Duet|Group|Male	Spanish
+Sinead O' Connor	Nothing Compares to you (Acoustic)	Folk|Pop|Rock	90's	Female	English
+Sinead O'Connor	Nothing compares to you	Folk|Pop|Rock	90's	Female	English
+Stealers Wheel	Stuck In The Middle With You	Pop	70's	Group	English
+Steely Dan	Do It Again	Pop|Rock	70's	Group	English
+Steve Miller Band	Joker, The	Pop|Rock	70's	Group	English
+Stevie Wonder	I Wish	Pop|Soul	70's	Male	English
+Stevie Wonder	I just called to say I love you	Pop|Soul	80's	Male	English
+Stevie Wonder	Lately	Pop|Soul	80's	Male	English
+Stevie Wonder	My Cherie Amour	Pop|Soul	60's	Male	English
+Stevie Wonder	Overjoyed	Pop|Soul	80's	Male	English
+Stevie Wonder	Ribbon in the sky	Pop|Soul	80's	Male	English
+Stevie Wonder	Sir Duke	Pop|Soul	70's	Male	English
+Stevie Wonder	Superstition	Pop|Soul	70's	Male	English
+T.Rex	Bang a gong (Get it on)	Pop|Rock	70's	Group	English
+Tamara	Cada Dia	Bolero|Pop	2000's	Female	Spanish
+Tatiana	No vuelvas a besarme	Ballad|Pop|Rock	2010's|80's	Female	Spanish
+Thalia	Equivocada	Ballad|Pop	2000's|2010's	Female	Spanish
+Thalia	Me oyen, me escuchan	Pop	2010's	Female	Spanish
+Thalia	No me enseñaste	Ballad|Pop	2000's	Female	Spanish
+Thalia	No no no	Bachata|Pop	2000's	Duet|Female|Mixed	Spanish
+Thalia	Piel Morena	Cumbia|Pop	2000's|90's	Female	Spanish
+Thalia	Que sera de ti	Ballad|Pop	2000's|2010's	Female	Spanish
+Thalia	Quinceañera	Pop	2010's|80's	Female	Spanish
+Thalia	Sangre	Ballad|Pop	90's	Female	Spanish
+Thalia	quien le importa, A	Pop	2000's	Female	Spanish
+Thalia & Lali	Lindo pero bruto	Pop	2010's	Duet|Female	Spanish
+Thalía & Pedro Capó	Estoy Enamorado	Ballad|Pop	2000's	Duet|Mixed	Spanish
+Thin Lizzy	Boys Are Back In Town, The	Metal|Pop|Rock	70's	Group	English
+Timbiriche	Quinceañera	Pop	2000's|80's	Group|Mixed	Spanish
+Tormenta	Adios chico de mi barrio	Ballad	70's	Female	Spanish
+Troggs, The	Wild Thing	Pop|Rock	60's	Group	English
+U2	All I want Is you	Pop|Rock	80's	Group	English
+U2	Bad	Pop|Rock	80's	Group	English
+U2	I still haven't found what I'm looking for	Pop|Rock	80's	Group	English
+U2	New Year's Day	Pop|Rock	80's	Group	English
+U2	One	Pop|Rock	90's	Group	English
+U2	Stay (Faraway, So Close!)	Pop|Rock	90's	Group	English
+U2	Where the streets have no name	Pop|Rock	80's	Group	English
+U2	With or without you	Pop|Rock	80's	Group	English
+Umberto Tozzi	Tu	Pop	70's	Male	Spanish
+Unknown Artist	Girl On Fire	Ballad|Pop|R&B		Female	English
+Unknown Artist	Hello	Ballad|Soul	2020's	Female	English
+Vanessa Williams	Save The Best For Last	Pop|Soul	90's	Female	English
+Vicky Corbacho	Que bonito	Bachata	2010's	Female	Spanish
+Vilma Palma	Bye Bye	Rock	90's	Male	Spanish
+Vilma Palma e Vampiros	Bye Bye	Rock	90's	Group|Male	Spanish
+Vilma Palma e Vampiros	Déjame que te toque la piel	Rock	90's	Group|Male	Spanish
+Vilma Palma e Vampiros	La Pachanga	Rock	90's	Group|Male	Spanish
+Virus	Luna de Miel	New wave	2000's|80's	Group|Male	Spanish
+Wham!	Last Christmas (Higher Key)	Pop	80's	Group	English
+Whitney Houston	Didn't we almost have it all	Pop|Soul	80's	Female	English
+Whitney Houston	I have nothing	Pop|Soul	90's	Female	English
+Whitney Houston	I wanna dance with somebody (who loves me)	Pop|Soul	80's	Female	English
+Whitney Houston	I will always love you	Pop|Soul	90's	Female	English
+Whitney Houston	One moment in time	Pop|Soul	80's	Female	English
+Whitney Houston	Saving all my love for you	Pop|Soul	80's	Female	English
+Whitney Houston	greatest love of all, The	Pop|Soul	80's	Female	English
+Who, The	Won't Get Fooled Again	Pop|Rock	70's	Group	English
+Yordano	Locos de Amor	Pop	80's	Male	Spanish
+Yuri	Detrás de mi ventana	Ballad|Pop|Ranchera	90's	Female	Spanish
+Yuri	El Espejo	Ballad|Pop|Ranchera	2010's|90's	Female	Spanish
+Yuri	Es ella mas que yo	Ballad|Pop|Ranchera	80's	Female	Spanish
+Yuri	La maldita primavera	Ballad|Pop|Ranchera	80's	Female	Spanish
+Yuridia	Asi fue	Ballad|Pop|Ranchera	2000's	Female	Spanish
+Yuridia	Como Yo Nadie Te Ha Amado	Ballad|Pop|Ranchera|Rock	2000's|2010's	Female	Spanish
+Yuridia	Eclipse Total Del Amor	Ballad|Pop|Ranchera	2000's	Female	Spanish
+Yuridia	Ya Te Olvidé	Ballad|Pop|Ranchera	2010's	Female	Spanish
+Álvaro Torres	Amor de Tres	Ballad	90's	Male	Spanish
+Álvaro Torres	De Punta a Punta	Ballad	90's	Male	Spanish
+Álvaro Torres	Hazme Olvidarla	Ballad	90's	Male	Spanish
+Álvaro Torres	He Vivido Esperando por Ti	Ballad	90's	Male	Spanish
+Álvaro Torres	Nada se Compara Contigo	Ballad	90's	Male	Spanish
+Álvaro Torres	Si Estuvieras Conmigo	Ballad	90's	Male	Spanish
+Álvaro Torres	Te Dejo Libre	Ballad	90's	Male	Spanish
+Álvaro Torres	Te va a doler	Ballad	90's	Male	Spanish

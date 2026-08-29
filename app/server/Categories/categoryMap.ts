@@ -21,30 +21,50 @@ export interface Category {
 // canonical name -> tags that should map onto it (matched case-insensitively
 // against the whole tag, so "latin pop" hits Pop but "poppy" does not)
 const GENRE_SYNONYMS: Record<string, string[]> = {
-  Pop: ['pop', 'latin pop', 'pop rock', 'pop-rock', 'dance-pop', 'synthpop', 'teen pop'],
-  Rock: ['rock', 'latin rock', 'alternative rock', 'classic rock', 'hard rock', 'rock en español', 'post-punk', 'new wave', 'punk'],
-  Ballad: ['ballad', 'balada', 'latin ballad', 'power ballad', 'romantic', 'romántica'],
-  Bolero: ['bolero', 'boleros'],
-  Salsa: ['salsa', 'son cubano', 'timba'],
-  Merengue: ['merengue'],
-  Bachata: ['bachata'],
-  Cumbia: ['cumbia'],
-  Vallenato: ['vallenato'],
-  Ranchera: ['ranchera', 'rancheras', 'mariachi', 'regional mexicano'],
-  Waltz: ['waltz', 'vals', 'valse'],
-  Tango: ['tango'],
-  Reggaeton: ['reggaeton', 'reggaetón', 'urbano latino', 'latin urban'],
-  Christian: ['christian', 'gospel', 'worship'],
-  Country: ['country'],
-  Jazz: ['jazz', 'swing', 'bossa nova'],
-  Blues: ['blues'],
-  Soul: ['soul', 'r&b', 'rhythm and blues', 'motown', 'funk'],
-  Disco: ['disco'],
-  Electronic: ['electronic', 'electronica', 'house', 'techno', 'downtempo', 'edm'],
-  Reggae: ['reggae', 'ska'],
-  Metal: ['metal', 'heavy metal', 'thrash metal'],
-  Folk: ['folk', 'folklore', 'nueva canción', 'trova'],
-  Children: ['children', 'children\'s music', 'infantil'],
+  'Pop': ['pop', 'latin pop', 'pop rock', 'pop-rock', 'dance-pop', 'synthpop', 'teen pop'],
+  'Rock': ['rock', 'latin rock', 'alternative rock', 'classic rock', 'hard rock', 'rock en español', 'post-punk', 'punk'],
+  'Ballad': ['ballad', 'balada', 'latin ballad', 'power ballad', 'romantic', 'romántica'],
+  'Bolero': ['bolero', 'boleros'],
+  'Salsa': ['salsa', 'son cubano', 'timba'],
+  'Merengue': ['merengue'],
+  'Bachata': ['bachata'],
+  'Cumbia': ['cumbia'],
+  'Vallenato': ['vallenato'],
+  'Ranchera': ['ranchera', 'rancheras', 'mariachi', 'regional mexicano'],
+  'Waltz': ['waltz', 'vals', 'valse'],
+  'Tango': ['tango'],
+  'Reggaeton': ['reggaeton', 'reggaetón', 'urbano latino', 'latin urban'],
+  'Christian': ['christian', 'gospel', 'worship'],
+  'Country': ['country'],
+  'Jazz': ['jazz', 'swing', 'bossa nova'],
+  'Blues': ['blues'],
+  'Soul': ['soul', 'motown', 'funk'],
+  'Disco': ['disco'],
+  'Electronic': ['electronic', 'electronica', 'house', 'techno', 'downtempo', 'edm'],
+  'Reggae': ['reggae', 'ska'],
+  'Metal': ['metal', 'heavy metal', 'thrash metal'],
+  'Folk': ['folk', 'folklore', 'nueva canción'],
+  'Children': ['children', 'children\'s music', 'infantil'],
+  // Names a person reached for that the allowlist had no room for. Each one
+  // was typed by hand on a real song before it was added here, and each is a
+  // genre the crowd-sourced tags do carry — leaving them out meant an online
+  // lookup could never reproduce a categorisation a person had already made,
+  // and the reference table would name genres its own mapper did not know.
+  'Hip hop': ['hip hop', 'hip-hop', 'hiphop', 'rap', 'trap', 'trap latino'],
+  // moved out of Rock: a person filing a song under New wave is drawing a
+  // distinction, and folding it back into Rock would erase it
+  'New wave': ['new wave', 'nueva ola'],
+  'Peruvian Waltz': ['peruvian waltz', 'vals peruano', 'vals criollo', 'música criolla', 'musica criolla'],
+  'Tropical': ['tropical', 'música tropical', 'musica tropical'],
+  'Flamenco': ['flamenco', 'rumba flamenca'],
+  'Twist': ['twist'],
+  // moved out of Soul, for the same reason New wave left Rock
+  'R&B': ['r&b', 'rnb', 'rhythm and blues', 'contemporary r&b'],
+  'Copla': ['copla', 'coplas'],
+  'Classical': ['classical', 'classical music', 'clásico', 'clasico', 'música clásica', 'musica clasica'],
+  'Sertanejo': ['sertanejo', 'sertaneja', 'música sertaneja', 'musica sertaneja'],
+  // moved out of Folk
+  'Trova': ['trova', 'nueva trova'],
 }
 
 const LANGUAGE_SYNONYMS: Record<string, string[]> = {
@@ -67,6 +87,13 @@ function buildLookup (groups: Record<string, string[]>): Map<string, string> {
 
 const GENRE_LOOKUP = buildLookup(GENRE_SYNONYMS)
 const LANGUAGE_LOOKUP = buildLookup(LANGUAGE_SYNONYMS)
+
+/**
+ * Every genre this mapper can produce. The shipped reference table is checked
+ * against it: a table naming a genre the mapper does not know would be a table
+ * an online lookup could never agree with.
+ */
+export const GENRE_NAMES = new Set(Object.keys(GENRE_SYNONYMS))
 
 /** e.g. 1971 -> "70's", 2013 -> "2010's" */
 export function decadeFromYear (year: number): string | null {
@@ -107,6 +134,30 @@ export function primaryArtist (artistName: string): string {
 }
 
 /**
+ * The form of a name two installations can agree on.
+ *
+ * Case, accents and punctuation all vary between the places a name arrives
+ * from — a filename, a YouTube title, MusicBrainz, somebody typing — and the
+ * leading article moves: this app files "The Beatles" as "Beatles, The", and
+ * another library will not. So both ends are stripped, and what is left is the
+ * key.
+ *
+ * Deliberately the single key function for every cross-library comparison:
+ * the shipped reference table is looked up by it, and MusicBrainz answers are
+ * checked against it. A second normaliser would mean two libraries that agree
+ * on a song still failing to find each other's row.
+ */
+export function matchKey (name: string): string {
+  return name
+    .toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/^(the|a|an)\s+/, '')
+    .replace(/,\s*(the|a|an)$/, '')
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim()
+}
+
+/**
  * Compare an artist name against what MusicBrainz matched.
  *
  * Necessary because the reported score is not a name-equality signal: querying
@@ -117,15 +168,7 @@ export function primaryArtist (artistName: string): string {
  * quietly supplying wrong data.
  */
 export function namesMatch (query: string, matched: string): boolean {
-  const normalize = (s: string) => s
-    .toLowerCase()
-    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-    .replace(/^(the|a|an)\s+/, '')
-    .replace(/,\s*(the|a|an)$/, '')
-    .replace(/[^a-z0-9]+/g, ' ')
-    .trim()
-
-  return normalize(query) === normalize(matched)
+  return matchKey(query) === matchKey(matched)
 }
 
 /**
@@ -159,9 +202,13 @@ export interface RawMetadata {
 // rather than guessed.
 const SPANISH_COUNTRIES = new Set(['ES', 'MX', 'AR', 'CO', 'PE', 'CL', 'VE', 'EC', 'UY', 'PY', 'BO', 'CR', 'PA', 'DO', 'CU', 'GT', 'HN', 'SV', 'NI', 'PR'])
 const ENGLISH_COUNTRIES = new Set(['US', 'GB', 'CA', 'AU', 'IE', 'NZ', 'ZA'])
-const LATIN_GENRES = new Set(['Salsa', 'Bolero', 'Ranchera', 'Cumbia', 'Bachata', 'Merengue', 'Vallenato', 'Reggaeton', 'Tango'])
+const LATIN_GENRES = new Set(['Salsa', 'Bolero', 'Ranchera', 'Cumbia', 'Bachata', 'Merengue', 'Vallenato', 'Reggaeton', 'Tango', 'Peruvian Waltz', 'Copla', 'Flamenco', 'Trova', 'Tropical'])
+// Sertanejo is the one Latin genre that is not sung in Spanish, so it gets its
+// own answer rather than being left out of the inference altogether.
+const PORTUGUESE_GENRES = new Set(['Sertanejo'])
 
 function inferLanguage (genres: string[], rawTags: string[], country?: string): string | null {
+  if (genres.some(g => PORTUGUESE_GENRES.has(g))) return 'Portuguese'
   if (genres.some(g => LATIN_GENRES.has(g))) return 'Spanish'
   if (rawTags.some(t => /^latin/i.test(t.trim()))) return 'Spanish'
   if (country && SPANISH_COUNTRIES.has(country)) return 'Spanish'
