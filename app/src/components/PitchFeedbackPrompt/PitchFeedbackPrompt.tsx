@@ -98,7 +98,16 @@ const PitchFeedbackPrompt = () => {
   // Closing is an answer too — the answer "leave my pitch alone". It resolves
   // the question server-side so it doesn't come back on the next reconnect,
   // and writes nothing, exactly like "Not sure".
-  const handleDismiss = () => handleRespond('unsure')
+  //
+  // Once it has been answered there is nothing left to answer, and saying
+  // 'unsure' again asked the server about a question it had already forgotten
+  // — which came back as "That question is no longer waiting for an answer",
+  // in a dialog, on top of the confirmation the singer was reading. The X is
+  // the same button in both states; what it means changes with them.
+  const handleDismiss = () => {
+    if (resolution) dispatch(clearPitchFeedback())
+    else handleRespond('unsure')
+  }
 
   return (
     <div

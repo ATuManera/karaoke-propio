@@ -1,4 +1,4 @@
-import React, { useMemo, useRef, useState } from 'react'
+import React, { useRef, useState } from 'react'
 import { useT } from 'lib/i18n'
 import { useAppDispatch, useAppSelector } from 'store/hooks'
 import Button from 'components/Button/Button'
@@ -33,17 +33,20 @@ const SongCategories = ({ songId }: { songId: number }) => {
   // an inch above. The list used to offer the stored names raw, so a Spanish
   // reader chose from a menu of English while everything around it was in
   // Spanish.
-  const suggestions = useMemo(() => {
-    const byLabel = new Map<string, string>()
+  //
+  // Computed on every render rather than memoized: the labels depend on the
+  // language too, and a useMemo keyed on the categories alone would keep
+  // yesterday's language after a switch. It is a few dozen strings.
+  const byLabel = new Map<string, string>()
 
-    for (const category of Object.values(entities)) {
-      if (category.type !== type) continue
-      byLabel.set(categoryLabel(category.type, category.name), category.name)
-    }
+  for (const category of Object.values(entities)) {
+    if (category.type !== type) continue
+    byLabel.set(categoryLabel(category.type, category.name), category.name)
+  }
 
-    return [...byLabel].map(([label, stored]) => ({ label, stored }))
-      .sort((a, b) => a.label.localeCompare(b.label))
-  }, [entities, type])
+  const suggestions = [...byLabel]
+    .map(([label, stored]) => ({ label, stored }))
+    .sort((a, b) => a.label.localeCompare(b.label))
 
   const handleAdd = async () => {
     if (!name.trim() || savingRef.current) return

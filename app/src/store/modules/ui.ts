@@ -3,8 +3,10 @@ import {
   CLEAR_ERROR_MESSAGE,
   FOOTER_HEIGHT_CHANGE,
   HEADER_HEIGHT_CHANGE,
+  PITCH_FEEDBACK_RESPOND,
   SHOW_ERROR_MESSAGE,
   UI_WINDOW_RESIZE,
+  _ERROR,
 } from 'shared/actionTypes'
 import { RootState } from 'store/store'
 
@@ -82,6 +84,27 @@ const initialState: UIState = {
   contentWidth: Math.min(window.innerWidth, MAX_CONTENT_WIDTH),
 }
 
+/**
+ * Failures that belong beside the thing that failed, or nowhere at all.
+ *
+ * Everything else with an `error` raises the global dialog, which is right for
+ * a failure the singer has to know about and wrong for one they caused by
+ * finishing with something.
+ */
+const QUIET_ERRORS = new Set<string>([
+  // Category additions keep their error beside the value that failed, so the
+  // song dialog remains open and the admin can retry it. Raising the global
+  // dialog here used to cover that editor and make it look closed.
+  'categories/ADD_TO_SONG/rejected',
+
+  // Dismissing "How was that pitch?" for a question the server no longer
+  // holds — it lapsed, it was answered on another device, or the server was
+  // restarted, since the question is kept in memory only. The singer asked for
+  // it to go away and it is going away; telling them it was already gone
+  // answers a question nobody asked, in a dialog they then have to dismiss too.
+  PITCH_FEEDBACK_RESPOND + _ERROR,
+])
+
 const uiReducer = createReducer(initialState, (builder) => {
   builder
     .addCase(headerHeightChange, (state, { payload }) => {
@@ -103,10 +126,7 @@ const uiReducer = createReducer(initialState, (builder) => {
       state.contentWidth = Math.min(payload.innerWidth, MAX_CONTENT_WIDTH)
     })
     .addMatcher(
-      // Category additions keep their error beside the value that failed, so
-      // the song dialog remains open and the admin can retry it. Raising the
-      // global dialog here used to cover that editor and make it look closed.
-      (action): action is AnyAction => !!action.error && action.type !== 'categories/ADD_TO_SONG/rejected',
+      (action): action is AnyAction => !!action.error && !QUIET_ERRORS.has(action.type),
       (state, { error }) => {
         state.isErrored = true
         state.errorMessage = error.message ?? error

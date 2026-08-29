@@ -398,6 +398,40 @@ per singer, replaced by their next performance, gone after 15 minutes or a
 restart. What is worth keeping is the answer, and that lands in `songPitchPrefs`
 like any other saved pitch — hence no new table.
 
+### Closing it is an answer
+
+The X answers 'unsure' — the same as "Not sure", which resolves the question
+server-side so it does not come back on the next reconnect, and writes nothing.
+
+Once the question *has* been answered the X means something else, and has to:
+the sheet stays up for five seconds to say what was saved, and pressing X there
+used to answer a second time. The server no longer held the question, said so,
+and the failure went up as the global "Oops..." dialog — over the confirmation
+the singer was reading, and now needing a dismissal of its own. It closes the
+sheet locally instead.
+
+The server can also have forgotten an *unanswered* question, and legitimately:
+it lapses after 15 minutes, it is resolved by whichever device answers first,
+and it does not survive a restart. So that error is in the `QUIET_ERRORS` set
+in `store/modules/ui.ts` and raises no dialog at all. The singer asked for the
+sheet to go away and it is going away; being told it was already gone answers
+a question nobody asked.
+
+### The answers have to look like answers
+
+`Button` only paints a surface for its `variant`, and the five choices pass
+none — so they rendered as plain text on the sheet, with no fill and no border.
+The words were legible (10.3:1) but the controls had no boundary, which fails
+WCAG 1.4.11's 3:1 and, on a phone, does not invite a tap. Worst on Android,
+where a dim panel and an eye-comfort filter remove what little separation was
+left.
+
+Against a sheet this dark the fill cannot carry it alone: a surface light
+enough to reach 3:1 leaves too little headroom for the label. So the border
+carries the boundary (4.35:1 against the sheet) and the fill only seats the
+text (6.4:1). Both keep margin over the minimum, because the minimum is what
+disappears first on a bad screen.
+
 Full design and the roadmap beyond this phase: `docs/PERSONAL_PITCH.md`.
 
 ## Portable repertoire (export / import between installations)
