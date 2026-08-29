@@ -18,3 +18,27 @@ export function categoryLabel (type: string, name: string): string {
 
   return i18n.t(`categories.values.${type}.${name}` as MessageKey, { defaultValue: name })
 }
+
+/**
+ * The stored name behind a label somebody picked off a suggestion list.
+ *
+ * The inverse of `categoryLabel`, and it has to exist: genre, voice and
+ * language are a closed vocabulary shared with the reference table that ships
+ * with the app, so a Spanish reader choosing "Balada" must land on the stored
+ * "Ballad" rather than open a second genre beside it.
+ *
+ * Resolved by translating the names the library actually holds and comparing,
+ * rather than by a reversed table — one direction can then never drift from
+ * the other. A label nothing answers to is something the reader typed, and is
+ * returned as they typed it: inventing a category is allowed, it is
+ * duplicating one that is not.
+ */
+export function categoryFromLabel (type: string, label: string, storedNames: Iterable<string>): string {
+  const wanted = label.trim().toLowerCase()
+
+  for (const name of storedNames) {
+    if (categoryLabel(type, name).toLowerCase() === wanted) return name
+  }
+
+  return label.trim()
+}

@@ -1,9 +1,9 @@
-import React, { useRef, useState } from 'react'
+import React, { useMemo, useRef, useState } from 'react'
 import { useT } from 'lib/i18n'
 import { useAppDispatch, useAppSelector } from 'store/hooks'
 import Button from 'components/Button/Button'
 import { addSongCategory, removeSongCategory, type CategoryType } from 'store/modules/categories'
-import { categoryLabel } from 'lib/categoryLabel'
+import { categoryFromLabel, categoryLabel } from 'lib/categoryLabel'
 import styles from './SongInfo.css'
 
 const TYPES: CategoryType[] = ['genre', 'decade', 'voice', 'language']
@@ -27,14 +27,39 @@ const SongCategories = ({ songId }: { songId: number }) => {
   const [saveError, setSaveError] = useState<string | null>(null)
   const savingRef = useRef(false)
 
+  // suggest what the library already uses, so typing "balada" doesn't create a
+  // near-duplicate of an existing "Ballad" — and suggest it in the reader's
+  // language, since that is how the very same names are written on the chips
+  // an inch above. The list used to offer the stored names raw, so a Spanish
+  // reader chose from a menu of English while everything around it was in
+  // Spanish.
+  const suggestions = useMemo(() => {
+    const byLabel = new Map<string, string>()
+
+    for (const category of Object.values(entities)) {
+      if (category.type !== type) continue
+      byLabel.set(categoryLabel(category.type, category.name), category.name)
+    }
+
+    return [...byLabel].map(([label, stored]) => ({ label, stored }))
+      .sort((a, b) => a.label.localeCompare(b.label))
+  }, [entities, type])
+
   const handleAdd = async () => {
     if (!name.trim() || savingRef.current) return
     savingRef.current = true
     setIsSaving(true)
     setSaveError(null)
 
+    // Send the stored name, not the translated one. Genre, voice and language
+    // are a closed vocabulary shared with the reference table that ships with
+    // the app, so a Spanish reader picking "Balada" has to land on the
+    // existing "Ballad" rather than open a second genre beside it. Anything
+    // not on the list is something they typed, and goes as typed.
+    const stored = categoryFromLabel(type, name, suggestions.map(s => s.stored))
+
     try {
-      await dispatch(addSongCategory({ songId, name: name.trim(), type })).unwrap()
+      await dispatch(addSongCategory({ songId, name: stored, type })).unwrap()
       setName('')
     } catch (err) {
       setSaveError(err instanceof Error ? err.message : String(err))
@@ -43,12 +68,6 @@ const SongCategories = ({ songId }: { songId: number }) => {
       setIsSaving(false)
     }
   }
-
-  // suggest what the library already uses, so typing "balada" doesn't create a
-  // near-duplicate of an existing "Balada"
-  const suggestions = Array.from(new Set(
-    Object.values(entities).filter(c => c.type === type).map(c => c.name),
-  )).sort()
 
   return (
     <div className={styles.categoriesBlock}>
@@ -90,7 +109,7 @@ const SongCategories = ({ songId }: { songId: number }) => {
           placeholder={t('categories.placeholder')}
         />
         <datalist id={`category-suggestions-${songId}`}>
-          {suggestions.map(s => <option key={s} value={s} />)}
+          {suggestions.map(s => <option key={s.stored} value={s.label} />)}
         </datalist>
         <Button onClick={() => { void handleAdd() }} disabled={!name.trim() || isSaving}>
           {isSaving ? t('common.saving') : t('common.add')}

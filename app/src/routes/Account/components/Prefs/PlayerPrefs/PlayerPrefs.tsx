@@ -46,12 +46,9 @@ const PlayerPrefs = () => {
             name='isPlayerLaunchEnabled'
           />
           {' '}
-          Let signed-in singers start the player
+          {t('prefs.letSingersStartPlayer')}
         </label>
-        <p className={styles.hint}>
-          Anyone with an account (not guests) can open the player on a screen
-          and control playback from it. Off by default.
-        </p>
+        <p className={styles.hint}>{t('prefs.playerLaunchHint')}</p>
       </div>
     </Accordion>
   )

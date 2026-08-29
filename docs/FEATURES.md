@@ -564,6 +564,27 @@ New wave left Rock and R&B left Soul for the same reason: somebody filing a
 song under the narrower name is drawing a distinction, and folding it back
 would erase it.
 
+### Written in one language, stored in another
+
+Genre, voice and language are a closed vocabulary — the mapper produces a fixed
+set of canonical names — so a Spanish reader sees them in Spanish
+(`categoryLabel`). A decade is digits, and a name an admin typed is theirs, so
+both fall through unchanged.
+
+The editor's suggestion list had been offering the *stored* names raw, which
+left a Spanish reader choosing from a menu of English while the chips an inch
+above said Balada, Hombre, Inglés. It now suggests labels and resolves the
+choice back with `categoryFromLabel` before saving.
+
+That resolution is not cosmetic. The vocabulary is shared with the shipped
+reference table, so a reader picking "Balada" has to land on the stored
+"Ballad": a second genre beside it would be invisible in one language and
+duplicated in the other, and the table would name a genre no lookup could
+agree with. The inverse is computed by translating the names the library holds
+and comparing, never from a reversed table, so the two directions cannot drift
+apart. A label nothing answers to is something the reader typed and is saved as
+typed — inventing a category is allowed, duplicating one is not.
+
 ### The source ladder
 
 `songCategories.source` is `manual` > `reference` > `auto`, and a write may
