@@ -507,7 +507,11 @@ const en = {
 
   rooms: {
     title: 'Rooms',
+    titleWithCount: 'Rooms ({{count}})',
     all: 'All',
+    withPeople: 'With people',
+    noneMatch: 'No rooms match this filter.',
+    noneWithPeople: 'Nobody is in any open room right now.',
     open: 'Open',
     closed: 'Closed',
     name: 'Name',
@@ -602,6 +606,7 @@ const en = {
   repertoire: {
     title: 'My Repertoire',
     myPitches: 'My Pitches',
+    myPitchesWithCount: 'My Pitches ({{count}})',
     forget: 'Forget',
     joinToQueue: 'Join a room to add any of these to the queue.',
     nothingSavedYet: 'Nothing saved yet. Tick <b>Remember this pitch for me</b> when you add a song, and it will be waiting for you next time.',
@@ -652,11 +657,9 @@ const en = {
     version: '{{name}} v{{version}}',
     versionOnGitHub: '{{name}} {{version}} on GitHub',
     builtOn: 'Built on Karaoke Eternal',
-    changelogAndSponsors: 'Karaoke Eternal changelog & sponsors',
-    upstreamChangelog: 'Changelog',
     licenses: 'Licenses',
     star: 'Star',
-    sponsor: 'Sponsor',
+    whatsNew: 'What\'s new in {{name}}',
   },
 
   errors: {

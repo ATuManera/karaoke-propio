@@ -640,6 +640,57 @@ the database is already changed while the editor still looks stale. The input
 stays populated and locked while its single request is pending, so accepting a
 native datalist suggestion or pressing Enter repeatedly cannot overlap saves.
 
+## The account screen folds
+
+`Panel` takes `collapsible`, and two panels use it: *My Pitches* and, for an
+admin, *Rooms*. Both are as long as something outside their control — a
+singer's repertoire, an installation's history of rooms — and an account screen
+that has to be scrolled past sixty saved pitches to reach *About* is a screen
+nobody reads.
+
+Folding is only safe because the title carries a count: "My Pitches (0)" and
+"My Pitches (37)" are different answers and neither needs opening. A folded
+panel that says nothing about what is inside trades a long screen for a
+guessing game.
+
+The heading is the button, with `aria-expanded` and `aria-controls` on it the
+way `Accordion` does it, so a screen reader announces the state on the thing
+whose name it just read rather than on an unlabelled row. Panels that do not
+pass `collapsible` render exactly the markup they did before — no button, no
+chevron, nothing to announce.
+
+The *Rooms* filter gains "with people": open rooms that have somebody in them,
+which is the question being asked in the middle of a party. It is deliberately
+not the default. The reason to open that panel is usually to manage one room —
+create it, rename it, close it — and a default that hides every empty room
+hides the one that was being looked for. An empty result says so in words,
+since an empty table under a filter reads as a fault rather than an answer.
+
+## About: which project this is
+
+Everything above the divider is this project, everything below it is credit for
+the work it is built on. *What's new* now sits above it and opens this
+repository's release notes.
+
+It used to sit below, opening the vendored `CHANGELOG.md` in a modal: Karaoke
+Eternal's releases, bundled into the client, under a heading a reader takes to
+mean the app in front of them. "Star counts are now shown in the Queue view" is
+true of a different program. A link rather than a list fetched at runtime —
+the notes live on GitHub, reaching them costs nothing, and asking its API for
+them would add a rate limit and a way for this panel to look broken on an
+installation with no internet.
+
+The sponsor button went with it. It pointed at the upstream author's funding
+page from inside a different application, which is a confusing thing to put in
+front of a guest at somebody's party. Attribution is untouched and lives where
+it always did: the divider prose with its link and copyright, `NOTICE`, and
+`THIRD_PARTY_NOTICES.md`. The ISC licence asks for the copyright notice, not
+for a funding link.
+
+Removing the import took the webpack `.md` loader rule with it, and the
+`html-loader` and `markdown-loader` devDependencies that existed only to serve
+it, and the `__KE_URL_SPONSOR__` define.
+
 ## Rooms belong to accounts
 
 Which rooms a person may enter is an admin's decision, kept on their account
@@ -665,8 +716,8 @@ from what that account is allowed.
 - **One room.** They are put in it. A question with one answer is not a
   question, and `POST /api/login` signs the room straight into the session.
 - **Several.** The room picker appears (`components/RoomGate`), with one
-  already chosen. It is never an empty list of radio buttons: "always
-  preselected" is the promise, and `getPreferredRoomId` keeps it.
+  already chosen. "Always preselected" is the promise, and `getPreferredRoomId`
+  keeps it.
 
 The preselection is the admin's the first time — they set it when assigning
 rooms — and the person's own from then on, since entering a room records it.
@@ -675,6 +726,24 @@ That resolution is deliberately a preference and not a promise: the stored
 choice is honoured only while that room is still assigned *and* still open, and
 otherwise the first room they can reach is used. A revoked or deleted room
 therefore costs somebody a preference and never a sign-in.
+
+The picker is one `<select>`, whatever the room count. It began as a column of
+cards — a radio group, one card per room, each naming whether anyone was in it
+— on the reasoning that "someone here" is why people pick one room over another
+and a dropdown hides it. That reads well at two rooms and badly at six: the
+cards pushed the Enter button off the bottom of a phone, so choosing a room
+meant scrolling past every other room to reach the way in, and sooner than that
+on a television browser, which is wide and short. The state moved into the
+option text instead, the way `MyRoom` already writes it, so the chosen room
+still says it without opening anything — one control for "which room" rather
+than two.
+
+A select always displays one of its options, which forces the state to name the
+same one. With no preference set, `choice` stayed null while the select showed
+the first room, and Enter sat disabled under a room that looked chosen; the
+cards could afford that because none of them looked picked. Hence `selected`,
+which falls through preference to first room. Lost with the cards: double-click
+to enter, undiscoverable on a screen whose whole audience is on a touchscreen.
 
 ### The room password, and where it still applies
 

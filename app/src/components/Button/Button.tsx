@@ -12,7 +12,7 @@ type ButtonBaseProps = {
   className?: string
   icon?: React.ComponentProps<typeof Icon>['icon']
   size?: number
-  variant?: 'primary' | 'danger' | 'default'
+  variant?: 'primary' | 'danger' | 'default' | 'quiet'
   as?: ButtonElementType
 }
 

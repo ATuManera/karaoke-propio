@@ -37,10 +37,6 @@
   margin-top: 1em;
 }
 
-.pseudolink {
-  cursor: pointer;
-}
-
 /* everything above this rule is this project; everything below it is credit
    for the work it is built on */
 .divider {
@@ -49,14 +45,13 @@
   border-top: 1px solid rgba(240, 246, 252, .1);
 }
 
+/* "What's new" and "Licences" sit on one line: two paragraphs of one link
+   each read as two separate statements, which they are not. */
 .links {
+  display: flex;
+  gap: var(--space-m);
+  justify-content: center;
   margin-top: var(--space-m);
-}
-
-.changelog {
-  text-align: left;
-  width: 90%;
-  height: 90%;
 }
 
 .ghButtonContainer {
@@ -94,8 +89,4 @@
 
 .ghButton.star svg {
   color: #E3B341;
-}
-
-.ghButton.sponsor svg {
-  color: #db61a2;
 }

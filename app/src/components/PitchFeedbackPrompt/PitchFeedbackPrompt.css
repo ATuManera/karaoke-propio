@@ -92,40 +92,13 @@
   gap: var(--space-s);
 }
 
-/* The answers have to look like things you press.
- *
- * They were plain text on the sheet: Button only paints a surface for its
- * `variant`, and these passed none, so `.container` left them transparent and
- * borderless. The words themselves read fine — gray-8 on this sheet is
- * 10.3:1 — but a control with no boundary at all fails WCAG 1.4.11, which asks
- * 3:1 between a component and what is behind it, and on a phone it simply does
- * not invite a tap. It was worst on Android, where a dim panel and an eye-
- * comfort filter take away whatever separation is left.
- *
- * The fill alone cannot carry it: against a sheet this dark, a surface light
- * enough to reach 3:1 leaves too little headroom for the label. So the border
- * carries the boundary — 4.35:1 against the sheet — and the fill only has to
- * seat the text, which it does at 6.4:1. Both keep margin over the minimum,
- * because the minimum is what disappears first on a bad screen. */
+/* The surface and the boundary come from Button's `quiet` variant, which
+   exists because this was the second control in the app to render with
+   neither. Only the sizing is this component's business. */
 .choice,
 .wideChoice {
-  padding: var(--space-s);
   min-height: 44px; /* stays tappable with a microphone in the other hand */
   font-size: var(--font-size-s);
-  font-weight: var(--font-weight-bold);
-  color: var(--color-gray-9);
-  background-color: hsl(var(--hue-blue), 18%, 32%);
-  border: 1.5px solid hsl(var(--hue-blue), 30%, 52%);
-  border-radius: var(--border-radius);
-
-  /* a press has to show, on a screen with no hover to fall back on */
-  &:active:not(:disabled) {
-    background-color: hsl(var(--hue-blue), 22%, 42%);
-  }
-
-  &:disabled {
-    opacity: 0.55;
-  }
 }
 
 .wideChoice {

@@ -56,7 +56,6 @@ let config = {
       __KE_URL_HOME__: JSON.stringify('https://www.karaoke-eternal.com'),
       __KE_URL_LICENSE__: JSON.stringify('/licenses.txt'),
       __KE_URL_REPO__: JSON.stringify('https://www.karaoke-eternal.com/repo'),
-      __KE_URL_SPONSOR__: JSON.stringify('https://www.karaoke-eternal.com/sponsor'),
     })),
     new CaseSensitivePathsPlugin(),
     new MiniCssExtractPlugin({
@@ -148,19 +147,6 @@ config.module.rules.push(
     type: 'asset',
   },
 )
-
-// Markdown
-config.module.rules.push({
-  test: /\.md$/,
-  use: [
-    {
-      loader: 'html-loader',
-    },
-    {
-      loader: 'markdown-loader',
-    },
-  ],
-})
 
 if (__PROD__) config = applyLicenseConfig(config)
 

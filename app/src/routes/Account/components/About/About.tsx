@@ -1,22 +1,16 @@
-import React, { useState } from 'react'
+import React from 'react'
 import clsx from 'clsx'
 import Panel from 'components/Panel/Panel'
 import Icon from 'components/Icon/Icon'
 import Logo from 'components/Logo/Logo'
-import Modal from 'components/Modal/Modal'
-import Button from 'components/Button/Button'
-// @ts-expect-error: not worth configuring TS for this one weird import
-import html from '<PROJECT_ROOT>/CHANGELOG.md'
 import styles from './About.css'
 import { useT } from 'lib/i18n'
-import { KP_NAME, KP_REPO_URL, KP_VERSION } from 'shared/version'
+import { KP_NAME, KP_RELEASES_URL, KP_REPO_URL, KP_VERSION } from 'shared/version'
 
 const curYear = new Date().getFullYear()
 
 const About = () => {
   const t = useT()
-  const [isChangelogOpen, setChangelogOpen] = useState(false)
-  const toggleChangelog = () => setChangelogOpen(prevState => !prevState)
 
   return (
     <Panel title={t('about.title')} contentClassName={styles.content}>
@@ -67,7 +61,24 @@ const About = () => {
           </div>
         </div>
 
+        {/*
+          * What changed, in this app.
+          *
+          * It used to open Karaoke Eternal's changelog in a modal, bundled
+          * into the client from the vendored source — a list describing
+          * another application's releases, under a heading a reader takes to
+          * mean this one. Every version of Karaoke Propio has its own notes,
+          * so this goes there instead.
+          *
+          * A link rather than a list fetched at runtime: the notes live on
+          * GitHub and reaching them costs nothing, while asking its API for
+          * them adds a rate limit and a way for this panel to look broken on
+          * an installation with no internet.
+          */}
         <p className={styles.links}>
+          <a href={KP_RELEASES_URL} target='_blank' rel='noreferrer'>
+            {t('about.whatsNew', { name: KP_NAME })}
+          </a>
           <a href='/licenses.txt' target='_blank'>{t('about.licenses')}</a>
         </p>
 
@@ -90,41 +101,6 @@ const About = () => {
           <a href='https://www.radroot.com' target='_blank' rel='noreferrer'>RadRoot LLC</a>
         </p>
 
-        <div className={styles.ghButtonContainer}>
-          <div className={styles.ghButton}>
-            {/* opens a panel, not GitHub, so it does not wear GitHub's mark */}
-            <a className={styles.pseudolink} onClick={toggleChangelog}>
-              <Icon icon='INFO_OUTLINE' size={16} />
-              {t('about.upstreamChangelog')}
-            </a>
-          </div>
-          <div className={clsx(styles.ghButton, styles.sponsor)}>
-            {/* @ts-expect-error: global via Webpack */}
-            <a href={__KE_URL_SPONSOR__} target='_blank' rel='noreferrer'>
-              <Icon icon='GITHUB_SPONSOR' size={16} />
-              {t('about.sponsor')}
-            </a>
-          </div>
-        </div>
-
-        {isChangelogOpen && (
-          <Modal
-            title={t('about.changelogAndSponsors')}
-            className={styles.changelog}
-            onClose={toggleChangelog}
-            scrollable
-            buttons={(
-              <Button variant='primary' onClick={toggleChangelog}>
-                {t('common.done')}
-              </Button>
-            )}
-          >
-            {/* @todo: without this anchor the changelog gets scrolled to
-              the first "real" link, even with focusTrapped=false */}
-            <a href='' aria-hidden></a>
-            <div dangerouslySetInnerHTML={{ __html: html }} />
-          </Modal>
-        )}
       </>
     </Panel>
   )

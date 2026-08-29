@@ -11,9 +11,17 @@
  * up wrong. The git tag is deliberately NOT covered by that test: tagging is
  * an act of release, done once the code is final, not an input to the build.
  */
-export const KP_VERSION = '2.7.2'
+export const KP_VERSION = '2.8.0'
 
 export const KP_REPO_URL = 'https://github.com/ATuManera/karaoke-propio'
+
+/**
+ * Where each version says what changed in it.
+ *
+ * The About panel used to offer the vendored upstream CHANGELOG.md instead,
+ * which describes a different application's releases.
+ */
+export const KP_RELEASES_URL = `${KP_REPO_URL}/releases`
 
 /** the product name, which is never translated and never machine-translated */
 export const KP_NAME = 'Karaoke Propio'

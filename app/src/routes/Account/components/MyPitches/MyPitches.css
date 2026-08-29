@@ -58,9 +58,14 @@
   gap: var(--space-xs);
 }
 
+/* Surface, border and weight come from Button's `quiet` variant; these two
+   only have to stay square and stay tappable. Deliberately no padding
+   override: both are plain class selectors, so whichever stylesheet the
+   bundler happens to emit last would win, and a stepper that is 44px on one
+   build and not the next is not a size. */
 .nudge {
-  padding: 0 0.7em;
-  font-weight: var(--font-weight-bold);
+  min-width: 44px;
+  min-height: 44px;
 }
 
 .pitch {

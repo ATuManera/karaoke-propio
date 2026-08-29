@@ -61,8 +61,17 @@ const MyPitches = () => {
 
   const handleForget = (songId: number) => dispatch(clearSongPitchPref(songId))
 
+  // Folded by default and counted in its own title: this list is as long as
+  // the singer's repertoire, and sixty songs between Account and everything
+  // below turn the screen into a scroll. The count is what makes folding safe
+  // — "My Pitches (0)" and "My Pitches (37)" are different answers, and
+  // neither needs opening to read.
   return (
-    <Panel title={t('repertoire.myPitches')} contentClassName={styles.content}>
+    <Panel
+      collapsible
+      title={t('repertoire.myPitchesWithCount', { count: rows.length })}
+      contentClassName={styles.content}
+    >
       <>
         {rows.length === 0 && (
           <p className={styles.empty}>
@@ -88,6 +97,7 @@ const MyPitches = () => {
 
             <div className={styles.controls}>
               <Button
+                variant='quiet'
                 className={styles.nudge}
                 onClick={() => handleNudge(songId, pref.pitchSemitones, -1)}
                 disabled={pref.pitchSemitones <= PITCH_MIN}
@@ -97,6 +107,7 @@ const MyPitches = () => {
               </Button>
               <output className={styles.pitch}>{formatPitch(pref.pitchSemitones)}</output>
               <Button
+                variant='quiet'
                 className={styles.nudge}
                 onClick={() => handleNudge(songId, pref.pitchSemitones, 1)}
                 disabled={pref.pitchSemitones >= PITCH_MAX}

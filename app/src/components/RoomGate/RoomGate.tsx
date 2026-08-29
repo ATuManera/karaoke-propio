@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react'
-import clsx from 'clsx'
 import { useAppDispatch, useAppSelector } from 'store/hooks'
 import { fetchMyRooms } from 'store/modules/rooms'
 import { enterRoom, requestLogout } from 'store/modules/user'
@@ -42,6 +41,15 @@ const RoomGate = () => {
     setPrevPreferred(mine.preferredRoomId)
     setChoice(mine.preferredRoomId)
   }
+
+  // What the control is actually showing.
+  //
+  // A select always displays one of its options, so the state has to name the
+  // same one or the screen contradicts itself: with no preference set, `choice`
+  // stayed null while the select showed the first room, and Enter sat disabled
+  // under a room that looked chosen. The cards could afford that — none of them
+  // looked picked — a dropdown cannot.
+  const selected = choice ?? mine.preferredRoomId ?? mine.result[0] ?? null
 
   const go = (roomId: number) => {
     setIsEntering(true)
@@ -106,41 +114,46 @@ const RoomGate = () => {
       <h1>{t('selectRoom.title')}</h1>
       <p className={styles.hint}>{t('selectRoom.hint')}</p>
 
-      {/* A list of rooms is a single choice, so it is a radio group and says
-          so: a set of buttons where one stays pressed is what this looks like,
-          and a screen reader would otherwise announce it as a row of buttons
-          that each do something. */}
-      <div className={styles.rooms} role='radiogroup' aria-label={t('selectRoom.title')}>
+      {/* One row, however many rooms there are.
+
+          This was a radio group — one tall card per room — which is a fine
+          shape for two rooms and a wrong one for six: the cards pushed the
+          Enter button off the bottom of the phone, so choosing a room meant
+          scrolling past every other room to reach the way in. A native select
+          is still a single choice, still announces itself as one, and on a
+          phone it opens the platform's own picker, which is a better list than
+          any this screen could draw. It is the control My Room already uses
+          for the same question, down to naming the room's state in the option
+          — one pattern for "which room", not two.
+
+          Lost with the cards: double-click to enter. It was undiscoverable on
+          a screen whose whole audience is on a touchscreen. */}
+      <select
+        className={styles.roomSelect}
+        value={selected ?? ''}
+        onChange={e => setChoice(parseInt(e.target.value, 10))}
+        disabled={isEntering}
+        aria-label={t('selectRoom.title')}
+      >
         {mine.result.map((roomId) => {
           const room = mine.entities[roomId]
+          const state = room.status === 'closed'
+            ? t('selectRoom.closed')
+            : room.isLive ? t('selectRoom.someoneHere') : t('selectRoom.free')
 
           return (
-            <button
-              key={roomId}
-              type='button'
-              role='radio'
-              aria-checked={choice === roomId}
-              className={clsx(styles.room, choice === roomId && styles.chosen)}
-              onClick={() => setChoice(roomId)}
-              onDoubleClick={() => go(roomId)}
-              disabled={isEntering}
-            >
-              <span className={styles.roomName} translate='no'>{room.name}</span>
-              <span className={styles.roomState}>
-                {room.status === 'closed'
-                  ? t('selectRoom.closed')
-                  : room.isLive ? t('selectRoom.someoneHere') : t('selectRoom.free')}
-              </span>
-            </button>
+            <option key={roomId} value={roomId}>
+              {`${room.name} — ${state}`}
+            </option>
           )
         })}
-      </div>
+      </select>
 
       <Button
         variant='primary'
         className={styles.enter}
-        disabled={choice === null || isEntering}
-        onClick={() => choice !== null && go(choice)}
+        disabled={selected === null || isEntering}
+        onClick={() => selected !== null && go(selected)}
       >
         {isEntering ? t('selectRoom.entering') : t('selectRoom.enter')}
       </Button>

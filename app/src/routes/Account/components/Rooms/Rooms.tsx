@@ -68,12 +68,26 @@ const Rooms = () => {
     <select className={styles.roomsFilter} onChange={handleFilterChange} value={filterStatus === false ? 'all' : filterStatus as string}>
       <option key='all' value='all'>{t('rooms.all')}</option>
       <option key='open' value='open'>{t('rooms.open')}</option>
+      {/* the party question: not "which rooms exist" but "where is anybody" */}
+      <option key='live' value='live'>{t('rooms.withPeople')}</option>
       <option key='closed' value='closed'>{t('rooms.closed')}</option>
     </select>
   )
 
+  // Folded by default, and counted under the filter that is actually on: an
+  // installation accumulates rooms and never loses them, so this table is the
+  // tallest thing on the screen long before anybody notices.
+  //
+  // The default filter is deliberately left at 'open' rather than moved to
+  // 'withPeople'. The reason to open this panel is usually to manage one room
+  // — create it, rename it, close it — and a default that hides every empty
+  // room hides the one that was being looked for.
   return (
-    <Panel title={t('rooms.title')} titleComponent={roomsFilter}>
+    <Panel
+      collapsible
+      title={t('rooms.titleWithCount', { count: rows.length })}
+      titleComponent={roomsFilter}
+    >
       <>
         <table className={styles.table}>
           <thead>
@@ -87,6 +101,14 @@ const Rooms = () => {
             {rows}
           </tbody>
         </table>
+
+        {/* An empty table under a filter reads as "something is broken"; said
+            plainly it reads as "nothing matches", which is what it means. */}
+        {rows.length === 0 && (
+          <p className={styles.empty}>
+            {filterStatus === 'live' ? t('rooms.noneWithPeople') : t('rooms.noneMatch')}
+          </p>
+        )}
 
         <br />
         <Button onClick={handleCreate} variant='primary'>

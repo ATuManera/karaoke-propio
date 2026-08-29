@@ -23,3 +23,45 @@
 .content {
   padding: var(--container-padding);
 }
+
+/* A collapsible panel's title is a button, and has to keep looking like a
+   title: no chrome of its own, the whole row tappable, and a chevron that
+   turns rather than a second word saying "show". */
+.collapsibleHeading {
+  flex: 1;
+  min-width: 0;
+}
+
+.toggle {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  width: 100%;
+  padding: 0;
+  margin: 0;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  background: none;
+  border: none;
+  cursor: pointer;
+
+  &:focus-visible {
+    outline: var(--focus-outline);
+  }
+}
+
+.chevron {
+  flex: none;
+  transition: transform 150ms ease;
+}
+
+.container[data-expanded] .chevron {
+  transform: rotate(90deg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chevron {
+    transition: none;
+  }
+}

@@ -465,7 +465,11 @@ const es: Messages = {
 
   rooms: {
     title: 'Salas',
+    titleWithCount: 'Salas ({{count}})',
     all: 'Todas',
+    withPeople: 'Con gente',
+    noneMatch: 'Ninguna sala coincide con este filtro.',
+    noneWithPeople: 'Ahora mismo no hay nadie en ninguna sala abierta.',
     open: 'Abierta',
     closed: 'Cerrada',
     name: 'Nombre',
@@ -560,6 +564,7 @@ const es: Messages = {
   repertoire: {
     title: 'Mi repertorio',
     myPitches: 'Mis tonos',
+    myPitchesWithCount: 'Mis tonos ({{count}})',
     forget: 'Olvidar',
     joinToQueue: 'Entra a una sala para agregar cualquiera de estas a la cola.',
     nothingSavedYet: 'Todavía no has guardado nada. Marca <b>Recordar este tono para mí</b> cuando agregues una canción y te estará esperando la próxima vez.',
@@ -604,11 +609,9 @@ const es: Messages = {
     version: '{{name}} v{{version}}',
     versionOnGitHub: '{{name}} {{version}} en GitHub',
     builtOn: 'Construido sobre Karaoke Eternal',
-    changelogAndSponsors: 'Novedades y patrocinadores de Karaoke Eternal',
-    upstreamChangelog: 'Novedades',
     licenses: 'Licencias',
     star: 'Estrella',
-    sponsor: 'Patrocinar',
+    whatsNew: 'Novedades de {{name}}',
   },
 
   errors: {

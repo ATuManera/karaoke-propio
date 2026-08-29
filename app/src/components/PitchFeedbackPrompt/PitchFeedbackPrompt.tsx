@@ -157,6 +157,7 @@ const PitchFeedbackPrompt = () => {
                   {CHOICES.map(({ choice, key, isWide }) => (
                     <Button
                       key={choice}
+                      variant='quiet'
                       className={isWide ? styles.wideChoice : styles.choice}
                       onClick={() => handleRespond(choice)}
                       disabled={isSubmitting}

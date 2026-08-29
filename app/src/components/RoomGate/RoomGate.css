@@ -26,60 +26,26 @@
   color: var(--color-gray-5);
 }
 
-.rooms {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-s);
-  margin-bottom: var(--space-l);
-}
-
-/* Rows rather than a dropdown: this is the one thing on the screen, a phone
-   opens a native picker for a <select> that hides the very list being chosen
-   from, and "someone here" is the reason most people pick one room over
-   another — it has to be readable without opening anything. */
-.room {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: var(--space-m);
+/* One control, whatever the room count.
+ *
+ * This was a column of cards, one per room. That reads well at two rooms and
+ * badly at six: the cards pushed Enter off the bottom of a phone, so choosing
+ * meant scrolling past every room to reach the way in — and on a television
+ * browser, which is wide and short, sooner than that.
+ *
+ * The argument for cards was that "someone here" is why people pick one room
+ * over another and a dropdown hides it. The state moved into the option text
+ * instead, the way My Room already writes it, so the chosen room still says it
+ * without opening anything and the rest say it the moment the list is open. */
+.roomSelect {
   width: 100%;
-  padding: var(--space-m);
-  border: 2px solid transparent;
-  border-radius: var(--border-radius);
-  background-color: hsl(var(--hue-blue), 10%, 18%);
-  box-shadow: var(--box-shadow);
-  color: var(--text-color);
-  font-size: var(--font-size-s);
-  text-align: left;
-  cursor: pointer;
-
-  &:focus-visible {
-    outline: var(--focus-outline);
-  }
+  margin-bottom: var(--space-l);
+  font-size: var(--font-size-m);
 
   &:disabled {
     opacity: 0.6;
     cursor: default;
   }
-}
-
-/* The chosen room is marked by its border and its weight, not by colour
-   alone — the difference between two dark blues is not a cue every reader
-   gets, and this screen has exactly one thing to communicate. */
-.chosen {
-  border-color: var(--link-color);
-  background-color: hsl(var(--hue-blue), 30%, 22%);
-}
-
-.roomName {
-  font-weight: var(--font-weight-bold);
-  overflow-wrap: anywhere;
-}
-
-.roomState {
-  flex: 0 0 auto;
-  font-size: var(--font-size-xs);
-  color: var(--color-gray-6);
 }
 
 /* A Button has no disabled styling of its own, and this one goes disabled the

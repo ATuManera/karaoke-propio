@@ -46,3 +46,41 @@
   background-color: var(--btn-danger-bg-color);
   background-image: linear-gradient(180deg, hsl(var(--hue-pink), 62%, 50%) 0%, hsl(var(--hue-pink), 62%, 45%) 100%);
 }
+
+/* A control that has to be visibly a control, on a dark surface, without
+ * shouting like `primary`.
+ *
+ * `.container` alone paints nothing — transparent, borderless — which is right
+ * for an icon button sitting in a row of chrome and wrong for anything a
+ * person is meant to press on a panel. Twice now that produced a control with
+ * no boundary at all: the pitch assistant's five answers and the −/+ steppers
+ * in My Pitches. Both were legible and neither looked pressable, and both
+ * failed WCAG 1.4.11, which asks 3:1 between a component and its background.
+ *
+ * On surfaces this dark the fill cannot carry that on its own: one light
+ * enough to reach 3:1 leaves too little headroom for the label above it. So
+ * the border carries the boundary and the fill only seats the text. Measured
+ * against the lighter of the two surfaces it sits on — the assistant's sheet,
+ * hsl(hue, 30%, 12%) — the border is 4.35:1 and the label 6.4:1; on the darker
+ * panel behind My Pitches both are higher. Margin over the minimum on purpose:
+ * the minimum is what disappears first on a dim phone with a comfort filter,
+ * which is where this was reported.
+ */
+.quiet {
+  padding: var(--space-s);
+  color: var(--color-gray-9);
+  font-weight: var(--font-weight-bold);
+  background-color: hsl(var(--hue-blue), 18%, 32%);
+  border: 1.5px solid hsl(var(--hue-blue), 30%, 52%);
+  border-radius: var(--border-radius);
+
+  /* a press has to show, on a screen with no hover to fall back on */
+  &:active:not(:disabled) {
+    background-color: hsl(var(--hue-blue), 22%, 42%);
+  }
+
+  &:disabled {
+    opacity: 0.55;
+    cursor: default;
+  }
+}
