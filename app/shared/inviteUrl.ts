@@ -45,3 +45,23 @@ export function resolveInviteBaseUrl (
   // on the same wifi).
   return configured || `${current.protocol}//${current.host}`
 }
+
+/**
+ * The link a host hands out, complete.
+ *
+ * Always the room's random code and never its numeric id: ids are sequential,
+ * so "?roomId=1" advertises that rooms 2, 3, 4… exist — harmless on a private
+ * LAN, not once this answers from the internet. The whole string is what goes
+ * to the clipboard and to the share sheet, so it is built in one place rather
+ * than assembled twice at the two call sites.
+ */
+export function buildInviteUrl (
+  current: { protocol: string, host: string, hostname: string },
+  configuredPublicUrl: string | null | undefined,
+  code: string,
+): string {
+  const url = new URL(resolveInviteBaseUrl(current, configuredPublicUrl))
+  url.searchParams.set('room', code)
+
+  return url.href
+}

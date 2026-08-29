@@ -18,16 +18,48 @@
 
   input[type="text"] {
     flex: 1;
+    /* without this the field refuses to shrink below the length of the URL it
+       holds, and a long invite link pushes the two buttons off a phone */
     min-width: 0;
   }
+}
 
-  /* not stretched and not squeezed: Button is 100% wide by default, which in
-     a row makes it fight the field beside it and spill its label across it as
-     soon as a translation is longer than the English was */
-  button {
-    flex: 0 0 auto;
-    width: auto;
-    padding-inline: var(--space-m);
-    white-space: nowrap;
-  }
+/* Square, because these two say what they do with an icon and nothing else.
+ *
+ * They used to be a word — "Copiar" — on a Button with no variant, which
+ * paints nothing at all: transparent, borderless, the label the only thing on
+ * screen. It read as a caption rather than a control and failed WCAG 1.4.11,
+ * which asks 3:1 between a component and its background. `quiet` is the
+ * variant that exists for exactly this (see Button.css): a border that carries
+ * the boundary and a fill that only seats the icon.
+ *
+ * 44px is the tap target, not the icon: two 22px icons side by side on a phone
+ * are two things nobody can hit apart. The box is `border-box` (modern-
+ * normalize), so `quiet`'s own 8px padding and 1.5px border sit inside those
+ * 44px and leave 25px for a 22px icon.
+ *
+ * Deliberately no padding of its own. `.quiet` and `.action` are both plain
+ * class selectors on the same element, in two different CSS chunks, so a
+ * padding written here would be decided by whichever stylesheet webpack
+ * emitted last — the same trap My Pitches' steppers document, and the same
+ * one that kept My Pitches from folding. Contest nothing and there is nothing
+ * to lose.
+ */
+.action {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  min-width: 44px;
+  height: 44px;
+}
+
+/* Holds its line whether or not it is saying anything, so confirming a copy
+   does not shove the rest of the panel down a row. */
+.feedback {
+  min-height: 1.4em;
+  margin: var(--space-xs) 0 0 0;
+  font-size: var(--font-size-s);
+  color: var(--color-gray-6);
 }

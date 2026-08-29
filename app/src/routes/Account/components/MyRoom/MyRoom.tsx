@@ -4,6 +4,7 @@ import { fetchMyRooms } from 'store/modules/rooms'
 import { enterRoom } from 'store/modules/user'
 import Panel from 'components/Panel/Panel'
 import Button from 'components/Button/Button'
+import { roomOptionLabel } from 'lib/roomLabel'
 import { useT } from 'lib/i18n'
 import styles from './MyRoom.css'
 
@@ -48,8 +49,7 @@ const MyRoom = () => {
         >
           {mine.result.map(id => (
             <option key={id} value={id}>
-              {mine.entities[id].name}
-              {mine.entities[id].isLive ? ` — ${t('selectRoom.someoneHere')}` : ` — ${t('selectRoom.free')}`}
+              {roomOptionLabel(mine.entities[id], t)}
             </option>
           ))}
         </select>

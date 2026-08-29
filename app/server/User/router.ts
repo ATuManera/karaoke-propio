@@ -238,9 +238,16 @@ router.get('/user/rooms', (ctx) => {
   res.result.forEach((roomId) => {
     const sockets = ctx.io.sockets.adapter.rooms.get(Rooms.prefix(roomId))
 
-    // whether a party is already going in there, never how many people —
-    // the same line the room list has always drawn
-    res.entities[roomId].isLive = sockets ? sockets.size > 0 : false
+    // How many people are in there, not merely whether anyone is.
+    //
+    // /api/rooms still draws the older line — "somebody is in there", never
+    // the number — because that endpoint answers "what rooms exist", and the
+    // occupancy of a room nobody may enter is not theirs to know. This one
+    // answers "where may I go", and every room in the answer is already one
+    // they may walk into, so the count tells them nothing they could not find
+    // out by walking in. It is also the thing actually being asked: "someone
+    // here" reads the same for a duet and for a full room.
+    res.entities[roomId].numUsers = sockets ? sockets.size : 0
 
     // nothing on this screen reads a room's prefs, and the invite code must
     // never ride along (Rooms.get already withholds it)

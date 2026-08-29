@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { isPrivateHost, resolveInviteBaseUrl } from './inviteUrl.js'
+import { buildInviteUrl, isPrivateHost, resolveInviteBaseUrl } from './inviteUrl.js'
 
 const at = (url: string) => {
   const u = new URL(url)
@@ -52,5 +52,29 @@ describe('resolveInviteBaseUrl', () => {
   it('ignores a trailing slash in the configured URL', () => {
     expect(resolveInviteBaseUrl(at('http://192.168.1.5:8080/player'), 'https://karaoke.example.com/'))
       .toBe('https://karaoke.example.com')
+  })
+})
+
+describe('buildInviteUrl', () => {
+  // the exact string that goes to the clipboard and to the share sheet
+  it('carries the room code as ?room=', () => {
+    expect(buildInviteUrl(at('https://karaoke.gallarday.net/'), null, 'TT98MR'))
+      .toBe('https://karaoke.gallarday.net/?room=TT98MR')
+  })
+
+  it('invites people to the public address when the host is on the LAN', () => {
+    expect(buildInviteUrl(at('http://192.168.68.170:8080/account'), 'https://karaoke.gallarday.net', 'TT98MR'))
+      .toBe('https://karaoke.gallarday.net/?room=TT98MR')
+  })
+
+  // whatever the host was looking at when they pressed Copy stays out of it
+  it('never carries the page it was built on', () => {
+    expect(buildInviteUrl(at('https://karaoke.gallarday.net/library?search=flaca'), null, 'AB12CD'))
+      .toBe('https://karaoke.gallarday.net/?room=AB12CD')
+  })
+
+  it('escapes a code rather than pasting it in raw', () => {
+    expect(buildInviteUrl(at('https://karaoke.gallarday.net/'), null, 'A B&C'))
+      .toBe('https://karaoke.gallarday.net/?room=A+B%26C')
   })
 })

@@ -24,6 +24,21 @@
   padding: var(--container-padding);
 }
 
+/* `hidden` is only a user-agent rule (`display: none`), and ANY author
+   `display` on the same element outranks it. A panel that passes a
+   `contentClassName` carrying its own layout therefore stays open no matter
+   what the toggle says — which is exactly what happened to My Pitches, whose
+   content class is a flex column: the chevron turned, aria-expanded flipped,
+   and eighteen songs stayed on screen.
+
+   Written as `.content[hidden]` on purpose. That is one class plus an
+   attribute, so it beats the caller's single class whichever order the
+   bundler happens to emit the two stylesheets in — a fix that depends on
+   emit order is a fix that works until the next build. */
+.content[hidden] {
+  display: none;
+}
+
 /* A collapsible panel's title is a button, and has to keep looking like a
    title: no chrome of its own, the whole row tappable, and a chevron that
    turns rather than a second word saying "show". */

@@ -659,6 +659,22 @@ whose name it just read rather than on an unlabelled row. Panels that do not
 pass `collapsible` render exactly the markup they did before — no button, no
 chevron, nothing to announce.
 
+**`hidden` does not survive a `contentClassName`.** *My Pitches* shipped folded
+and never folded: the chevron turned, `aria-expanded` flipped, the content got
+its `hidden` attribute, and eighteen songs stayed on screen through all of it.
+`hidden` is nothing but a user-agent `display: none`, and any author `display`
+on the same element outranks it — `MyPitches.css` sets `display: flex` on the
+very class it passes as `contentClassName`. So a panel is now hidden by a rule
+of its own, `.content[hidden]`, written with the attribute alongside the class
+so it outweighs the caller's single class whichever order webpack emits the two
+chunks in. A fix that depends on emit order is a fix that lasts until the next
+build.
+
+The lesson generalises past this panel: a component that hides a slot the
+caller may style cannot delegate the hiding to the user agent, because the
+caller always wins. `Accordion` hands out the same slot and is one
+`contentClassName` with a `display` away from the same bug.
+
 The *Rooms* filter gains "with people": open rooms that have somebody in them,
 which is the question being asked in the middle of a party. It is deliberately
 not the default. The reason to open that panel is usually to manage one room —
@@ -737,6 +753,29 @@ on a television browser, which is wide and short. The state moved into the
 option text instead, the way `MyRoom` already writes it, so the chosen room
 still says it without opening anything — one control for "which room" rather
 than two.
+
+**How many, not whether.** That state used to read "someone here" or "free",
+off an `isLive` boolean the server derived from the room's socket count and
+then threw the number away. It answers a question nobody asks: whoever is
+deciding where to sing wants to know if they are joining a duet or eleven
+people, and "someone here" reads identically for both. Both pickers now say
+"4 people here" — one function, `lib/roomLabel`, because they are one question
+asked twice and had already drifted apart once, the picker naming a closed room
+where the panel did not.
+
+The number is socket connections in the room, the same count the *Rooms* panel
+has always shown an admin — so a phone with two tabs open counts twice, and one
+that has gone to sleep stops counting. It rides on the room list that was
+already being fetched (`GET /user/rooms`), so counting costs no request: an
+extra call per room would be N+1 against the thing this screen is made of.
+There is no push behind it, and none was invented; the list is asked for when
+the screen mounts, exactly as the boolean was, and polling every room to keep a
+number twitching would be a lot of traffic to watch nothing happen.
+
+`/api/rooms` still refuses the number to a non-admin — the occupancy of a room
+you may not enter is not yours to know. `/user/rooms` answers a different
+question, "where may I go", and every room in that answer is one this person
+can already walk into.
 
 A select always displays one of its options, which forces the state to name the
 same one. With no preference set, `choice` stayed null while the select showed
@@ -856,6 +895,36 @@ a party nobody could join: the QR lives on the television in the room, which is
 no help for asking someone who has not arrived yet, and the overlay may be off.
 Guests are refused it — at the endpoint, not only on the screen — since a guest
 was asked in themselves and passing the invitation on belongs to the host.
+
+**Two ways out of that panel, because they are wanted at different moments.**
+Copy is for a link going somewhere this app cannot reach; Share opens the
+phone's own share sheet, which is how the invitation actually travels — the
+host taps WhatsApp and never has to leave the page and find a paste target.
+
+Both are icon buttons on `Button`'s `quiet` variant. Copy was a word on a
+`Button` with no variant, which paints nothing at all — transparent,
+borderless — so it read as a caption rather than a control and failed WCAG
+1.4.11's 3:1 between a component and its background. Same variant, same
+reasoning, as the pitch assistant's answers and the −/+ steppers; the third
+time that surface has been the fix.
+
+`lib/share` holds both routes rather than the component, because the outcomes
+are not interchangeable:
+
+- **A dismissed share sheet is not a failure.** `AbortError` means the person
+  saw the list of apps and closed it. Quietly copying the link behind them
+  would be overruling an answer they just gave.
+- **A share sheet that will not open is.** Anything else thrown — a browser
+  that has `navigator.share` and refuses over plain http — falls through to the
+  clipboard, and the panel says "Copied" so the fallback is not silent.
+- **Neither route exists on some browsers**, and the screen still has to work.
+  Each button is rendered only where its API is, so nothing on screen offers
+  something that cannot happen; with both missing, the field is still there,
+  still selects its whole contents on focus, and can be copied by hand.
+
+The share text carries the link and an invitation, never the room's name: it is
+read by someone who is not in the room yet, on a lock screen anyone standing
+near them can see, and the invite link is a credential.
 
 ## Public exposure
 

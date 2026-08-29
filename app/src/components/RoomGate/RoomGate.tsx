@@ -5,6 +5,7 @@ import { enterRoom, requestLogout } from 'store/modules/user'
 import Button from 'components/Button/Button'
 import Logo from 'components/Logo/Logo'
 import Spinner from 'components/Spinner/Spinner'
+import { roomOptionLabel } from 'lib/roomLabel'
 import { useT } from 'lib/i18n'
 import styles from './RoomGate.css'
 
@@ -135,18 +136,11 @@ const RoomGate = () => {
         disabled={isEntering}
         aria-label={t('selectRoom.title')}
       >
-        {mine.result.map((roomId) => {
-          const room = mine.entities[roomId]
-          const state = room.status === 'closed'
-            ? t('selectRoom.closed')
-            : room.isLive ? t('selectRoom.someoneHere') : t('selectRoom.free')
-
-          return (
-            <option key={roomId} value={roomId}>
-              {`${room.name} — ${state}`}
-            </option>
-          )
-        })}
+        {mine.result.map(roomId => (
+          <option key={roomId} value={roomId}>
+            {roomOptionLabel(mine.entities[roomId], t)}
+          </option>
+        ))}
       </select>
 
       <Button

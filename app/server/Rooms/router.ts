@@ -51,9 +51,12 @@ router.get(['/', '/:roomId'], (ctx) => {
     const sockets = ctx.io.sockets.adapter.rooms.get(Rooms.prefix(roomId))
     const numUsers = sockets ? sockets.size : 0
 
-    // Whether anyone is in there, never how many. Someone deciding where to
-    // sing needs to know if a party is already going; the size of it is the
-    // room's business, and a member is not an admin.
+    // Whether anyone is in there, never how many: this endpoint answers "what
+    // rooms exist", and the occupancy of a room a member may not enter is not
+    // theirs to know. Nothing in the client reads this any more — the two room
+    // pickers count people, off /user/rooms, which only ever lists rooms this
+    // person may already walk into — so it is kept as the shape of a response
+    // and not as anything's source.
     res.entities[roomId].isLive = numUsers > 0
 
     if (ctx.user.isAdmin) {
