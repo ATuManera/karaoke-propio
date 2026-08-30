@@ -975,7 +975,7 @@ and a clean OOM becomes an unpredictable slowdown.
 
 | Service | Limit | Measured |
 |---|---|---|
-| karaoke-eternal | 512m | 199 MB peak anon during a full 1786-song / 19 GB scan |
+| karaoke-propio | 512m | 199 MB peak anon during a full 1786-song / 19 GB scan |
 | pitch-worker | 1g | 103 MB for the Node process; ffmpeg + rubberband children are the variable part |
 | acquisition-worker | 1g | 84 MB for the Node process; yt-dlp and ffmpeg children dominate |
 | cdg-worker | 256m | 75 MB peak over 12 days |
@@ -1265,3 +1265,104 @@ which is both true and something a host can act on.
   it is usually the first case. All three players now re-ask the server for the
   same URL when a load fails and report *its* answer, so `403: queueId does not
   belong to your room` reaches the queue instead of a complaint about the file.
+
+## Installing by pulling, not building
+
+Until 2.9.0, installing meant cloning the repository and letting four images
+build on the machine — a few minutes on this server, considerably worse on
+anything smaller, and impossible to explain to someone who only wants karaoke
+at a party. The four images are now published, so installing is two downloaded
+files and `docker compose up -d`. `docker-compose.yml` names images and nothing
+else; the four `build:` blocks moved to `docker-compose.dev.yml`, which is the
+override anyone changing the code adds back.
+
+**GHCR rather than Docker Hub, for the file people follow.** Both registries
+get the images — the workflow pushes to `ghcr.io/atumanera` and mirrors to
+Docker Hub — but `docker-compose.yml` can only name one, and it names GHCR. The
+deciding argument is the anonymous pull: Docker Hub meters those by source IP,
+and the moment that bites is a first installation from an office, a campus or a
+VPS provider whose addresses somebody else has already spent. GHCR also
+publishes from Actions with the `GITHUB_TOKEN` that already exists — no account
+to create, no secret to rotate — and `org.opencontainers.image.source` in each
+Dockerfile is what makes it attach the package to this repository by itself.
+Docker Hub needs two secrets, so the workflow computes once whether they are
+present and disables that half if they are not: a mirror that is not configured
+must not turn a release red.
+
+**The build context had to move up, because the notices have to travel.** The
+application image used to be built from `./app`, which meant `LICENSE`,
+`NOTICE` and `THIRD_PARTY_NOTICES.md` — all at the repository root — were not
+merely uncopied but unreachable. While nobody distributed images that was
+academic. Publishing them makes it an obligation: the ISC licence of the
+vendored base asks for its copyright notice to appear in all copies, and the
+copy people now receive is an image, not a checkout. All four builds therefore
+take the root as their context and every `COPY` names its directory, so each
+image can carry the same notices at `/licenses` — plus, for the application,
+Karaoke Eternal's own ISC text, and for the CD+G worker, CDGSharp's MIT.
+
+That move is what makes `.dockerignore` at the root load-bearing rather than
+tidy. `songs/` is ~19 GB on this server and now sits inside the context;
+without the exclusions, Docker tries to send the whole library to the daemon
+before the first instruction runs. `.env` matters for a different reason: it
+holds `USDB_PASSWORD`, and a context that starts one directory higher would
+have swept it into a build. Measured after the exclusions: 2.6 MB transferred,
+4.2 MB in the context.
+
+**PUID stopped being a build argument.** The four Dockerfiles used to bake
+`USER ${PUID}:${PGID}` in at build time, which works exactly as long as
+everyone builds their own image. A published image cannot do it — everybody
+would receive this machine's 1000 — so the images default to 1000:1000 and
+`docker-compose.yml` sets `user: "${PUID:-1000}:${PGID:-1000}"` on all four
+services at run time. Docker accepts a UID with no entry in the image's
+`/etc/passwd`; what it does not supply is a home directory, so `$HOME` resolves
+to `/` and anything writing beside it fails on a read-only path. Each image now
+sets a writable `HOME`, and the acquisition worker also sets `XDG_CACHE_HOME`,
+because yt-dlp keeps a cache there and reports its absence as a permission
+error that says nothing about the UID that caused it. `pitch-cache-init` is the
+one service that keeps `user: root`: chowning the named volume is its whole
+purpose.
+
+**Two architectures, one name, almost no emulation.** The images are published
+as an OCI manifest list covering `linux/amd64` and `linux/arm64`, so the same
+tag runs on an x86 VPS, a Raspberry Pi 4 or 5 and a Mac with Apple Silicon
+without anybody typing anything different. The usual objection to
+multi-architecture builds is that QEMU emulates the foreign one and an emulated
+`npm ci` plus webpack takes forever. It barely applies here, and the reason was
+checked rather than assumed: all 22 production dependencies of `app/` are pure
+JavaScript — no node-gyp, no `.node` addons, since the fork uses Node's own
+SQLite and bcryptjs — and `dotnet publish --no-self-contained` emits portable
+IL. Compiling output that does not depend on the architecture can therefore be
+compiled once, natively, which is what `FROM --platform=$BUILDPLATFORM` on the
+build and dependency stages says; only the final stage is per-architecture.
+`pitch-worker` and `acquisition-worker` carry no `--platform` at all, because
+their entire content is `apt-get` and `pip3` and those packages must be the
+target's. That is emulated, and it is fine: installing packages is I/O rather
+than computation. 32-bit ARM is not published; `node:24-alpine` has no such
+variant, so a Raspberry Pi 3 could not run the application image whatever the
+workers did.
+
+**The service is called `karaoke-propio` now.** It was the last corner where
+the vendored project's name still showed — nothing depended on it: no service
+declares `depends_on` for it, nothing resolves it by DNS (traffic goes the
+other way, to `pitch-worker:4000` and friends), and the proxy routes by
+`VIRTUAL_HOST`. The one consequence is at upgrade time: Compose keys containers
+by service name, so the old `app-karaoke-eternal` becomes an orphan and two
+containers fight over port 8080. The upgrade is `docker compose down` first,
+then `up -d --remove-orphans`. Named volumes belong to the project rather than
+to the service, so the database and the pitch cache come through untouched.
+
+**What CI checks, and what it deliberately does not.** The workflow runs the
+test suite on every push, pull request and tag, and on a tag additionally
+refuses to publish unless the tag equals `KP_VERSION` — `version.test.ts`
+already ties that constant to the README badge and the version line, so the tag
+check closes the last gap between the number in the code and the number on the
+release. That test grew a fourth check at the same time: the
+`${KP_TAG:-2.9.0}` default on each of the four services in
+`docker-compose.yml`. It is the version an installation runs when nothing sets
+`KP_TAG`, and forgetting it is silent — the release publishes new images and
+everyone keeps pulling the old ones, because a stale tag pulls perfectly well.
+`.env.example` leaves `KP_TAG` commented out for the same reason: a value set
+there outlives any newer `docker-compose.yml` downloaded later, which is
+exactly how an installation looks upgraded and is not. Lint and typecheck are left out on purpose: both had errors that
+predate the workflow, and a CI that fails from its first run teaches everyone
+to ignore it. They go in when they pass.

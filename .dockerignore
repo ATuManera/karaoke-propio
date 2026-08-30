@@ -1,0 +1,52 @@
+# What never travels into a build context.
+#
+# From 2.9.0 the four builds take their context from the repository root
+# rather than from each service's own directory, so that every image can copy
+# the same LICENSE, NOTICE and THIRD_PARTY_NOTICES.md — the notices have to
+# ride inside a published image, and from ./app those three files were simply
+# out of reach (see docs/FEATURES.md, "Installing by pulling").
+#
+# Moving the context up makes this file load-bearing rather than tidy:
+# `songs/` alone is ~19 GB on this server, and Docker would try to send all of
+# it to the daemon before running the first instruction. Without the two lines
+# that exclude the library and node_modules, a build that used to take minutes
+# does not finish. Patterns here are anchored at the root, exactly like the
+# ones in .gitignore; `**/` is used where a directory can appear at any depth.
+
+# The song library. The single reason this file must exist.
+songs/
+
+# Runtime data and secrets. `.env` holds USDB_PASSWORD, `ke-config` holds
+# database.sqlite3 with password hashes and room invite codes; neither has any
+# business in an image layer, and both sit right beside the Dockerfiles now.
+.env
+.env.*
+!.env.example
+ke-config/
+data/
+backups/
+pitch-cache/
+
+# Scratch files and history. `.git` is 11 MB of no use to any build stage.
+.git
+.gitignore
+tmp/
+
+# Build output and installed dependencies: every image installs its own, and a
+# host copy is both large and the wrong architecture.
+**/node_modules
+app/build
+**/bin
+**/obj
+
+# Editor and tooling leftovers.
+**/*.log
+**/*.tmp
+**/*.swp
+**/*.sqlite3
+**/*.sqlite3-shm
+**/*.sqlite3-wal
+**/*.tsbuildinfo
+.vscode
+.github
+.DS_Store

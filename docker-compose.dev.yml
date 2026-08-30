@@ -1,0 +1,68 @@
+# Karaoke Propio — building from source instead of pulling.
+#
+#   docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d --build
+#
+# docker-compose.yml names published images and nothing else, so that someone
+# who has never cloned this repository can download it beside a .env and run
+# the stack. This override is the other half: it adds back the four `build:`
+# blocks, for whoever is changing the code.
+#
+# The `image:` names from the base file are kept on purpose — a local build
+# then lands under the same name and tag the published one would have, so
+# `docker compose up -d` without this override goes back to the published
+# image rather than silently keeping a half-finished local one.
+#
+# Every context is the repository root and every dockerfile is named by path.
+# That is what lets each image copy LICENSE, NOTICE and THIRD_PARTY_NOTICES.md
+# from one place; the root .dockerignore is what keeps the 19 GB library out
+# of a context that now starts one directory above it.
+#
+# PUID/PGID are still passed as build args, but they no longer decide who the
+# container runs as: `user:` in the base file does, at run time. They survive
+# here so a local build stays byte-comparable with a published one when they
+# are 1000:1000, which they are by default.
+#
+# KP_VERSION falls back to `dev` rather than to a version number, so a locally
+# built image says so in org.opencontainers.image.version. It lands under the
+# same `:2.9.0` name — it has to, or `docker compose up -d` without this
+# override would go back to the published image — and the label is then the
+# one thing that tells the two apart. The number is not repeated here on
+# purpose: version.test.ts watches the four in docker-compose.yml, and a fifth
+# copy it does not watch is a copy that goes stale.
+
+services:
+  karaoke-propio:
+    build:
+      context: .
+      dockerfile: app/Dockerfile
+      args:
+        PUID: "${PUID:-1000}"
+        PGID: "${PGID:-1000}"
+        KP_VERSION: "${KP_TAG:-dev}"
+
+  pitch-worker:
+    build:
+      context: .
+      dockerfile: pitch-worker/Dockerfile
+      args:
+        PUID: "${PUID:-1000}"
+        PGID: "${PGID:-1000}"
+        KP_VERSION: "${KP_TAG:-dev}"
+
+  acquisition-worker:
+    build:
+      context: .
+      dockerfile: acquisition-worker/Dockerfile
+      args:
+        PUID: "${PUID:-1000}"
+        PGID: "${PGID:-1000}"
+        KP_VERSION: "${KP_TAG:-dev}"
+
+  cdg-worker:
+    build:
+      context: .
+      dockerfile: cdg-worker/Dockerfile
+      args:
+        PUID: "${PUID:-1000}"
+        PGID: "${PGID:-1000}"
+        KP_VERSION: "${KP_TAG:-dev}"

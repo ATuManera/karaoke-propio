@@ -4,7 +4,7 @@
 [![Based on](https://img.shields.io/badge/based%20on-Karaoke%20Eternal-blue.svg)](https://github.com/bhj/KaraokeEternal)
 [![Docker](https://img.shields.io/badge/docker-compose-blue.svg)](docker-compose.yml)
 [![Platform](https://img.shields.io/badge/platform-Linux%20%7C%20Docker-lightgrey.svg)]()
-[![Version](https://img.shields.io/badge/version-2.8.1-blue.svg)]()
+[![Version](https://img.shields.io/badge/version-2.9.0-blue.svg)]()
 
 > **Built on [Karaoke Eternal](https://github.com/bhj/KaraokeEternal)** — © RadRoot LLC, ISC License.
 > Karaoke Propio is an independent project that vendors and extends it; it is **not** an official
@@ -36,7 +36,7 @@
 
 **AI Assistance / Asistencia de IA:** Developed with the support of GPT 5.6 Sol, Claude Opus 5, Claude Opus 4.8, and Claude Sonnet 5.
 
-**Version / Versión:** 2.8.1
+**Version / Versión:** 2.9.0
 
 ---
 
@@ -66,14 +66,16 @@ does well — library, queue, player, phone remote — and adds what a real part
 | **Rooms are assigned, not offered** | The welcome screen asks for an invite code or a username — never which room, and it no longer publishes the room list to anyone who finds the address. An admin decides which rooms each account may enter and which one it lands in. One room and the singer is put straight into it; several and they are asked, with one already chosen — the admin's answer the first time, their own after that. Every open room says how many people are in it — one person, four people, nobody — in one picker, whatever the room count, and a singer can move between the rooms that are theirs from *My Room*, without signing out. An admin's room list folds away and can be narrowed to the rooms that have somebody in them. |
 | **Public access** | Optional HTTPS exposure through an existing nginx-proxy + Let's Encrypt, configured with a single variable. |
 | **Runs on a small server** | Memory use no longer follows the size of the library: a song is streamed and fingerprinted a chunk at a time, so scanning a 1 GB video costs the same as scanning a 5 MB one. Seeking within a song jumps straight to the requested position instead of reading the file from the beginning — invisible on a fast disk, and the difference between instant and sluggish on a VPS. |
+| **Installs by pulling, not building** | Two files and `docker compose up -d`. The four images are published, so a first installation downloads instead of compiling and there is nothing to clone; upgrading is a `pull` rather than a rebuild. They carry both 64-bit x86 and 64-bit ARM under one name, so the same instructions hold on a VPS, on a Raspberry Pi 4 or 5 and on a Mac with Apple Silicon, and `docker pull` picks the variant that fits the machine. The licences and notices of everything inside ride along in the image, under `/licenses`. |
 | **Notes & key** | Melody note by note for UltraStar songs, plus an estimated musical key for any track. |
-| **Its own name and version** | The app says what it is and which build you are on — *Karaoke Propio v2.8.1*, linking to this repository — on the welcome screen and in *About*, where *What's new* opens this project's own release notes rather than the vendored project's changelog. Credit for the base it is built on sits at the foot of both, with its own link. |
+| **Its own name and version** | The app says what it is and which build you are on — *Karaoke Propio v2.9.0*, linking to this repository — on the welcome screen and in *About*, where *What's new* opens this project's own release notes rather than the vendored project's changelog. Credit for the base it is built on sits at the foot of both, with its own link. |
 | **Speaks your language** | English and Spanish, chosen by the phone that arrives — a guest who scans the QR is greeted in their own language without setting anything. A language can be fixed in the account instead, and then it travels to any phone that account signs in from. Everything follows: dates and clocks in the local format, note names as letters or as *Do Re Mi*, and the errors the server sends back. More languages are a single message file away. |
 
 ### Requirements
 
 - Docker and Docker Compose
-- 2 GB RAM minimum (with `PITCH_MAX_CONCURRENCY=1`); ~4 GB recommended — pitch shifting is CPU-bound, and CPU runs out before memory does
+- 64-bit x86 or 64-bit ARM — a VPS, a Raspberry Pi 4 or 5, a Mac with Apple Silicon. Images are published for both, and 32-bit ARM (Raspberry Pi 3 and earlier) is not among them: the Node base image no longer builds for it
+- 2 GB RAM minimum (with `PITCH_MAX_CONCURRENCY=1`); ~4 GB recommended — pitch shifting is CPU-bound, and CPU runs out before memory does. On a Raspberry Pi, where rubberband has much less CPU to work with, `PITCH_MAX_CONCURRENCY=1` is the setting to start from
 - Optional: a domain and an existing `nginx-proxy` + `acme-companion` for public access
 
 ### Media content and copyright
@@ -84,42 +86,85 @@ The project promotes respect for copyright and lawful use of media. It does not 
 
 ### Installation
 
-1. **Clone the repository**
+Nothing to clone and nothing to compile. The four images are published for
+`linux/amd64` and `linux/arm64`, so the same two files bring the stack up on an
+x86 VPS, on a Raspberry Pi 4/5 or on a Mac with Apple Silicon — `docker pull`
+picks the right variant on its own.
+
+1. **Take the two files**
 
    ```bash
-   git clone https://github.com/ATuManera/karaoke-propio.git karaoke
-   cd karaoke
+   mkdir karaoke && cd karaoke
+   curl -O https://raw.githubusercontent.com/ATuManera/karaoke-propio/main/docker-compose.yml
+   curl -o .env https://raw.githubusercontent.com/ATuManera/karaoke-propio/main/.env.example
    ```
 
 2. **Set your environment**
 
-   ```bash
-   cp .env.example .env
-   ```
+   Edit `.env`: `PUID`/`PGID` (your own `id -u` and `id -g`), `TZ` and, for
+   public access, your domain. Every setting is documented in the file itself,
+   [`.env.example`](.env.example).
 
-   Adjust `PUID`/`PGID`, `TZ` and, for public access, your domain. Every setting
-   is documented in [`.env.example`](.env.example).
-
-3. **Start it**
+3. **Make the two directories the stack mounts**
 
    ```bash
-   docker compose up -d --build
+   mkdir -p ke-config songs
    ```
 
-   The four images build on first run, which takes a few minutes.
+   Create them yourself and they belong to you. Left for Docker to create, they
+   arrive owned by root, and the containers — which run as `PUID` on purpose,
+   so that everything they write stays yours — cannot write into them.
 
-4. **Open `http://<host>:8080`** and create the first account — it becomes the admin.
+4. **Start it**
+
+   ```bash
+   docker compose up -d
+   ```
+
+   The images download once. Nothing is built.
+
+5. **Open `http://<host>:8080`** and create the first account — it becomes the admin.
+
+#### Updating
+
+```bash
+docker compose pull && docker compose up -d
+```
+
+`docker-compose.yml` pins a version rather than following `latest`, so this
+upgrades only once you say which version to move to: set `KP_TAG` in `.env`, or
+take a fresh copy of `docker-compose.yml`. The
+[release notes](https://github.com/ATuManera/karaoke-propio/releases) say what
+each version changed and whether anything has to be done by hand. Your library,
+database and pitch cache are volumes and bind mounts: they survive.
+
+#### Building from source
+
+For changing the code. `docker-compose.dev.yml` is the override that adds the
+four `build:` blocks back:
+
+```bash
+git clone https://github.com/ATuManera/karaoke-propio.git karaoke
+cd karaoke
+cp .env.example .env
+docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d --build
+```
 
 ### Architecture
 
 Four services, so heavy or unusual dependencies stay isolated:
 
-| Service | Role |
-|---|---|
-| `karaoke-eternal` | Web app and API (Node, Alpine) |
-| `pitch-worker` | Pitch shifting and key detection (ffmpeg + rubberband) |
-| `acquisition-worker` | YouTube search and download (yt-dlp + ffmpeg) |
-| `cdg-worker` | CD+G generation from UltraStar files (.NET, CDGSharp) |
+| Service | Role | Image |
+|---|---|---|
+| `karaoke-propio` | Web app and API (Node, Alpine) | `ghcr.io/atumanera/karaoke-propio` |
+| `pitch-worker` | Pitch shifting and key detection (ffmpeg + rubberband) | `ghcr.io/atumanera/karaoke-propio-pitch-worker` |
+| `acquisition-worker` | YouTube search and download (yt-dlp + ffmpeg) | `ghcr.io/atumanera/karaoke-propio-acquisition-worker` |
+| `cdg-worker` | CD+G generation from UltraStar files (.NET, CDGSharp) | `ghcr.io/atumanera/karaoke-propio-cdg-worker` |
+
+From 2.9.0 the release workflow mirrors the same four images to Docker Hub
+under `atumanera`, for anyone who prefers to pull from there.
+`docker-compose.yml` names the GHCR ones because an anonymous pull from GHCR is
+not rate-limited, and a first installation is exactly when that limit is felt.
 
 ### Credits
 
@@ -197,14 +242,16 @@ fiesta real necesita.
 | **Salas asignadas, no ofrecidas** | La pantalla de bienvenida pide un código de invitación o un usuario — nunca la sala, y ya no publica la lista de salas a cualquiera que llegue a la dirección. El administrador decide a qué salas puede entrar cada cuenta y en cuál cae al ingresar. Con una sola sala, el cantante entra directo; con varias se le pregunta, con una ya preseleccionada — la del administrador la primera vez, la suya después. Cada sala abierta dice cuánta gente hay adentro — una persona, cuatro personas, nadie — en un solo selector, por muchas salas que haya, y quien tiene varias se cambia desde *Mi sala* sin cerrar sesión. La lista de salas del administrador se pliega y se puede reducir a las que tienen gente adentro. |
 | **Acceso público** | Exposición HTTPS opcional mediante un nginx-proxy + Let's Encrypt existente, con una sola variable. |
 | **Funciona en un servidor pequeño** | El uso de memoria ya no depende del tamaño de la biblioteca: cada canción se lee y se identifica por partes, así que escanear un video de 1 GB cuesta lo mismo que uno de 5 MB. Adelantar dentro de una canción salta directamente a la posición pedida en vez de leer el archivo desde el principio: no se nota en un disco rápido y es la diferencia entre instantáneo y lento en un VPS. |
+| **Se instala descargando, no compilando** | Dos archivos y `docker compose up -d`. Las cuatro imágenes están publicadas, así que la primera instalación descarga en vez de compilar y no hay nada que clonar; actualizar es un `pull` y no una recompilación. Traen x86 de 64 bits y ARM de 64 bits bajo un mismo nombre, de modo que las mismas instrucciones valen en un VPS, en una Raspberry Pi 4 o 5 y en una Mac con Apple Silicon, y `docker pull` elige la variante que corresponde a la máquina. Las licencias y los avisos de todo lo que va adentro viajan dentro de la imagen, en `/licenses`. |
 | **Notas y tonalidad** | Melodía nota por nota en canciones UltraStar, y tonalidad estimada para cualquier pista. |
-| **Nombre y versión propios** | La aplicación dice qué es y qué versión estás usando — *Karaoke Propio v2.8.1*, enlazando a este repositorio — en la pantalla de bienvenida y en *Acerca de*, donde *Novedades* abre las notas de versión de este proyecto y no el registro de cambios del proyecto que incorpora. El reconocimiento a la base sobre la que está construida va al pie de ambas, con su propio enlace. |
+| **Nombre y versión propios** | La aplicación dice qué es y qué versión estás usando — *Karaoke Propio v2.9.0*, enlazando a este repositorio — en la pantalla de bienvenida y en *Acerca de*, donde *Novedades* abre las notas de versión de este proyecto y no el registro de cambios del proyecto que incorpora. El reconocimiento a la base sobre la que está construida va al pie de ambas, con su propio enlace. |
 | **Habla tu idioma** | Español e inglés, elegidos por el celular que llega — a un invitado que escanea el QR se le habla en su idioma sin que configure nada. También se puede fijar un idioma en la cuenta, y entonces viaja a cualquier celular desde el que esa cuenta entre. Todo lo sigue: fechas y horas en el formato local, los nombres de las notas en letras o en *Do Re Mi*, y los errores que devuelve el servidor. Agregar otro idioma es un solo archivo de mensajes. |
 
 ### Requisitos
 
 - Docker y Docker Compose
-- 2 GB de RAM como mínimo (con `PITCH_MAX_CONCURRENCY=1`); ~4 GB recomendado — el cambio de tono usa CPU intensivamente, y la CPU se agota antes que la memoria
+- x86 de 64 bits o ARM de 64 bits — un VPS, una Raspberry Pi 4 o 5, una Mac con Apple Silicon. Hay imágenes publicadas para ambas; ARM de 32 bits (Raspberry Pi 3 y anteriores) no está entre ellas, porque la imagen base de Node ya no se construye para esa arquitectura
+- 2 GB de RAM como mínimo (con `PITCH_MAX_CONCURRENCY=1`); ~4 GB recomendado — el cambio de tono usa CPU intensivamente, y la CPU se agota antes que la memoria. En una Raspberry Pi, donde rubberband dispone de mucha menos CPU, conviene empezar por `PITCH_MAX_CONCURRENCY=1`
 - Opcional: un dominio y un `nginx-proxy` + `acme-companion` ya instalados, para acceso público
 
 ### Contenido multimedia y derechos de autor
@@ -215,42 +262,86 @@ El proyecto promueve el respeto de los derechos de autor y el uso legal de conte
 
 ### Instalación
 
-1. **Clonar el repositorio**
+No hay nada que clonar ni nada que compilar. Las cuatro imágenes se publican
+para `linux/amd64` y `linux/arm64`, así que los mismos dos archivos levantan
+todo en un VPS x86, en una Raspberry Pi 4 o 5 y en una Mac con Apple Silicon —
+`docker pull` elige sola la variante que corresponde.
+
+1. **Traer los dos archivos**
 
    ```bash
-   git clone https://github.com/ATuManera/karaoke-propio.git karaoke
-   cd karaoke
+   mkdir karaoke && cd karaoke
+   curl -O https://raw.githubusercontent.com/ATuManera/karaoke-propio/main/docker-compose.yml
+   curl -o .env https://raw.githubusercontent.com/ATuManera/karaoke-propio/main/.env.example
    ```
 
 2. **Configurar el entorno**
 
-   ```bash
-   cp .env.example .env
-   ```
+   Editar `.env`: `PUID`/`PGID` (los propios, con `id -u` e `id -g`), `TZ` y,
+   para acceso público, el dominio. Cada variable está documentada en el propio
+   archivo, [`.env.example`](.env.example).
 
-   Ajustar `PUID`/`PGID`, `TZ` y, para acceso público, el dominio. Cada variable
-   está documentada en [`.env.example`](.env.example).
-
-3. **Levantar la aplicación**
+3. **Crear las dos carpetas que se montan**
 
    ```bash
-   docker compose up -d --build
+   mkdir -p ke-config songs
    ```
 
-   Las cuatro imágenes se construyen la primera vez, lo que toma unos minutos.
+   Creadas así son tuyas. Si se deja que las cree Docker, nacen del usuario
+   root, y los contenedores —que corren como `PUID` justamente para que todo
+   lo que escriban siga siendo tuyo— no pueden escribir dentro.
 
-4. **Abrir `http://<host>:8080`** y crear la primera cuenta — queda como administradora.
+4. **Levantar la aplicación**
+
+   ```bash
+   docker compose up -d
+   ```
+
+   Las imágenes se descargan una vez. No se compila nada.
+
+5. **Abrir `http://<host>:8080`** y crear la primera cuenta — queda como administradora.
+
+#### Actualizar
+
+```bash
+docker compose pull && docker compose up -d
+```
+
+`docker-compose.yml` fija una versión en vez de seguir a `latest`, así que esto
+actualiza solo cuando uno dice a qué versión moverse: cambiar `KP_TAG` en
+`.env`, o traer una copia nueva de `docker-compose.yml`. Las
+[notas de versión](https://github.com/ATuManera/karaoke-propio/releases) dicen
+qué cambió en cada una y si hay que hacer algo a mano. La biblioteca, la base
+de datos y la caché de tonos son volúmenes y carpetas montadas: sobreviven.
+
+#### Compilar desde el código
+
+Para quien vaya a modificar el código. `docker-compose.dev.yml` es el override
+que devuelve los cuatro bloques `build:`:
+
+```bash
+git clone https://github.com/ATuManera/karaoke-propio.git karaoke
+cd karaoke
+cp .env.example .env
+docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d --build
+```
 
 ### Arquitectura
 
 Cuatro servicios, para que las dependencias pesadas o inusuales queden aisladas:
 
-| Servicio | Rol |
-|---|---|
-| `karaoke-eternal` | Aplicación web y API (Node, Alpine) |
-| `pitch-worker` | Cambio de tono y detección de tonalidad (ffmpeg + rubberband) |
-| `acquisition-worker` | Búsqueda y descarga de YouTube (yt-dlp + ffmpeg) |
-| `cdg-worker` | Generación de CD+G desde archivos UltraStar (.NET, CDGSharp) |
+| Servicio | Rol | Imagen |
+|---|---|---|
+| `karaoke-propio` | Aplicación web y API (Node, Alpine) | `ghcr.io/atumanera/karaoke-propio` |
+| `pitch-worker` | Cambio de tono y detección de tonalidad (ffmpeg + rubberband) | `ghcr.io/atumanera/karaoke-propio-pitch-worker` |
+| `acquisition-worker` | Búsqueda y descarga de YouTube (yt-dlp + ffmpeg) | `ghcr.io/atumanera/karaoke-propio-acquisition-worker` |
+| `cdg-worker` | Generación de CD+G desde archivos UltraStar (.NET, CDGSharp) | `ghcr.io/atumanera/karaoke-propio-cdg-worker` |
+
+Desde 2.9.0 el flujo de publicación duplica esas mismas cuatro imágenes en
+Docker Hub bajo `atumanera`, para quien prefiera bajarlas de ahí. El
+`docker-compose.yml` nombra las de GHCR porque una descarga anónima desde GHCR
+no tiene límite de cuota, y la primera instalación es justo el momento en que
+ese límite se nota.
 
 ### Créditos
 
