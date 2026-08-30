@@ -22,7 +22,7 @@ export class AcquisitionWorkerError extends Error {
 
 /**
  * HTTP client for the acquisition-worker service (yt-dlp + ffmpeg, runs in
- * its own Debian container so the Alpine karaoke-eternal image never needs
+ * its own Debian container so the Alpine karaoke-propio image never needs
  * Python installed). Search results only tell the user what's available;
  * nothing is downloaded until the user picks one.
  */

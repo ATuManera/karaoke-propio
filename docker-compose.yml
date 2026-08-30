@@ -1,9 +1,29 @@
+# Karaoke Propio — the stack, as published.
+#
+# This file names images and never builds them. It is meant to be downloaded
+# on its own, next to a .env, and to work without cloning anything: from
+# 2.9.0 the four images are published for linux/amd64 and linux/arm64, so
+# `docker compose up -d` pulls what fits the machine.
+#
+# To build from source instead — the path for anyone changing the code — add
+# the development override, which is the only place `build:` now lives:
+#
+#   docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d --build
+#
+# KP_TAG pins the version, deliberately. Upgrading is then something you do on
+# purpose (raise KP_TAG, or take a newer copy of this file) rather than
+# something a restart can do to you. Set KP_TAG=latest in .env for the
+# opposite preference.
+
 services:
-  # Docker creates named volumes owned by root on first use; karaoke-eternal
+  # Docker creates named volumes owned by root on first use; karaoke-propio
   # and pitch-worker both run as non-root (UID/GID 1000 by default — see
   # prompt_de_implementacion.md #45) and would fail to write to pitch-cache
   # otherwise. This one-shot init container fixes ownership once, then exits;
   # the real services wait for it via service_completed_successfully.
+  #
+  # It is the one service that must stay root: chown is its whole job, so the
+  # `user:` line the other four carry would defeat it.
   pitch-cache-init:
     image: busybox:latest
     container_name: app-pitch-cache-init
@@ -12,16 +32,18 @@ services:
     volumes:
       - pitch-cache:/data/pitch-cache
 
-  karaoke-eternal:
-    build:
-      context: ./app
-      dockerfile: Dockerfile
-      args:
-        PUID: "${PUID:-1000}"
-        PGID: "${PGID:-1000}"
-    image: karaoke-propio:latest
-    container_name: app-karaoke-eternal
+  karaoke-propio:
+    image: ghcr.io/atumanera/karaoke-propio:${KP_TAG:-2.9.0}
+    container_name: app-karaoke-propio
     restart: unless-stopped
+
+    # The UID/GID the container runs as, at run time rather than baked in at
+    # build time. A published image cannot carry anyone's UID — everybody
+    # would receive this machine's 1000 — so the image defaults to 1000:1000
+    # and this line is what makes PUID/PGID in .env mean anything. Docker
+    # accepts a UID with no entry in the image's /etc/passwd; neither Node nor
+    # .NET needs one, and the Dockerfiles set a writable HOME for that case.
+    user: "${PUID:-1000}:${PGID:-1000}"
 
     # Measured, not guessed: a full scan of a 1786-song / 19 GB library peaks at
     # 199 MB of real (anonymous) memory for this container, server and scanner
@@ -97,18 +119,13 @@ services:
       - karaoke-internal
 
   # FFmpeg + rubberband pitch shifting. Separate Debian-based service because
-  # karaoke-eternal's Alpine image lacks the rubberband filter (see
-  # prompt_de_implementacion.md #16). Never published — internal network only.
+  # the application's Alpine image lacks the rubberband filter (see
+  # prompt_de_implementacion.md #16). Never exposed — internal network only.
   pitch-worker:
-    build:
-      context: ./pitch-worker
-      dockerfile: Dockerfile
-      args:
-        PUID: "${PUID:-1000}"
-        PGID: "${PGID:-1000}"
-    image: karaoke-propio-pitch-worker:latest
+    image: ghcr.io/atumanera/karaoke-propio-pitch-worker:${KP_TAG:-2.9.0}
     container_name: app-pitch-worker
     restart: unless-stopped
+    user: "${PUID:-1000}:${PGID:-1000}"
 
     # The Node process itself has never exceeded 103 MB here (VmHWM over 11
     # days of real jobs); the variable part is the ffmpeg + rubberband children,
@@ -132,20 +149,15 @@ services:
   # yt-dlp + ffmpeg song acquisition from YouTube (see
   # prompt_de_implementacion.md #34). Separate from pitch-worker: different
   # responsibility (download vs. transcode) and different runtime needs
-  # (Python for yt-dlp). Never published — internal network only. Needs
+  # (Python for yt-dlp). Never exposed — internal network only. Needs
   # WRITE access to the library: it stages downloads under
   # <library>/_staging/<requestId>/ before AcquisitionManager atomically
   # publishes them.
   acquisition-worker:
-    build:
-      context: ./acquisition-worker
-      dockerfile: Dockerfile
-      args:
-        PUID: "${PUID:-1000}"
-        PGID: "${PGID:-1000}"
-    image: karaoke-propio-acquisition-worker:latest
+    image: ghcr.io/atumanera/karaoke-propio-acquisition-worker:${KP_TAG:-2.9.0}
     container_name: app-acquisition-worker
     restart: unless-stopped
+    user: "${PUID:-1000}:${PGID:-1000}"
 
     # Node peaked at 84 MB over 4 days, but the real consumers are the yt-dlp
     # and ffmpeg children it spawns per download. Bulk import runs one song at a
@@ -161,21 +173,16 @@ services:
 
   # UltraStar song.txt -> .cdg generation (vendored CDGSharp, MIT — see
   # cdg-worker/CDGSharp/LICENSE). Separate .NET runtime from the two Node
-  # workers above. Never published — internal network only. It receives
+  # workers above. Never exposed — internal network only. It receives
   # already-valid .lrc TEXT over HTTP (not a path), but writes its .cdg
   # OUTPUT directly to the shared library path (same convention as
   # pitch-worker/acquisition-worker), since AcquisitionManager gives it an
   # absolute path under <library>/_staging/<requestId>/.
   cdg-worker:
-    build:
-      context: ./cdg-worker
-      dockerfile: Dockerfile
-      args:
-        PUID: "${PUID:-1000}"
-        PGID: "${PGID:-1000}"
-    image: karaoke-propio-cdg-worker:latest
+    image: ghcr.io/atumanera/karaoke-propio-cdg-worker:${KP_TAG:-2.9.0}
     container_name: app-cdg-worker
     restart: unless-stopped
+    user: "${PUID:-1000}:${PGID:-1000}"
 
     # .NET, and the smallest of the four: 75 MB peak over 12 days. It renders
     # one .cdg from a text file. .NET reads the cgroup limit and sizes its heap
@@ -193,7 +200,7 @@ networks:
   nginx-proxy:
     external: true
   # pitch-worker and acquisition-worker are reachable ONLY from
-  # karaoke-eternal on this network — neither has a ports: mapping, and
+  # karaoke-propio on this network — neither has a ports: mapping, and
   # neither is attached to nginx-proxy, so neither is reachable from the
   # host or the internet. This is deliberately NOT marked internal:true:
   # acquisition-worker needs outbound internet access to reach YouTube via

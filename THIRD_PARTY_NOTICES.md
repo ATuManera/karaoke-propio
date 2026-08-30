@@ -209,10 +209,20 @@ English:
 
 FFmpeg and Rubber Band Library include GPL-licensed components and are installed inside containers through the operating system package manager. They are invoked as independent command-line processes and are not linked with this project's code.
 
-This repository distributes Dockerfiles and project source code, not prebuilt Docker images containing those binaries. Any person or organization that publishes Docker images built from this repository is responsible for complying with any applicable obligations related to the third-party GPL components included in those images.
+From version 2.9.0 this project also publishes prebuilt Docker images — to `ghcr.io/atumanera` and to Docker Hub under `atumanera` — and the `pitch-worker` and `acquisition-worker` images contain those binaries. Where to obtain their corresponding source:
+
+- The binaries are the unmodified Debian bookworm packages `ffmpeg` and `rubberband-cli`, installed with `apt-get` and not rebuilt, patched or statically linked by this project. Debian publishes the corresponding source for every binary package it ships: `apt-get source ffmpeg` / `apt-get source rubberband` inside the same base image (`node:22-bookworm-slim`, with a `deb-src` line enabled for `bookworm` and `bookworm-updates`), or <https://deb.debian.org/debian/pool/main/f/ffmpeg/> and <https://deb.debian.org/debian/pool/main/r/rubberband/>.
+- Upstream sources: <https://ffmpeg.org/download.html> and <https://breakfastquay.com/rubberband/>.
+
+Each published image carries LICENSE, NOTICE and this file under `/licenses`. Anyone who builds and publishes their own images from this repository takes on the same obligations for the third-party GPL components those images contain.
 
 Español:
 
 FFmpeg y Rubber Band Library incluyen componentes bajo licencia GPL y se instalan dentro de los contenedores mediante el gestor de paquetes del sistema operativo. Se invocan como procesos independientes de línea de comandos y no se enlazan con el código de este proyecto.
 
-Este repositorio distribuye Dockerfiles y código fuente del proyecto, no imágenes Docker preconstruidas que contengan esos binarios. Cualquier persona u organización que publique imágenes Docker construidas a partir de este repositorio es responsable de cumplir las obligaciones aplicables relacionadas con los componentes GPL de terceros incluidos en dichas imágenes.
+Desde la versión 2.9.0 este proyecto también publica imágenes Docker preconstruidas —en `ghcr.io/atumanera` y en Docker Hub bajo `atumanera`— y las imágenes de `pitch-worker` y `acquisition-worker` contienen esos binarios. Dónde obtener su código fuente correspondiente:
+
+- Los binarios son los paquetes de Debian bookworm `ffmpeg` y `rubberband-cli` sin modificar, instalados con `apt-get`: este proyecto no los recompila, ni los parcha, ni los enlaza estáticamente. Debian publica el código fuente correspondiente de cada paquete binario que distribuye: `apt-get source ffmpeg` / `apt-get source rubberband` dentro de la misma imagen base (`node:22-bookworm-slim`, habilitando una línea `deb-src` para `bookworm` y `bookworm-updates`), o bien <https://deb.debian.org/debian/pool/main/f/ffmpeg/> y <https://deb.debian.org/debian/pool/main/r/rubberband/>.
+- Fuentes originales: <https://ffmpeg.org/download.html> y <https://breakfastquay.com/rubberband/>.
+
+Cada imagen publicada lleva LICENSE, NOTICE y este archivo en `/licenses`. Quien construya y publique sus propias imágenes a partir de este repositorio asume las mismas obligaciones respecto de los componentes GPL de terceros que esas imágenes contengan.

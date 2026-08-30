@@ -29,7 +29,7 @@ const env = {
   KES_PATH_WEBROOT: path.join(baseDir, 'build', 'client'),
   KES_PORT: parseInt(process.env.KES_PORT, 10) || 0,
   // Karaoke Propio: pitch shifting service (see server/Pitch/PitchManager.ts).
-  // Must resolve to the SAME absolute path inside both the karaoke-eternal and
+  // Must resolve to the SAME absolute path inside both the karaoke-propio and
   // pitch-worker containers (shared volume) since PitchManager hands worker
   // paths, not bytes.
   KES_PITCH_CACHE_DIR: process.env.KES_PITCH_CACHE_DIR

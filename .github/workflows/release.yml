@@ -1,0 +1,188 @@
+# Karaoke Propio — tests on every push, images on every tag.
+#
+# Two jobs. `verify` runs the test suite and, on a tag, checks that the tag and
+# the version the code claims are the same number. `publish` builds the four
+# images for linux/amd64 and linux/arm64 and pushes them to GHCR and, when the
+# Docker Hub secrets exist, to Docker Hub as well.
+#
+# `publish` is gated on the ref being a tag, not on the event. A
+# workflow_dispatch run started against a tag therefore publishes exactly like
+# a tag push — which is how a failed release gets retried — while one started
+# against a branch only runs the tests. That is deliberate: it makes the rule
+# "tags publish, branches don't" true regardless of how the run began.
+name: Release
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+  workflow_dispatch:
+
+# GITHUB_TOKEN is enough to push to GHCR under this repository's owner; there
+# is no registry secret to create or rotate. Docker Hub is the exception and
+# needs two secrets, handled below.
+permissions:
+  contents: read
+  packages: write
+
+# A tag pushed right after its branch would otherwise run twice over the same
+# tree. Tags are never cancelled, though: a half-pushed manifest list is worse
+# than a wasted runner.
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: ${{ !startsWith(github.ref, 'refs/tags/') }}
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: app/package-lock.json
+
+      - name: Install
+        working-directory: app
+        run: npm ci --no-audit --no-fund
+
+      - name: Test
+        working-directory: app
+        run: npm test
+
+      # Deliberately no lint and no typecheck here. Both have errors that
+      # predate this workflow — inherited no-explicit-any, mostly — and a CI
+      # that fails from its first run teaches everyone to ignore it. They go in
+      # once they pass, not before.
+
+      # KP_VERSION is the one place the number is written down, and
+      # version.test.ts already holds the README to it. This closes the last
+      # gap: that the tag being released is that same number, so v2.9.0 cannot
+      # ship an image whose About panel says 2.8.1.
+      - name: The tag has to be the version the code claims
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          V=$(grep -oE "KP_VERSION = '[0-9]+\.[0-9]+\.[0-9]+'" app/shared/version.ts \
+               | grep -oE "[0-9]+\.[0-9]+\.[0-9]+")
+          if [ "v$V" != "$GITHUB_REF_NAME" ]; then
+            echo "tag $GITHUB_REF_NAME does not match KP_VERSION $V" >&2
+            exit 1
+          fi
+          echo "tag $GITHUB_REF_NAME matches KP_VERSION $V"
+
+  publish:
+    needs: verify
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+
+    strategy:
+      # One image per matrix entry. They are independent, and a failure in one
+      # should not hide whether the other three are publishable.
+      fail-fast: false
+      matrix:
+        include:
+          - image: karaoke-propio
+            dockerfile: app/Dockerfile
+          - image: karaoke-propio-pitch-worker
+            dockerfile: pitch-worker/Dockerfile
+          - image: karaoke-propio-acquisition-worker
+            dockerfile: acquisition-worker/Dockerfile
+          - image: karaoke-propio-cdg-worker
+            dockerfile: cdg-worker/Dockerfile
+
+    steps:
+      - uses: actions/checkout@v7
+
+      # Docker Hub is a mirror, not the source of the install instructions, so
+      # its absence must not fail a release. The answer is computed once here
+      # and every Docker Hub step reads this output rather than testing the
+      # secret again — one place to look when the mirror is not being written.
+      - name: Is Docker Hub configured?
+        id: hub
+        env:
+          HUB_USER: ${{ secrets.DOCKERHUB_USERNAME }}
+          HUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+        run: |
+          if [ -n "$HUB_USER" ] && [ -n "$HUB_TOKEN" ]; then
+            echo 'enabled=true' >> "$GITHUB_OUTPUT"
+            echo 'Docker Hub secrets present: mirroring there too.'
+          else
+            echo 'enabled=false' >> "$GITHUB_OUTPUT"
+            echo 'No Docker Hub secrets: publishing to GHCR only.'
+          fi
+
+      # binfmt interpreters, so the arm64 layers of the two Debian workers can
+      # run their apt-get on an x86 runner. The application and CD+G images do
+      # not need it — their compiling stages are pinned to $BUILDPLATFORM and
+      # run native — but registering it costs seconds and its absence would
+      # fail those two with "exec format error".
+      - uses: docker/setup-qemu-action@v4
+
+      - uses: docker/setup-buildx-action@v4
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Log in to Docker Hub
+        if: steps.hub.outputs.enabled == 'true'
+        uses: docker/login-action@v4
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      # The GHCR namespace is the repository owner lowercased. It is written
+      # out rather than derived from github.repository_owner, which is
+      # "ATuManera": a registry rejects the capitals, and a name that reads the
+      # same here and in the README is worth more than the indirection.
+      - name: Tags and labels
+        id: meta
+        uses: docker/metadata-action@v6
+        with:
+          images: |
+            name=ghcr.io/atumanera/${{ matrix.image }}
+            name=docker.io/atumanera/${{ matrix.image }},enable=${{ steps.hub.outputs.enabled }}
+          # Two tags per release: the version, which is what
+          # docker-compose.yml pins, and latest, for whoever prefers the other
+          # arrangement. The OCI labels — including image.version, taken from
+          # the semver tag without its leading v — come from this step too.
+          #
+          # `value=` is given explicitly because type=semver otherwise only
+          # fires on a push-tag event. Handed github.ref_name it parses the
+          # same v2.9.0 whichever way the run started, which is what makes a
+          # workflow_dispatch against a tag a real retry rather than a run
+          # that quietly publishes only :latest.
+          tags: |
+            type=semver,pattern={{version}},value=${{ github.ref_name }}
+            type=raw,value=latest
+
+      - name: Build and push
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: ${{ matrix.dockerfile }}
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            KP_VERSION=${{ steps.meta.outputs.version }}
+          # Without a cache every release rebuilds all four from nothing, and
+          # the emulated apt-get in the two Debian workers is paid in full each
+          # time. The scope is per image: one shared scope would have the four
+          # jobs overwrite each other's cache.
+          cache-from: type=gha,scope=${{ matrix.image }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.image }}
+          # No provenance or SBOM attestations. They are useful, but they show
+          # up in `docker buildx imagetools inspect` as unknown/unknown
+          # platform entries, and the first thing anyone does with a
+          # multi-architecture image is inspect it to check the architectures
+          # are there. Two entries, both real, is the clearer answer.
+          provenance: false
+          sbom: false
