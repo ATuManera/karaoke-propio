@@ -54,9 +54,21 @@
 .content {
   flex: 1;
 
+  /* The body of a scrollable modal has to be told to size from its content.
+     `flex: 1` is `flex: 1 1 0%`, and inside a dialog that has a max-height but
+     no height WebKit resolves that 0% against nothing — then `overflow: auto`
+     takes the automatic minimum height away as well, and the body is 0px tall
+     while the title and the X above it stay put. That is what the acquisition
+     search looked like on an iPad: a heading, a close button, and nothing to
+     search with. Chromium sized the same rules from the content and never
+     showed it. `auto` sizes from the content everywhere; `min-height: 0` is
+     what still lets the body give way and scroll once the dialog reaches its
+     max-height. Not applied to the base rule above, which has no overflow and
+     therefore no problem. */
   &.scrollable {
+    flex: 1 1 auto;
+    min-height: 0;
     overflow: auto;
-    -webkit-overflow-scrolling: touch;
   }
 }
 

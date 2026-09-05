@@ -33,7 +33,7 @@ services:
       - pitch-cache:/data/pitch-cache
 
   karaoke-propio:
-    image: ghcr.io/atumanera/karaoke-propio:${KP_TAG:-2.9.0}
+    image: ghcr.io/atumanera/karaoke-propio:${KP_TAG:-2.9.1}
     container_name: app-karaoke-propio
     restart: unless-stopped
 
@@ -122,7 +122,7 @@ services:
   # the application's Alpine image lacks the rubberband filter (see
   # prompt_de_implementacion.md #16). Never exposed — internal network only.
   pitch-worker:
-    image: ghcr.io/atumanera/karaoke-propio-pitch-worker:${KP_TAG:-2.9.0}
+    image: ghcr.io/atumanera/karaoke-propio-pitch-worker:${KP_TAG:-2.9.1}
     container_name: app-pitch-worker
     restart: unless-stopped
     user: "${PUID:-1000}:${PGID:-1000}"
@@ -154,7 +154,7 @@ services:
   # <library>/_staging/<requestId>/ before AcquisitionManager atomically
   # publishes them.
   acquisition-worker:
-    image: ghcr.io/atumanera/karaoke-propio-acquisition-worker:${KP_TAG:-2.9.0}
+    image: ghcr.io/atumanera/karaoke-propio-acquisition-worker:${KP_TAG:-2.9.1}
     container_name: app-acquisition-worker
     restart: unless-stopped
     user: "${PUID:-1000}:${PGID:-1000}"
@@ -179,7 +179,7 @@ services:
   # pitch-worker/acquisition-worker), since AcquisitionManager gives it an
   # absolute path under <library>/_staging/<requestId>/.
   cdg-worker:
-    image: ghcr.io/atumanera/karaoke-propio-cdg-worker:${KP_TAG:-2.9.0}
+    image: ghcr.io/atumanera/karaoke-propio-cdg-worker:${KP_TAG:-2.9.1}
     container_name: app-cdg-worker
     restart: unless-stopped
     user: "${PUID:-1000}:${PGID:-1000}"

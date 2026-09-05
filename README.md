@@ -4,7 +4,7 @@
 [![Based on](https://img.shields.io/badge/based%20on-Karaoke%20Eternal-blue.svg)](https://github.com/bhj/KaraokeEternal)
 [![Docker](https://img.shields.io/badge/docker-compose-blue.svg)](docker-compose.yml)
 [![Platform](https://img.shields.io/badge/platform-Linux%20%7C%20Docker-lightgrey.svg)]()
-[![Version](https://img.shields.io/badge/version-2.9.0-blue.svg)]()
+[![Version](https://img.shields.io/badge/version-2.9.1-blue.svg)]()
 
 > **Built on [Karaoke Eternal](https://github.com/bhj/KaraokeEternal)** — © RadRoot LLC, ISC License.
 > Karaoke Propio is an independent project that vendors and extends it; it is **not** an official
@@ -34,9 +34,9 @@
 
 **Author / Autor:** A Tu Manera Digital — Fernando Gallarday ([@fgallarday](https://github.com/fgallarday))
 
-**AI Assistance / Asistencia de IA:** Developed with the support of GPT 5.6 Sol, Claude Opus 5, Claude Opus 4.8, and Claude Sonnet 5.
+**AI Assistance / Asistencia de IA:** Developed with the support of GPT 5.6 Sol, Claude Fable 5.1, Claude Opus 5, Claude Opus 4.8, and Claude Sonnet 5.
 
-**Version / Versión:** 2.9.0
+**Version / Versión:** 2.9.1
 
 ---
 
@@ -68,7 +68,7 @@ does well — library, queue, player, phone remote — and adds what a real part
 | **Runs on a small server** | Memory use no longer follows the size of the library: a song is streamed and fingerprinted a chunk at a time, so scanning a 1 GB video costs the same as scanning a 5 MB one. Seeking within a song jumps straight to the requested position instead of reading the file from the beginning — invisible on a fast disk, and the difference between instant and sluggish on a VPS. |
 | **Installs by pulling, not building** | Two files and `docker compose up -d`. The four images are published, so a first installation downloads instead of compiling and there is nothing to clone; upgrading is a `pull` rather than a rebuild. They carry both 64-bit x86 and 64-bit ARM under one name, so the same instructions hold on a VPS, on a Raspberry Pi 4 or 5 and on a Mac with Apple Silicon, and `docker pull` picks the variant that fits the machine. The licences and notices of everything inside ride along in the image, under `/licenses`. |
 | **Notes & key** | Melody note by note for UltraStar songs, plus an estimated musical key for any track. |
-| **Its own name and version** | The app says what it is and which build you are on — *Karaoke Propio v2.9.0*, linking to this repository — on the welcome screen and in *About*, where *What's new* opens this project's own release notes rather than the vendored project's changelog. Credit for the base it is built on sits at the foot of both, with its own link. |
+| **Its own name and version** | The app says what it is and which build you are on — *Karaoke Propio v2.9.1*, linking to this repository — on the welcome screen and in *About*, where *What's new* opens this project's own release notes rather than the vendored project's changelog. Credit for the base it is built on sits at the foot of both, with its own link. |
 | **Speaks your language** | English and Spanish, chosen by the phone that arrives — a guest who scans the QR is greeted in their own language without setting anything. A language can be fixed in the account instead, and then it travels to any phone that account signs in from. Everything follows: dates and clocks in the local format, note names as letters or as *Do Re Mi*, and the errors the server sends back. More languages are a single message file away. |
 
 ### Requirements
@@ -244,7 +244,7 @@ fiesta real necesita.
 | **Funciona en un servidor pequeño** | El uso de memoria ya no depende del tamaño de la biblioteca: cada canción se lee y se identifica por partes, así que escanear un video de 1 GB cuesta lo mismo que uno de 5 MB. Adelantar dentro de una canción salta directamente a la posición pedida en vez de leer el archivo desde el principio: no se nota en un disco rápido y es la diferencia entre instantáneo y lento en un VPS. |
 | **Se instala descargando, no compilando** | Dos archivos y `docker compose up -d`. Las cuatro imágenes están publicadas, así que la primera instalación descarga en vez de compilar y no hay nada que clonar; actualizar es un `pull` y no una recompilación. Traen x86 de 64 bits y ARM de 64 bits bajo un mismo nombre, de modo que las mismas instrucciones valen en un VPS, en una Raspberry Pi 4 o 5 y en una Mac con Apple Silicon, y `docker pull` elige la variante que corresponde a la máquina. Las licencias y los avisos de todo lo que va adentro viajan dentro de la imagen, en `/licenses`. |
 | **Notas y tonalidad** | Melodía nota por nota en canciones UltraStar, y tonalidad estimada para cualquier pista. |
-| **Nombre y versión propios** | La aplicación dice qué es y qué versión estás usando — *Karaoke Propio v2.9.0*, enlazando a este repositorio — en la pantalla de bienvenida y en *Acerca de*, donde *Novedades* abre las notas de versión de este proyecto y no el registro de cambios del proyecto que incorpora. El reconocimiento a la base sobre la que está construida va al pie de ambas, con su propio enlace. |
+| **Nombre y versión propios** | La aplicación dice qué es y qué versión estás usando — *Karaoke Propio v2.9.1*, enlazando a este repositorio — en la pantalla de bienvenida y en *Acerca de*, donde *Novedades* abre las notas de versión de este proyecto y no el registro de cambios del proyecto que incorpora. El reconocimiento a la base sobre la que está construida va al pie de ambas, con su propio enlace. |
 | **Habla tu idioma** | Español e inglés, elegidos por el celular que llega — a un invitado que escanea el QR se le habla en su idioma sin que configure nada. También se puede fijar un idioma en la cuenta, y entonces viaja a cualquier celular desde el que esa cuenta entre. Todo lo sigue: fechas y horas en el formato local, los nombres de las notas en letras o en *Do Re Mi*, y los errores que devuelve el servidor. Agregar otro idioma es un solo archivo de mensajes. |
 
 ### Requisitos

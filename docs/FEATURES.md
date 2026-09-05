@@ -30,6 +30,17 @@ before anything is downloaded.
   stream before the URL is handed back — a signature that will not be honoured
   is worth discovering while another client can still be tried, not in the
   browser as a preview that never starts.
+- On an iPad the search opened as a title and an X and nothing else — no source
+  tabs, no field, no button, no results — while Android showed all of it. The
+  body was there, 0px tall. The modal body is `flex: 1`, which is
+  `flex: 1 1 0%`, and inside a dialog that has a max-height but no height WebKit
+  resolves that 0% against nothing; the scrollable variant's `overflow: auto`
+  then takes away the automatic minimum height too, so nothing holds the body
+  open. Chromium sizes the same rules from the content. The scrollable variant
+  now says `flex: 1 1 auto` outright, with `min-height: 0` so it still gives way
+  and scrolls once the dialog reaches its max-height (2.9.1). No browser is
+  sniffed and no height is invented; the plain body, which has no overflow and
+  had no problem, is left as it was.
 
 ## Library search
 
